@@ -1,0 +1,21 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs, test output and coverage
+*.log
+coverage/
+test-results/
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# AI: after the unique stack is approved, replace or extend this file using
+# that stack's official ignore recommendations. Review before committing.
