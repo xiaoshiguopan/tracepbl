@@ -9,6 +9,12 @@
 *.log
 coverage/
 test-results/
+playwright-report/
+
+# Node and frontend build output
+node_modules/
+dist/
+*.tsbuildinfo
 
 # Editors and operating system
 .vscode/
@@ -16,6 +22,3 @@ test-results/
 .DS_Store
 Thumbs.db
 Desktop.ini
-
-# AI: after the unique stack is approved, replace or extend this file using
-# that stack's official ignore recommendations. Review before committing.

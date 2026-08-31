@@ -1,0 +1,410 @@
+:root {
+  color: #f2f1ea;
+  background: #080d0f;
+  font-family:
+    system-ui, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --narrative-void: #080d0f;
+  --narrative-ink: #111b1e;
+  --mineral-blue: #294e59;
+  --mineral-green: #496b62;
+  --lamp-gold: #c5a46a;
+  --cinnabar-mark: #a94b42;
+  --narrative-text: #f2f1ea;
+  --focus-violet: #a995ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  background: var(--narrative-void);
+}
+
+body {
+  margin: 0;
+  min-width: 20rem;
+  min-height: 100svh;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 0.1875rem solid var(--focus-violet);
+  outline-offset: 0.25rem;
+}
+
+.demo-entry {
+  min-height: 100svh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 74% 54%, rgb(197 164 106 / 18%), transparent 24rem),
+    radial-gradient(circle at 67% 32%, rgb(73 107 98 / 14%), transparent 30rem),
+    var(--narrative-void);
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 20;
+  translate: 0 -180%;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  color: var(--narrative-void);
+  background: var(--narrative-text);
+}
+
+.skip-link:focus {
+  translate: 0;
+}
+
+.topbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100% - 2rem, 90rem);
+  margin-inline: auto;
+  padding-block: 1rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--narrative-text);
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 2.5rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgb(197 164 106 / 60%);
+  border-radius: 50%;
+  color: var(--lamp-gold);
+  font-family: "Songti SC", STSong, SimSun, serif;
+}
+
+.brand strong,
+.brand small {
+  display: block;
+}
+
+.brand strong {
+  font-family: "Songti SC", STSong, SimSun, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.brand small {
+  margin-block-start: 0.12rem;
+  color: rgb(242 241 234 / 62%);
+  font-size: 0.67rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.demo-badge {
+  color: rgb(242 241 234 / 72%);
+  font-size: 0.75rem;
+}
+
+.sound-control,
+.secondary-action {
+  border: 1px solid rgb(242 241 234 / 24%);
+  border-radius: 999px;
+  padding: 0.62rem 0.9rem;
+  color: var(--narrative-text);
+  background: rgb(8 13 15 / 58%);
+  cursor: pointer;
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: center;
+  width: min(100% - 2rem, 90rem);
+  min-height: calc(100svh - 5.5rem);
+  margin-inline: auto;
+  padding-block: clamp(3rem, 8vw, 8rem);
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 42rem);
+}
+
+.year {
+  margin: 0 0 1rem;
+  color: var(--lamp-gold);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 10ch;
+  margin: 0;
+  font-family: "Songti SC", STSong, "Noto Serif CJK SC", SimSun, serif;
+  font-size: clamp(2.55rem, 8vw, 5.25rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.lede {
+  max-width: 35rem;
+  margin: 1.5rem 0 0;
+  color: rgb(242 241 234 / 76%);
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.75;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-start: 2rem;
+}
+
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  border: 1px solid var(--lamp-gold);
+  border-radius: 999px;
+  padding: 0.78rem 1.25rem;
+  color: var(--narrative-void);
+  background: var(--lamp-gold);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.art-label {
+  margin: 1.5rem 0 0;
+  color: rgb(242 241 234 / 66%);
+  font-size: 0.78rem;
+}
+
+.boundary-note {
+  width: min(100%, 38rem);
+  margin-block-start: 1rem;
+  border-inline-start: 0.18rem solid var(--mineral-green);
+  padding: 0.85rem 1rem;
+  color: rgb(242 241 234 / 82%);
+  background: rgb(17 27 30 / 86%);
+  line-height: 1.65;
+}
+
+.boundary-note p {
+  margin: 0.35rem 0 0;
+}
+
+.cave-art {
+  position: absolute;
+  z-index: 1;
+  inset: 3% -10% 2% 38%;
+  overflow: hidden;
+  border-radius: 48% 14% 42% 30% / 46% 26% 38% 30%;
+  background:
+    linear-gradient(110deg, transparent 12%, rgb(8 13 15 / 12%) 45%),
+    radial-gradient(circle at 38% 48%, rgb(197 164 106 / 25%), transparent 26%),
+    repeating-linear-gradient(83deg, transparent 0 2.8rem, rgb(197 164 106 / 6%) 3rem 3.05rem),
+    linear-gradient(145deg, #1b2d2d, #0c1416 52%, #050809);
+  box-shadow:
+    inset 0 0 7rem #020405,
+    -4rem 0 7rem #080d0f;
+}
+
+.cave-art::before {
+  position: absolute;
+  inset: 8% 7%;
+  border: 1px solid rgb(197 164 106 / 12%);
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 68% 22%, rgb(41 78 89 / 35%), transparent 12%),
+    radial-gradient(circle at 76% 34%, rgb(73 107 98 / 20%), transparent 9%);
+  content: "";
+}
+
+.lamp-glow {
+  position: absolute;
+  inset-block-start: 46%;
+  inset-inline-start: 34%;
+  width: 0.75rem;
+  aspect-ratio: 0.75;
+  border-radius: 50%;
+  background: #f7d28b;
+  box-shadow:
+    0 0 1rem #f7d28b,
+    0 0 5rem 2.2rem rgb(197 164 106 / 38%);
+}
+
+.cave-figure {
+  position: absolute;
+  inset-block-end: 8%;
+  inset-inline-start: 22%;
+  width: clamp(6rem, 14vw, 12rem);
+  height: 62%;
+  border-radius: 52% 48% 30% 34% / 17% 19% 8% 9%;
+  background: linear-gradient(90deg, #050708, #111718 58%, #080b0c);
+  clip-path: polygon(35% 0, 67% 0, 72% 11%, 86% 34%, 100% 100%, 0 100%, 16% 34%, 30% 11%);
+  filter: drop-shadow(1.5rem 0 2rem rgb(0 0 0 / 70%));
+}
+
+.manuscript-stack {
+  position: absolute;
+  border-block: 0.12rem solid rgb(197 164 106 / 36%);
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(197 164 106 / 18%) 0 0.22rem,
+    transparent 0.25rem 0.7rem
+  );
+  transform: skewY(-4deg);
+}
+
+.manuscript-stack-one {
+  inset: 43% 8% 15% 68%;
+}
+
+.manuscript-stack-two {
+  inset: 61% 30% 9% 54%;
+}
+
+.evidence-line {
+  position: absolute;
+  inset-block-end: 13%;
+  inset-inline: 42% 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--lamp-gold), transparent);
+  transform: rotate(-7deg);
+  transform-origin: left;
+}
+
+.scene-caption {
+  position: absolute;
+  z-index: 2;
+  inset-inline-end: 1rem;
+  inset-block-end: 1.5rem;
+  max-width: 24rem;
+  margin: 0;
+  color: rgb(242 241 234 / 48%);
+  font-family: "Songti SC", STSong, SimSun, serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-align: end;
+}
+
+@media (max-width: 47.99rem) {
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .topbar-actions {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .demo-badge {
+    max-width: 8rem;
+    text-align: end;
+  }
+
+  .hero {
+    align-items: end;
+    min-height: calc(100svh - 6rem);
+    padding-block: 7rem 2rem;
+  }
+
+  .hero-copy {
+    padding-block-start: 18vh;
+  }
+
+  h1 {
+    font-size: clamp(2.45rem, 13vw, 4rem);
+  }
+
+  .hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hero-actions button {
+    width: 100%;
+  }
+
+  .cave-art {
+    inset: 0 -42% 31% 18%;
+    opacity: 0.82;
+  }
+
+  .scene-caption {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lamp-glow {
+    animation: breathe 4.8s ease-in-out infinite;
+  }
+
+  .evidence-line {
+    animation: reveal 2.4s ease-out both;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.72;
+    scale: 0.88;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    scale: 0 1;
+  }
+}
+
+@media (forced-colors: active) {
+  .cave-art {
+    display: none;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .sound-control {
+    border: 1px solid ButtonText;
+  }
+}
