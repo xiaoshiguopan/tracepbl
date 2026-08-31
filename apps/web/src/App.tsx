@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { P00Experience } from "./P00Experience";
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -32,12 +33,13 @@ export function App() {
             aria-pressed={soundEnabled}
             onClick={() => setSoundEnabled((enabled) => !enabled)}
           >
-            环境声：{soundEnabled ? "开" : "关"}
+            环境声偏好：{soundEnabled ? "开" : "关"}
           </button>
         </div>
       </header>
 
       <main id="main-content" className="hero" tabIndex={-1}>
+        <P00Experience settleRequested={showBoundary} />
         <div className="cave-art" aria-hidden="true">
           <span className="lamp-glow" />
           <span className="cave-figure" />

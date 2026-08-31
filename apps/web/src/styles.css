@@ -246,6 +246,51 @@ h1 {
     -4rem 0 7rem #080d0f;
 }
 
+.three-experience {
+  position: absolute;
+  z-index: 2;
+  inset: 0 -4% 0 30%;
+  width: 74%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.three-experience[data-experience-level="safe"],
+.three-experience[data-experience-level="light"],
+.three-experience[data-experience-level="static"] {
+  display: none;
+}
+
+.prototype-status {
+  position: absolute;
+  z-index: 5;
+  inset-block-end: 1.25rem;
+  inset-inline-start: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-inline-start: 2px solid var(--cinnabar-mark);
+  padding-inline-start: 0.7rem;
+  color: rgb(242 241 234 / 62%);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.prototype-status small {
+  color: rgb(197 164 106 / 78%);
+}
+
+.prototype-status button {
+  border: 0;
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+  color: var(--narrative-text);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.22rem;
+  cursor: pointer;
+}
+
 .cave-art::before {
   position: absolute;
   inset: 8% 7%;
@@ -366,6 +411,16 @@ h1 {
   .cave-art {
     inset: 0 -42% 31% 18%;
     opacity: 0.82;
+  }
+
+  .three-experience {
+    display: none;
+  }
+
+  .prototype-status {
+    position: relative;
+    inset: auto;
+    margin-block-start: 1.25rem;
   }
 
   .scene-caption {

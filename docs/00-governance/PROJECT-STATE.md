@@ -5,11 +5,11 @@
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
 - 当前阶段：阶段 6：前端编码
-- 当前子阶段：阶段 6.2 开工准备：P00 混合 3D 技术原型与运行时依赖准入
-- 状态：阶段 6.1 已获用户批准归档；本次只执行报告所列路径的本地提交，阶段 6.2 尚未开始实施
-- 当前唯一任务：完成阶段 6.1 本地归档；归档后只读复核混合 3D 规格并提交运行时依赖准入，不得在批准前安装或实现 3D 运行时
-- 允许修改的精确路径：`.gitignore`、`package.json`、`package-lock.json`、`tsconfig.json`、`eslint.config.js`、`apps/web/`、`docs/00-governance/PROJECT-STATE.md`、`docs/06-development/`
-- 明确禁止的动作：混合 3D 运行时或其他未批准项目依赖；P01—P12 正式实现；数据库表/Schema设计；数据库实现；具体后端 API 设计或后端业务代码；真实学生/用户数据；插件账号连接或权限变化；本子阶段报告获批前的 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
+- 当前子阶段：阶段 6.2b：P00 混合 3D 技术原型（已批准归档）
+- 状态：阶段 6.2 技术原型已获用户批准归档；等待用户明确开始 P00 最终视觉门
+- 当前唯一任务：保持归档状态，等待用户启动阶段 6.3：P00 最终视觉资产与视觉验收
+- 允许修改的精确路径：`apps/web/package.json`、`package-lock.json`、`apps/web/src/`、`docs/00-governance/PROJECT-STATE.md`、`docs/06-development/`
+- 明确禁止的动作：其他未批准项目依赖；最终人物/洞窟/壁画/音频生产资产；P01—P12 正式实现；数据库表/Schema设计；数据库实现；具体后端 API 设计或后端业务代码；真实学生/用户数据；插件账号连接或权限变化；本子阶段报告批准前的 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 已归档 PRD 0.2 及其四份立项输入；阶段 2 已归档 `TECHNOLOGY-DECISION.md` 0.3；阶段 3 已归档 `PROJECT-HANDBOOK.md` 0.3 与 `AGENTS.md`；阶段 4 已归档八份总体规划及 `PLANNING-REVIEW.md`；阶段 5 已归档前端设计、混合 3D 规格、原型验证与 `FRONTEND-REVIEW.md`
 - 阶段 2 唯一结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 完整保留在公开仓库、本地和 CI 中，不伪装为在线服务；AI 基于公开资料选择阿里云百炼北京地域 `qwen3.8-max`、`text-embedding-v4`、`qwen3-rerank`，明确未做 API 横评；未来真实上线沿同一 OCI/PostgreSQL/S3 架构部署并另行批准
 - 本阶段验收标准：原阶段 5 产物继续保留；新增 `DESIGN-REVIEW-STANDARD.md` 的完备性门和编码就绪门，补齐视觉方向/代表页高保真、逐页布局交互、字段与文案、复合状态优先级、前端视图模型与可执行 fixture、浏览器/性能/资产基线及原型验证；P00 采用经用户确认的混合 3D，具有四级降级与阶段 6 技术原型/最终视觉双门禁；P0 为零后重做 `FRONTEND-REVIEW.md`。MUST-001—010 与 NFR-001—012 有落点；史料不得合成且只采用官方权威公开来源；前端权限展示不冒充安全授权；没有数据库表、具体后端 API、正式代码、依赖或外部动作
@@ -17,9 +17,13 @@
 - 本次修订授权：阶段5期间允许按已批准治理规则复用现有 Skill、只读研究官方资料和成熟 GitHub 案例；用户补充授权全网检索官方公开权威材料并自行合成非史料数据，但史料不得合成；用户于 2026-08-31 要求先把第一性原理设计后审查写入规范，统一适用于后续数据库和后端设计；随后明确批准 P00 采用“预渲染人物/主镜头 + 实时空间增强”的混合 3D 推荐方案，并允许确认后写入文件；现有能力足够，不安装新 Skill，不连接插件账号
 - 最近批准：用户于 2026-08-31 明确回复“批准归档”，授权阶段 5 前端设计、混合 3D 修订与跨层设计审查规范按报告所列路径本地归档；不含 push、部署或依赖安装
 - 本次批准：用户于 2026-09-01 明确回复“批准归档”，授权阶段 6.1 报告所列精确路径进行一次本地提交；不含 push、部署、3D 依赖安装或下一子阶段实现
-- 最近归档提交：阶段 6.1 本地提交 `feat(web): establish P00 safe frontend baseline`
-- 未解决问题：5 名教师尚未招募；P00 最终 3D/预渲染/音频资产尚未制作，运行时依赖尚未批准，必须在阶段 6 通过技术原型与最终视觉双门禁；Qwen 结论基于公开资料而非项目 API 横评，实际教学质量仍需教师验证；百炼数据处理与保存期限需在真实调用前再次审查；GitHub Pages 在求职目标网络中的可用性尚未实测；未来真实上线所需后端、PostgreSQL、对象存储、Agent worker、备案与实时价格仍待届时验证并单独批准
-- 本子阶段验收标准：使用已批准 React/Vite/TypeScript 技术栈；P00 标题、演示/艺术边界、声音控制和主动作从首帧可用；静态媒体失败不破坏 UI；320px 可用、键盘焦点可见、reduced-motion 安全；至少 lint、typecheck、最小测试和 production build 有当前退出码；无 3D 运行时、数据库/后端代码、秘密或真实数据
-- 本子阶段依赖边界：只允许安装已归档 `TECHNOLOGY-DECISION.md` 明确列出的前端/测试/静态质量包；3D 运行时及其加载方案另行评估和批准。当前 Node `24.19.0`、npm `11.17.0` 比决策目标各低一个补丁版本，先记录并验证，不做未经授权的系统级升级
+- 未解决问题：5 名教师尚未招募；P00 最终王圆箓/洞窟/壁画/残卷/音频资产尚未制作，当前程序化几何仅是技术占位；真实浏览器切后台没有在当前内置浏览器触发 `document.hidden`，暂停监听已实现但仍需手工矩阵复验；Qwen 结论基于公开资料而非项目 API 横评，实际教学质量仍需教师验证；百炼数据处理与保存期限需在真实调用前再次审查；GitHub Pages 在求职目标网络中的可用性尚未实测；未来真实上线所需后端、PostgreSQL、对象存储、Agent worker、备案与实时价格仍待届时验证并单独批准
+- 本子阶段验收标准：真实 HTML UI 不等待 3D；Three 动态隔离且满足初始 ≤65kB gzip、可选 chunk ≤190kB gzip；6.5 秒时间线、首次/重看、主动作收束、页面隐藏暂停、完整 dispose 与一次性性能采样有落点；reduced-motion、窄屏、节省数据、WebGL2 缺失、超时、低帧率、加载失败和 context loss 可降级；lint、typecheck、最小测试、production build 与审计有当前证据；无最终资产、P01—P12、数据库/后端代码、秘密或真实数据
+- 本子阶段依赖边界：只允许用户已明确批准的 `three@0.185.1` 与开发期 `@types/three@0.185.4`；不得加入 Fiber、Drei、Babylon、OGL、后期处理、物理、音频或其他依赖。当前 Node `24.19.0`、npm `11.17.0` 比决策目标各低一个补丁版本，验证通过但不做未经授权的系统级升级
 - 本子阶段验证摘要：ESLint、TypeScript、Vitest（1 文件、2 测试）和 Vite production build 通过；应用内 Chromium 桌面与 320×800 走查通过，横向溢出 0px、触控目标至少 44px、主动作/声音状态可操作、控制台无 warning/error。Playwright CLI 因其 Linux 环境缺 Chrome 未运行，未擅自下载浏览器；完整键盘顺序、高对比、缩放与真实辅助技术仍是后续浏览器矩阵项
-- 下一步门禁：阶段 6.1 报告与学习卡获用户批准归档后，才进入 P00 混合 3D 技术原型子阶段并提交运行时依赖准入；前端编码全部完成并逐子阶段批准归档前不得进行数据库设计，更不得提前进行后端设计
+- 阶段 6.2a 评估结论：唯一建议直接使用 `three@0.185.1`，配套 `@types/three@0.185.4`；不采用 React Three Fiber、Drei、Babylon、OGL 或自研 WebGL。必须动态加载，初始关键 JS 目标仍 ≤65kB gzip，可选 Three chunk ≤190kB gzip；reduced-motion/WebGL2 不可用/超时/上下文丢失时不导入或立即降级
+- 本次依赖批准：用户于 2026-09-01 明确回复“批准”，授权安装 `three@0.185.1` 与开发期 `@types/three@0.185.4`，并进入 P00 混合 3D 技术原型；不授权其他依赖、最终资产、归档、push 或部署
+- 本次归档批准：用户于 2026-09-01 明确回复“批准归档”，授权阶段 6.2 报告所列精确路径进行一次本地提交；不含 push、部署、最终视觉资产、数据库或后端工作
+- 阶段 6.2 验证摘要：lint、typecheck、Vitest（2 文件、5 测试）、production build 与 npm audit 均通过；初始 JS 63.21kB gzip、独立 Three chunk 132.66kB gzip；应用内 Chromium 的完整 3D首帧 116ms、一次性 2 秒样本 174fps/1 慢帧、17 draw calls/20 geometries/576 triangles；真实 WebGL context-loss 自动降到静态层；320×800 自动选轻量层、Canvas 不加载显示、横向溢出 0px、按钮高度至少 44px。帧率仅是当前机器单次原型样本，不代表目标用户设备。
+- 最近归档提交：本次本地提交 `feat(web): validate P00 hybrid 3D runtime`；不含 push 或部署
+- 下一步门禁：用户明确开始后才进入阶段 6.3 P00 最终视觉资产与视觉门；不得把程序化低模占位冒充最终效果。前端编码全部完成并逐子阶段批准归档前不得进行数据库设计，更不得提前进行后端设计

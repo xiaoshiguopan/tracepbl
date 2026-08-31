@@ -16,6 +16,6 @@ describe("P00 安全首屏", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('aria-pressed="true"');
-    expect(html).toContain("环境声：开");
+    expect(html).toContain("环境声偏好：开");
   });
 });
