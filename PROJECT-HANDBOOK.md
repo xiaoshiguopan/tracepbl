@@ -2,13 +2,13 @@
 
 > 英文代号：TracePBL
 >
-> 文档版本：0.1
+> 文档版本：0.2
 >
 > 状态：已批准归档
 >
 > 最后更新：2026-08-31
 >
-> 地位：本项目每次开工必读的专属规范；只记录已批准事实和稳定护栏
+> 地位：本项目每次开工必读的专属规范；记录已批准事实和稳定护栏
 
 ## 1. 权威、适用范围与冲突处理
 
@@ -157,6 +157,14 @@
 - `qwen3.8-max` 是厂商服务 ID而非不可变快照，真实运行时记录返回模型、日期、提示模板和费用；
 - 模型或提示变化后运行固定评测；当前未做 API 横评的事实必须保留；
 - 技术替换仅在 `TECHNOLOGY-DECISION.md` 的重评条件触发后进行，并重新审批本手册。
+
+### 4.3 成熟案例研究规则
+
+- 阶段5前端设计、阶段7数据库设计和阶段9后端设计都必须以“当前官方资料 + 当前 GitHub 成熟案例研究”为第一子步骤，研究完成前不得定稿；
+- 每层至少研究3个直接相关仓库，原则上至少2个在访问日达到5,000 Stars；细分领域无符合者时记录检索证据并由用户批准例外；
+- Star 只代表采用度信号，还必须核对最近提交/Release、维护或归档状态、测试/CI、架构文档、Issue/安全响应和许可证；
+- 每个案例登记 URL、访问日期、Star 快照、版本/提交、维护证据、可借鉴点、不能照搬点和许可边界，并映射到史证工坊需求、风险和最终决策；
+- 案例用于验证和改进设计，不授权克隆、安装或复制代码，也不得绕过唯一技术栈；触发换栈时退回技术决策重新批准。
 
 ## 5. 每次开工与状态恢复
 
@@ -369,7 +377,7 @@ apps/worker┘        │                    ↑
 
 ### 11.2 标准命令契约
 
-脚手架尚未获批，因此下列命令目前是阶段 4 需要落实的统一接口，不得声称已经存在或通过：
+脚手架尚未获批，因此下列命令是阶段 4 规划确定、待后续相应编码阶段实现的统一接口；当前不得声称已经存在或通过：
 
 ```text
 npm run format:check
@@ -484,11 +492,21 @@ npm run build
 - 项目章程：[PROJECT-CHARTER.md](./docs/01-initiation/PROJECT-CHARTER.md)
 - 产品需求：[PRD.md](./docs/01-initiation/PRD.md)
 - 技术决策：[TECHNOLOGY-DECISION.md](./docs/01-initiation/TECHNOLOGY-DECISION.md)
+- 总体实施计划：[MASTER-PLAN.md](./docs/02-planning/MASTER-PLAN.md)
+- 设计标准：[DESIGN-STANDARDS.md](./docs/02-planning/DESIGN-STANDARDS.md)
+- 代码与架构规则：[CODE-ARCHITECTURE-RULES.md](./docs/02-planning/CODE-ARCHITECTURE-RULES.md)
+- 安全基线：[SECURITY-BASELINE.md](./docs/02-planning/SECURITY-BASELINE.md)
+- 测试策略：[TEST-STRATEGY.md](./docs/02-planning/TEST-STRATEGY.md)
+- 数据治理：[DATA-GOVERNANCE.md](./docs/02-planning/DATA-GOVERNANCE.md)
+- 就绪与完成定义：[DEFINITION-OF-READY-DONE.md](./docs/02-planning/DEFINITION-OF-READY-DONE.md)
+- 变更控制：[CHANGE-CONTROL.md](./docs/02-planning/CHANGE-CONTROL.md)
+- 总体规划评审：[PLANNING-REVIEW.md](./docs/02-planning/PLANNING-REVIEW.md)
 
-阶段 4 的总体规划、设计标准、代码架构、安全基线、测试策略、数据治理和 DoR/DoD 细则尚未批准；生成后只把已获批准的稳定事实同步到本手册。
+上述阶段 4 文档 0.1 已批准归档，其跨层稳定规则与本手册 0.2 一同生效。具体页面、Schema 和 API 仍须遵循后续分层设计门禁。
 
 ### 15.4 变更记录
 
 | 日期 | 版本 | 变化 | 状态 |
 |---|---|---|---|
 | 2026-08-31 | 0.1 | 根据已批准立项与技术决策建立项目专属规范 | 已批准归档 |
+| 2026-08-31 | 0.2 | 同步阶段 4 的计划、设计、安全、测试、数据、DoR/DoD、变更控制及各层成熟案例研究门禁 | 已批准归档 |
