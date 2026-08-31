@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-labelledby="title desc">
+  <title id="title">史证工坊手机候选史料页视觉稿</title>
+  <desc id="desc">单列手机页面保留演示模式、步骤、阻断、核验和权利信息，并提供可触控的核验动作。</desc>
+  <rect width="390" height="844" fill="#EEF1EF"/>
+  <rect width="390" height="64" fill="#111B1E"/>
+  <g font-family="Microsoft YaHei, PingFang SC, sans-serif" fill="#18211F">
+    <text x="18" y="40" font-family="SimSun, Songti SC, serif" font-size="19" letter-spacing="2" fill="#F2F1EA">史证工坊</text>
+    <rect x="129" y="18" width="112" height="28" rx="14" fill="#294E59"/>
+    <text x="185" y="37" text-anchor="middle" font-size="11" fill="#F2F1EA">作品集演示模式</text>
+    <text x="352" y="39" text-anchor="end" font-size="13" fill="#D7DDD9">任务⌄</text>
+    <rect x="0" y="64" width="390" height="58" fill="#F7F8F6"/>
+    <text x="18" y="89" font-size="12" fill="#52605C">第 3/9 步</text>
+    <text x="18" y="111" font-size="16" font-weight="700">候选史料</text>
+    <rect x="309" y="76" width="63" height="34" rx="7" fill="#FFFFFF" stroke="#C6CFCA"/>
+    <text x="340" y="98" text-anchor="middle" font-size="13">步骤</text>
+    <text x="18" y="161" font-family="SimSun, Songti SC, serif" font-size="28">候选史料</text>
+    <text x="18" y="190" font-size="13" fill="#52605C">选择至少两种类型，并继续完成核验。</text>
+    <rect x="18" y="214" width="354" height="72" rx="8" fill="#F8EFEF" stroke="#DAB6B8"/>
+    <rect x="18" y="214" width="5" height="72" rx="2" fill="#9E3F45"/>
+    <text x="37" y="243" font-size="14" font-weight="700" fill="#87333A">阻断 1 · 待核验 2</text>
+    <text x="37" y="268" font-size="12" fill="#65383C">一条引文尚不能定位，其他候选可继续。</text>
+    <rect x="18" y="306" width="354" height="46" rx="8" fill="#FFFFFF" stroke="#C6CFCA"/>
+    <text x="36" y="335" font-size="13">筛选 · 已应用 2 项</text>
+    <text x="353" y="335" text-anchor="end" font-size="13" fill="#245B68">打开⌄</text>
+    <rect x="18" y="374" width="354" height="220" rx="10" fill="#FFFFFF" stroke="#245B68" stroke-width="2"/>
+    <text x="38" y="409" font-family="SimSun, Songti SC, serif" font-size="18">《贞观政要》版本记录</text>
+    <rect x="38" y="429" width="70" height="26" rx="13" fill="#FFF4D9"/><text x="73" y="447" text-anchor="middle" font-size="11" fill="#6D4D13">待核验</text>
+    <rect x="116" y="429" width="91" height="26" rx="13" fill="#F1ECE5"/><text x="161" y="447" text-anchor="middle" font-size="11" fill="#66543C">仅元数据</text>
+    <text x="38" y="489" font-size="12" fill="#52605C">国家图书馆（国家古籍保护中心）</text>
+    <text x="38" y="518" font-size="12" fill="#52605C">官方书志链接 · 引文定位待完成</text>
+    <rect x="38" y="537" width="314" height="42" rx="7" fill="#245B68"/>
+    <text x="195" y="563" text-anchor="middle" font-size="14" fill="white">继续核验价值卡</text>
+    <rect x="18" y="616" width="354" height="164" rx="10" fill="#FFFFFF" stroke="#C6CFCA"/>
+    <text x="38" y="651" font-family="SimSun, Songti SC, serif" font-size="18">三彩釉陶载乐骆驼</text>
+    <text x="38" y="684" font-size="12" fill="#276554">有条件可用 · 仅元数据</text>
+    <text x="38" y="714" font-size="12" fill="#52605C">中国国家博物馆 · 图像未收录</text>
+    <rect x="38" y="731" width="140" height="36" rx="7" fill="#FFFFFF" stroke="#245B68"/>
+    <text x="108" y="754" text-anchor="middle" font-size="12" fill="#245B68">查看价值卡</text>
+  </g>
+</svg>

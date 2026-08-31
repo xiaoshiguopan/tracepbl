@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">史证工坊桌面证据工作台视觉稿</title>
+  <desc id="desc">明亮工作台包含左侧九步证据脉络带、中间候选史料列表和右侧史料价值卡，核验、权利和阻断状态均用文字呈现。</desc>
+  <rect width="1600" height="1000" fill="#EEF1EF"/>
+  <rect width="1600" height="76" fill="#111B1E"/>
+  <g font-family="Microsoft YaHei, PingFang SC, sans-serif" fill="#18211F">
+    <text x="42" y="49" font-family="SimSun, Songti SC, serif" font-size="24" letter-spacing="4" fill="#F2F1EA">史证工坊</text>
+    <rect x="212" y="22" width="142" height="34" rx="17" fill="#294E59"/>
+    <text x="283" y="44" text-anchor="middle" font-size="13" fill="#F2F1EA">作品集演示模式</text>
+    <text x="1378" y="46" font-size="14" fill="#D7DDD9">本机数据</text>
+    <text x="1492" y="46" font-size="14" fill="#D7DDD9">当前任务⌄</text>
+
+    <rect x="0" y="76" width="260" height="924" fill="#F7F8F6"/>
+    <text x="36" y="124" font-size="13" letter-spacing="2" fill="#52605C">证据脉络</text>
+    <line x1="57" y1="158" x2="57" y2="751" stroke="#B8C4BE" stroke-width="2"/>
+    <g font-size="15">
+      <circle cx="57" cy="170" r="15" fill="#276554"/><text x="57" y="176" text-anchor="middle" fill="white">1</text><text x="88" y="176">教学情境</text><text x="210" y="176" text-anchor="end" fill="#276554">完成</text>
+      <circle cx="57" cy="240" r="15" fill="#276554"/><text x="57" y="246" text-anchor="middle" fill="white">2</text><text x="88" y="246">探究问题</text><text x="210" y="246" text-anchor="end" fill="#276554">完成</text>
+      <rect x="24" y="278" width="212" height="68" rx="8" fill="#E3ECE9" stroke="#245B68"/>
+      <circle cx="57" cy="312" r="15" fill="#245B68"/><text x="57" y="318" text-anchor="middle" fill="white">3</text><text x="88" y="307" font-weight="700">候选史料</text><text x="88" y="329" font-size="12" fill="#245B68">当前 · 待核验 2</text>
+      <circle cx="57" cy="382" r="15" fill="#FFFFFF" stroke="#7B5A18"/><text x="57" y="388" text-anchor="middle">4</text><text x="88" y="388">主张—证据</text><text x="210" y="388" text-anchor="end" fill="#7B5A18">待复核</text>
+      <circle cx="57" cy="452" r="15" fill="#FFFFFF" stroke="#C6CFCA"/><text x="57" y="458" text-anchor="middle">5</text><text x="88" y="458">活动与支架</text>
+      <circle cx="57" cy="522" r="15" fill="#FFFFFF" stroke="#C6CFCA"/><text x="57" y="528" text-anchor="middle">6</text><text x="88" y="528">评价量规</text>
+      <circle cx="57" cy="592" r="15" fill="#FFFFFF" stroke="#9E3F45"/><text x="57" y="598" text-anchor="middle">7</text><text x="88" y="598">设计审计</text><text x="210" y="598" text-anchor="end" fill="#9E3F45">阻断 1</text>
+      <circle cx="57" cy="662" r="15" fill="#FFFFFF" stroke="#C6CFCA"/><text x="57" y="668" text-anchor="middle">8</text><text x="88" y="668">教师批准</text>
+      <circle cx="57" cy="732" r="15" fill="#FFFFFF" stroke="#C6CFCA"/><text x="57" y="738" text-anchor="middle">9</text><text x="88" y="738">导出</text>
+    </g>
+
+    <text x="306" y="126" font-family="SimSun, Songti SC, serif" font-size="34">候选史料</text>
+    <text x="306" y="162" font-size="15" fill="#52605C">完成条件：至少选择两种类型且可继续核验的史料</text>
+    <rect x="306" y="190" width="742" height="62" rx="8" fill="#F8EFEF" stroke="#DAB6B8"/>
+    <rect x="306" y="190" width="5" height="62" rx="2" fill="#9E3F45"/>
+    <text x="330" y="218" font-weight="700" fill="#87333A">1 项阻断需要处理</text>
+    <text x="330" y="240" font-size="14" fill="#65383C">一条引文尚不能定位；已完成候选仍可继续审阅。</text>
+    <rect x="306" y="280" width="742" height="52" rx="8" fill="#FBFCFA" stroke="#C6CFCA"/>
+    <text x="328" y="312" font-size="14" fill="#52605C">状态：全部⌄　 类型：全部⌄　 权利：全部⌄　 搜索题名或机构…</text>
+    <text x="1008" y="312" text-anchor="end" font-size="14" fill="#245B68">3 条结果</text>
+
+    <rect x="306" y="356" width="742" height="188" rx="10" fill="#FFFFFF" stroke="#245B68" stroke-width="2"/>
+    <text x="332" y="392" font-family="SimSun, Songti SC, serif" font-size="21">《贞观政要》版本记录</text>
+    <rect x="331" y="412" width="76" height="28" rx="14" fill="#FFF4D9"/><text x="369" y="431" text-anchor="middle" font-size="12" fill="#6D4D13">待核验</text>
+    <rect x="417" y="412" width="108" height="28" rx="14" fill="#F1ECE5"/><text x="471" y="431" text-anchor="middle" font-size="12" fill="#66543C">仅元数据</text>
+    <text x="332" y="472" font-size="14" fill="#52605C">来源机构　国家图书馆（国家古籍保护中心）</text>
+    <text x="332" y="501" font-size="14" fill="#52605C">价值方向　政治论述与后世“贞观之盛”叙事</text>
+    <rect x="852" y="474" width="168" height="44" rx="7" fill="#245B68"/><text x="936" y="502" text-anchor="middle" fill="white" font-size="15">继续核验价值卡</text>
+
+    <rect x="306" y="568" width="742" height="168" rx="10" fill="#FFFFFF" stroke="#C6CFCA"/>
+    <text x="332" y="604" font-family="SimSun, Songti SC, serif" font-size="21">三彩釉陶载乐骆驼</text>
+    <rect x="331" y="624" width="86" height="28" rx="14" fill="#E2F0EB"/><text x="374" y="643" text-anchor="middle" font-size="12" fill="#245B4C">有条件可用</text>
+    <rect x="427" y="624" width="108" height="28" rx="14" fill="#F1ECE5"/><text x="481" y="643" text-anchor="middle" font-size="12" fill="#66543C">仅元数据</text>
+    <text x="332" y="694" font-size="14" fill="#52605C">来源机构　中国国家博物馆　·　图像未收录</text>
+
+    <rect x="1080" y="104" width="480" height="850" rx="12" fill="#FFFFFF" stroke="#C6CFCA"/>
+    <text x="1112" y="146" font-size="13" letter-spacing="2" fill="#52605C">当前史料价值卡</text>
+    <text x="1112" y="192" font-family="SimSun, Songti SC, serif" font-size="27">《贞观政要》版本记录</text>
+    <text x="1112" y="225" font-size="14" fill="#7B5A18">待核验 · 仅元数据 · 尚未批准</text>
+    <line x1="1112" y1="250" x2="1528" y2="250" stroke="#D9DFDC"/>
+    <text x="1112" y="293" font-weight="700">出处与许可</text>
+    <text x="1112" y="326" font-size="14" fill="#52605C">明成化元年内府刻本 · 官方书志链接</text>
+    <text x="1112" y="359" font-size="14" fill="#52605C">公开复用：未确认，仅展示必要元数据</text>
+    <text x="1112" y="414" font-weight="700">原文与定位</text>
+    <rect x="1112" y="436" width="416" height="88" rx="8" fill="#F8F8F4" stroke="#D9DFDC"/>
+    <text x="1132" y="467" font-family="SimSun, Songti SC, serif" font-size="15" fill="#52605C">此处不展示未核准全文。</text>
+    <text x="1132" y="496" font-size="13" fill="#9E3F45">引文定位尚未完成，不能标记“已核验”。</text>
+    <text x="1112" y="579" font-weight="700">对当前问题的价值</text>
+    <text x="1112" y="614" font-size="14" fill="#52605C">可观察政治叙事如何概括“盛世”。</text>
+    <text x="1112" y="665" font-weight="700">局限</text>
+    <text x="1112" y="700" font-size="14" fill="#52605C">不能单独证明全国经济或普通人生活。</text>
+    <rect x="1112" y="836" width="184" height="52" rx="8" fill="#245B68"/><text x="1204" y="869" text-anchor="middle" fill="white">保存并继续核验</text>
+    <rect x="1310" y="836" width="142" height="52" rx="8" fill="#FFFFFF" stroke="#9E3F45"/><text x="1381" y="869" text-anchor="middle" fill="#87333A">排除候选</text>
+  </g>
+</svg>

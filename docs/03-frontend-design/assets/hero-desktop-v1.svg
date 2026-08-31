@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">史证工坊敦煌主题桌面首屏视觉稿</title>
+  <desc id="desc">深色洞窟艺术背景上显示品牌、演示模式、环境声控制、标题、说明和开始探究按钮，界面从第一帧即可操作。</desc>
+  <defs>
+    <linearGradient id="veil" x1="0" x2="1">
+      <stop offset="0" stop-color="#080D0F" stop-opacity=".96"/>
+      <stop offset=".42" stop-color="#080D0F" stop-opacity=".68"/>
+      <stop offset="1" stop-color="#080D0F" stop-opacity=".12"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#080D0F" stop-opacity="0"/>
+      <stop offset="1" stop-color="#080D0F" stop-opacity=".9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="#080D0F"/>
+  <image href="dunhuang-hero-art-direction-v1.png" width="1600" height="1000" preserveAspectRatio="xMidYMid slice"/>
+  <rect width="1600" height="1000" fill="url(#veil)"/>
+  <rect width="1600" height="1000" fill="url(#floor)"/>
+  <g font-family="Microsoft YaHei, PingFang SC, sans-serif" fill="#F2F1EA">
+    <text x="76" y="74" font-family="SimSun, Songti SC, serif" font-size="28" letter-spacing="5">史证工坊</text>
+    <rect x="257" y="43" width="154" height="42" rx="21" fill="#111B1E" stroke="#496B62"/>
+    <text x="334" y="70" text-anchor="middle" font-size="15" fill="#D7DDD9">作品集演示模式</text>
+    <rect x="1312" y="42" width="205" height="44" rx="8" fill="#111B1E" fill-opacity=".78" stroke="#65736E"/>
+    <text x="1414" y="70" text-anchor="middle" font-size="15">环境声：开  ·  可关闭</text>
+    <text x="76" y="235" font-family="SimSun, Songti SC, serif" font-size="25" letter-spacing="4" fill="#C5A46A">1900 · 敦煌</text>
+    <text x="76" y="330" font-family="SimSun, Songti SC, serif" font-size="72" letter-spacing="2">让沉睡千年的证据</text>
+    <text x="76" y="416" font-family="SimSun, Songti SC, serif" font-size="72" letter-spacing="2">重新开口</text>
+    <text x="80" y="486" font-size="21" fill="#D7DDD9">从一份材料，到一条可核验、可质疑、可用于课堂的历史解释。</text>
+    <rect x="78" y="548" width="218" height="64" rx="8" fill="#C5A46A"/>
+    <text x="187" y="589" text-anchor="middle" font-size="20" font-weight="700" fill="#111B1E">开始证据探究</text>
+    <rect x="317" y="548" width="178" height="64" rx="8" fill="#111B1E" fill-opacity=".74" stroke="#87938E"/>
+    <text x="406" y="589" text-anchor="middle" font-size="18">查看演示边界</text>
+    <text x="80" y="652" font-size="15" fill="#B9C2BE">页面已可使用 · 动画不会阻止滚动、导航或进入任务</text>
+    <line x1="80" y1="760" x2="80" y2="870" stroke="#C5A46A" stroke-width="2"/>
+    <circle cx="80" cy="760" r="5" fill="#C5A46A"/>
+    <text x="104" y="768" font-family="ui-monospace, Consolas, monospace" font-size="16" fill="#C5A46A">ARTISTIC INTERPRETATION</text>
+    <text x="104" y="801" font-size="16" fill="#C8D0CC">艺术化演绎，不是历史照片或可引用史料。</text>
+    <text x="104" y="833" font-size="16" fill="#C8D0CC">历史事实、真实史料与权利状态将在证据卡中分别标注。</text>
+  </g>
+</svg>
