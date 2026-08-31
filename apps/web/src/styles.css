@@ -56,6 +56,10 @@ a:focus-visible {
     var(--narrative-void);
 }
 
+audio {
+  display: none;
+}
+
 .skip-link {
   position: fixed;
   inset-block-start: 0.75rem;
@@ -230,20 +234,46 @@ h1 {
   margin: 0.35rem 0 0;
 }
 
-.cave-art {
+.scene-art-frame {
   position: absolute;
-  z-index: 1;
-  inset: 3% -10% 2% 38%;
+  z-index: 0;
+  inset: -5.5rem calc((100vw - 100%) / -2) 0;
   overflow: hidden;
-  border-radius: 48% 14% 42% 30% / 46% 26% 38% 30%;
+  --parallax-x: 0px;
+  --parallax-y: 0px;
   background:
-    linear-gradient(110deg, transparent 12%, rgb(8 13 15 / 12%) 45%),
-    radial-gradient(circle at 38% 48%, rgb(197 164 106 / 25%), transparent 26%),
-    repeating-linear-gradient(83deg, transparent 0 2.8rem, rgb(197 164 106 / 6%) 3rem 3.05rem),
-    linear-gradient(145deg, #1b2d2d, #0c1416 52%, #050809);
-  box-shadow:
-    inset 0 0 7rem #020405,
-    -4rem 0 7rem #080d0f;
+    radial-gradient(circle at 72% 48%, rgb(197 164 106 / 18%), transparent 28rem),
+    var(--narrative-void);
+  transform: translate3d(var(--parallax-x), var(--parallax-y), 0) scale(1.015);
+  transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+}
+
+.scene-art-frame picture,
+.scene-art-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene-art-frame img {
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.92) contrast(1.04);
+}
+
+.scene-art-frame::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--narrative-void) 0%, rgb(8 13 15 / 90%) 18%, transparent 52%),
+    linear-gradient(0deg, rgb(8 13 15 / 76%) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, transparent 42%, rgb(8 13 15 / 48%) 100%);
+  content: "";
+}
+
+.scene-art-frame[data-experience-level="safe"] picture {
+  display: none;
 }
 
 .three-experience {
@@ -261,99 +291,21 @@ h1 {
   display: none;
 }
 
-.prototype-status {
+.replay-control {
   position: absolute;
   z-index: 5;
   inset-block-end: 1.25rem;
   inset-inline-start: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  border-inline-start: 2px solid var(--cinnabar-mark);
-  padding-inline-start: 0.7rem;
-  color: rgb(242 241 234 / 62%);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-}
-
-.prototype-status small {
-  color: rgb(197 164 106 / 78%);
-}
-
-.prototype-status button {
   border: 0;
   min-height: 2.75rem;
   padding-inline: 0.5rem;
-  color: var(--narrative-text);
+  color: rgb(242 241 234 / 68%);
   background: transparent;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   text-decoration: underline;
   text-underline-offset: 0.22rem;
   cursor: pointer;
-}
-
-.cave-art::before {
-  position: absolute;
-  inset: 8% 7%;
-  border: 1px solid rgb(197 164 106 / 12%);
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at 68% 22%, rgb(41 78 89 / 35%), transparent 12%),
-    radial-gradient(circle at 76% 34%, rgb(73 107 98 / 20%), transparent 9%);
-  content: "";
-}
-
-.lamp-glow {
-  position: absolute;
-  inset-block-start: 46%;
-  inset-inline-start: 34%;
-  width: 0.75rem;
-  aspect-ratio: 0.75;
-  border-radius: 50%;
-  background: #f7d28b;
-  box-shadow:
-    0 0 1rem #f7d28b,
-    0 0 5rem 2.2rem rgb(197 164 106 / 38%);
-}
-
-.cave-figure {
-  position: absolute;
-  inset-block-end: 8%;
-  inset-inline-start: 22%;
-  width: clamp(6rem, 14vw, 12rem);
-  height: 62%;
-  border-radius: 52% 48% 30% 34% / 17% 19% 8% 9%;
-  background: linear-gradient(90deg, #050708, #111718 58%, #080b0c);
-  clip-path: polygon(35% 0, 67% 0, 72% 11%, 86% 34%, 100% 100%, 0 100%, 16% 34%, 30% 11%);
-  filter: drop-shadow(1.5rem 0 2rem rgb(0 0 0 / 70%));
-}
-
-.manuscript-stack {
-  position: absolute;
-  border-block: 0.12rem solid rgb(197 164 106 / 36%);
-  background: repeating-linear-gradient(
-    0deg,
-    rgb(197 164 106 / 18%) 0 0.22rem,
-    transparent 0.25rem 0.7rem
-  );
-  transform: skewY(-4deg);
-}
-
-.manuscript-stack-one {
-  inset: 43% 8% 15% 68%;
-}
-
-.manuscript-stack-two {
-  inset: 61% 30% 9% 54%;
-}
-
-.evidence-line {
-  position: absolute;
-  inset-block-end: 13%;
-  inset-inline: 42% 8%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--lamp-gold), transparent);
-  transform: rotate(-7deg);
-  transform-origin: left;
 }
 
 .scene-caption {
@@ -408,16 +360,26 @@ h1 {
     width: 100%;
   }
 
-  .cave-art {
-    inset: 0 -42% 31% 18%;
-    opacity: 0.82;
+  .scene-art-frame {
+    inset: -6rem calc((100vw - 100%) / -2) 0;
+    transform: none;
+  }
+
+  .scene-art-frame img {
+    object-position: center top;
+  }
+
+  .scene-art-frame::after {
+    background:
+      linear-gradient(0deg, var(--narrative-void) 0%, rgb(8 13 15 / 94%) 34%, transparent 69%),
+      radial-gradient(circle at 50% 40%, transparent 30%, rgb(8 13 15 / 48%) 100%);
   }
 
   .three-experience {
     display: none;
   }
 
-  .prototype-status {
+  .replay-control {
     position: relative;
     inset: auto;
     margin-block-start: 1.25rem;
@@ -429,31 +391,37 @@ h1 {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .lamp-glow {
-    animation: breathe 4.8s ease-in-out infinite;
+  .scene-art-frame[data-experience-level="full"][data-intro-playing="true"] img {
+    animation: cinematic-push 6.5s cubic-bezier(0.18, 0.72, 0.28, 1) both;
   }
 
-  .evidence-line {
-    animation: reveal 2.4s ease-out both;
-  }
-}
-
-@keyframes breathe {
-  50% {
-    opacity: 0.72;
-    scale: 0.88;
+  .scene-art-frame[data-experience-level="light"] img {
+    animation: ambient-breathe 10s ease-in-out infinite alternate;
   }
 }
 
-@keyframes reveal {
+@keyframes cinematic-push {
   from {
-    opacity: 0;
-    scale: 0 1;
+    transform: scale(1.075) translate3d(1.2%, 0.4%, 0);
+  }
+
+  to {
+    transform: scale(1.015) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ambient-breathe {
+  from {
+    transform: scale(1.015);
+  }
+
+  to {
+    transform: scale(1.035);
   }
 }
 
 @media (forced-colors: active) {
-  .cave-art {
+  .scene-art-frame {
     display: none;
   }
 

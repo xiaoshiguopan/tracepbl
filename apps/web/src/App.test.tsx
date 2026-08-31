@@ -9,6 +9,8 @@ describe("P00 安全首屏", () => {
     expect(html).toContain("让沉睡千年的证据重新开口");
     expect(html).toContain("开始证据探究");
     expect(html).toContain("艺术化演绎，不是历史照片或可引用史料");
+    expect(html).toContain("p00-dunhuang-desktop.webp");
+    expect(html).not.toContain("技术原型");
     expect(boundaryCopy).toContain("未连接在线 AI 或数据库");
   });
 
@@ -16,6 +18,7 @@ describe("P00 安全首屏", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('aria-pressed="true"');
-    expect(html).toContain("环境声偏好：开");
+    expect(html).toContain("环境声：开");
+    expect(html).toContain("p00-cave-ambience.wav");
   });
 });

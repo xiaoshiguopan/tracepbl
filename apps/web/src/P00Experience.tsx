@@ -9,12 +9,14 @@ import type { PerformanceSample } from "./three-scene";
 
 const INTRO_SEEN_KEY = "tracepbl:intro:v1";
 const LOAD_TIMEOUT_MS = 2500;
+const INTRO_DURATION_MS = 6500;
+const mediaBase = `${import.meta.env.BASE_URL}assets/p00/`;
 
 type P00ExperienceProps = {
   settleRequested: boolean;
 };
 
-type PrototypeStatus = "checking" | "loading" | "active" | "fallback";
+type SceneStatus = "checking" | "loading" | "active" | "fallback";
 
 function supportsWebGl2() {
   const canvas = document.createElement("canvas");
@@ -72,17 +74,30 @@ function loadWithTimeout() {
 }
 
 export function P00Experience({ settleRequested }: P00ExperienceProps) {
+  const artRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const controllerRef = useRef<P00SceneController | null>(null);
-  const [level, setLevel] = useState<ExperienceLevel>("safe");
-  const [status, setStatus] = useState<PrototypeStatus>("checking");
+  const introTimerRef = useRef<number | undefined>(undefined);
+  const [level, setLevel] = useState<ExperienceLevel>("static");
+  const [status, setStatus] = useState<SceneStatus>("checking");
   const [firstFrameMs, setFirstFrameMs] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [performanceSample, setPerformanceSample] = useState<PerformanceSample | null>(null);
+  const [introPlaying, setIntroPlaying] = useState(false);
+  const [sequence, setSequence] = useState(0);
+
+  const beginIntroMotion = () => {
+    setIntroPlaying(true);
+    if (introTimerRef.current !== undefined) window.clearTimeout(introTimerRef.current);
+    introTimerRef.current = window.setTimeout(() => setIntroPlaying(false), INTRO_DURATION_MS);
+  };
 
   useEffect(() => {
     const nextLevel = getInitialLevel();
+    const playIntro =
+      new URLSearchParams(location.search).get("p00-intro") === "replay" || !readIntroSeen();
     setLevel(nextLevel);
+    if (playIntro && nextLevel === "full") beginIntroMotion();
     if (nextLevel !== "full") {
       setStatus(nextLevel === "safe" ? "fallback" : "active");
       return;
@@ -123,9 +138,7 @@ export function P00Experience({ settleRequested }: P00ExperienceProps) {
               setStatus("fallback");
             }
           },
-          playIntro:
-            new URLSearchParams(location.search).get("p00-intro") === "replay" ||
-            !readIntroSeen(),
+          playIntro,
         });
         controllerRef.current = controller;
         if (new URLSearchParams(location.search).get("p00-failure") === "context") {
@@ -164,27 +177,67 @@ export function P00Experience({ settleRequested }: P00ExperienceProps) {
       window.removeEventListener("scroll", onScroll);
       controllerRef.current?.dispose();
       controllerRef.current = null;
+      if (introTimerRef.current !== undefined) window.clearTimeout(introTimerRef.current);
     };
   }, []);
 
   useEffect(() => {
-    if (settleRequested) controllerRef.current?.settle();
+    if (level !== "full") return;
+    const art = artRef.current;
+    if (!art) return;
+    const onPointerMove = (event: PointerEvent) => {
+      art.style.setProperty("--parallax-x", `${(event.clientX / window.innerWidth - 0.5) * -6}px`);
+      art.style.setProperty("--parallax-y", `${(event.clientY / window.innerHeight - 0.5) * -4}px`);
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, [level]);
+
+  useEffect(() => {
+    if (settleRequested) {
+      controllerRef.current?.settle();
+      setIntroPlaying(false);
+    }
   }, [settleRequested]);
 
   const replay = () => {
     controllerRef.current?.replay();
+    setSequence((current) => current + 1);
+    beginIntroMotion();
     saveIntroSeen();
   };
 
-  const levelLabel = {
-    full: "完整 3D",
-    light: "轻量动态",
-    safe: "纯色安全层",
-    static: "静态终帧",
-  }[level];
-
   return (
     <>
+      <div
+        ref={artRef}
+        className="scene-art-frame"
+        aria-hidden="true"
+        data-experience-level={level}
+        data-intro-playing={introPlaying}
+        data-scene-status={status}
+      >
+        <picture key={sequence}>
+          <source
+            media="(max-width: 47.99rem)"
+            srcSet={`${mediaBase}p00-dunhuang-mobile.webp`}
+            type="image/webp"
+          />
+          <source
+            media="(max-width: 47.99rem)"
+            srcSet={`${mediaBase}p00-dunhuang-mobile.jpg`}
+            type="image/jpeg"
+          />
+          <source srcSet={`${mediaBase}p00-dunhuang-desktop.webp`} type="image/webp" />
+          <img
+            src={`${mediaBase}p00-dunhuang-desktop.jpg`}
+            alt=""
+            width="1672"
+            height="941"
+            fetchPriority="high"
+          />
+        </picture>
+      </div>
       <canvas
         ref={canvasRef}
         className="three-experience"
@@ -194,23 +247,13 @@ export function P00Experience({ settleRequested }: P00ExperienceProps) {
         data-draw-calls={performanceSample?.drawCalls}
         data-paused={paused}
         data-triangles={performanceSample?.triangles}
+        data-first-frame-ms={firstFrameMs ?? undefined}
       />
-      <div className="prototype-status" aria-live="polite">
-        <span>技术原型 · {status === "loading" ? "正在增强" : levelLabel}</span>
-        {firstFrameMs !== null ? <small>首帧 {firstFrameMs}ms</small> : null}
-        {performanceSample !== null ? (
-          <small>
-            {performanceSample.fps}fps · {performanceSample.slowFrames} 慢帧
-          </small>
-        ) : null}
-        {paused ? <small>后台暂停</small> : null}
-        <small>音频待最终资产</small>
-        {level === "full" && status === "active" ? (
-          <button type="button" onClick={replay}>
-            重看序章
-          </button>
-        ) : null}
-      </div>
+      {level === "full" && status === "active" ? (
+        <button className="replay-control" type="button" onClick={replay}>
+          重看序章
+        </button>
+      ) : null}
     </>
   );
 }

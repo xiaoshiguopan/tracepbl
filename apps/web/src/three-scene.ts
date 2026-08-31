@@ -42,77 +42,65 @@ export function createP00Scene({
   });
   renderer.setClearColor(0x080d0f, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x080d0f, 0.13);
+  scene.fog = new THREE.FogExp2(0x080d0f, 0.08);
 
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 40);
   camera.position.set(0.4, 0.15, playIntro ? 8.2 : 5.1);
 
-  const cave = new THREE.Group();
-  scene.add(cave);
-
-  const stone = new THREE.MeshStandardMaterial({
-    color: 0x172526,
-    flatShading: true,
-    roughness: 0.94,
-  });
-  const manuscript = new THREE.MeshStandardMaterial({
-    color: 0x8b7147,
-    roughness: 0.88,
-  });
-  const silhouette = new THREE.MeshStandardMaterial({ color: 0x070a0b, roughness: 1 });
-
-  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(13, 8, 5, 3), stone);
-  backWall.position.set(0.8, 0, -2.6);
-  cave.add(backWall);
-
-  for (const [x, y, z, scale] of [
-    [-4.2, 0.2, -0.9, 2.2],
-    [4.4, 0.5, -1.2, 2.5],
-    [-3.1, 2.9, -1.4, 1.7],
-  ] as const) {
-    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), stone);
-    rock.position.set(x, y, z);
-    rock.scale.set(scale, scale * 1.35, scale * 0.72);
-    cave.add(rock);
+  const glowCanvas = document.createElement("canvas");
+  glowCanvas.width = 128;
+  glowCanvas.height = 128;
+  const glowContext = glowCanvas.getContext("2d");
+  const glowGradient = glowContext?.createRadialGradient(64, 64, 1, 64, 64, 64);
+  glowGradient?.addColorStop(0, "rgba(255, 221, 150, 0.72)");
+  glowGradient?.addColorStop(0.22, "rgba(197, 164, 106, 0.26)");
+  glowGradient?.addColorStop(1, "rgba(197, 164, 106, 0)");
+  if (glowContext && glowGradient) {
+    glowContext.fillStyle = glowGradient;
+    glowContext.fillRect(0, 0, 128, 128);
   }
+  const glowTexture = new THREE.CanvasTexture(glowCanvas);
+  const glowMaterial = new THREE.SpriteMaterial({
+    map: glowTexture,
+    opacity: 0.42,
+    transparent: true,
+  });
+  const glow = new THREE.Sprite(glowMaterial);
+  glow.position.set(1.35, -0.25, 0.6);
+  glow.scale.set(2.2, 2.2, 1);
+  scene.add(glow);
 
-  const figure = new THREE.Group();
-  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.68, 2.8, 7), silhouette);
-  robe.position.y = -0.95;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8), silhouette);
-  head.position.y = 0.62;
-  figure.add(robe, head);
-  figure.position.set(-0.45, -0.45, 0.25);
-  cave.add(figure);
-
-  for (let index = 0; index < 12; index += 1) {
-    const scroll = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.1, 0.18), manuscript);
-    scroll.position.set(2.15 + (index % 4) * 0.78, -1.75 + Math.floor(index / 4) * 0.18, -0.2);
-    scroll.rotation.z = (index % 2 ? 1 : -1) * 0.035;
-    cave.add(scroll);
+  const paperCanvas = document.createElement("canvas");
+  paperCanvas.width = 256;
+  paperCanvas.height = 128;
+  const paperContext = paperCanvas.getContext("2d");
+  const paperGradient = paperContext?.createRadialGradient(128, 64, 2, 128, 64, 62);
+  paperGradient?.addColorStop(0, "rgba(238, 241, 239, 0.92)");
+  paperGradient?.addColorStop(0.46, "rgba(216, 199, 158, 0.7)");
+  paperGradient?.addColorStop(0.82, "rgba(197, 164, 106, 0.22)");
+  paperGradient?.addColorStop(1, "rgba(197, 164, 106, 0)");
+  if (paperContext && paperGradient) {
+    paperContext.fillStyle = paperGradient;
+    paperContext.fillRect(0, 0, 256, 128);
+    paperContext.globalCompositeOperation = "source-atop";
+    paperContext.fillStyle = "rgba(255, 255, 255, 0.035)";
+    for (let x = 4; x < 256; x += 9) paperContext.fillRect(x, 8, 1, 112);
   }
+  const paperTexture = new THREE.CanvasTexture(paperCanvas);
+  const paperMaterial = new THREE.SpriteMaterial({
+    map: paperTexture,
+    opacity: playIntro ? 0 : 0.48,
+    transparent: true,
+  });
+  const paperLight = new THREE.Sprite(paperMaterial);
+  paperLight.position.set(0.75, -0.55, 1.15);
+  paperLight.scale.set(playIntro ? 0.01 : 4.4, playIntro ? 0.01 : 2.35, 1);
+  scene.add(paperLight);
 
-  const parchment = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.3, 1.25, 4, 2),
-    new THREE.MeshStandardMaterial({
-      color: 0xd8c79e,
-      emissive: 0x493c21,
-      roughness: 1,
-      side: THREE.DoubleSide,
-    }),
-  );
-  parchment.position.set(0.35, -0.1, 1.2);
-  parchment.scale.setScalar(playIntro ? 0.01 : 0.54);
-  scene.add(parchment);
-
-  const ambient = new THREE.AmbientLight(0x294e59, 0.5);
-  const lamp = new THREE.PointLight(0xf4c878, 24, 8, 1.8);
-  lamp.position.set(-0.15, -0.25, 1.35);
-  scene.add(ambient, lamp);
-
-  const dustPositions = new Float32Array(120 * 3);
+  const dustPositions = new Float32Array(96 * 3);
   for (let index = 0; index < dustPositions.length; index += 3) {
     dustPositions[index] = (Math.random() - 0.5) * 9;
     dustPositions[index + 1] = (Math.random() - 0.5) * 5;
@@ -168,14 +156,14 @@ export function createP00Scene({
     camera.position.x += (0.4 + pointerX * (1 - progress * 0.72) - camera.position.x) * 0.045;
     camera.position.y += (0.15 - pointerY * (1 - progress * 0.72) - camera.position.y) * 0.045;
     camera.lookAt(0.25, -0.2, -0.5);
-    lamp.intensity = 22 + Math.sin(now * 0.004) * 2.4;
+    glowMaterial.opacity = 0.38 + Math.sin(now * 0.004) * 0.04;
+    glow.scale.setScalar(2.16 + Math.sin(now * 0.0027) * 0.08);
     dust.rotation.y = now * 0.000025;
     dust.position.y = Math.sin(now * 0.00032) * 0.08;
-
-    const parchmentProgress = Math.max(0, (progress - 0.72) / 0.28);
-    const parchmentScale = 0.01 + parchmentProgress * 0.53;
-    parchment.scale.set(parchmentScale, parchmentScale, 1);
-    parchment.position.z = 1.2 + parchmentProgress * 0.65;
+    const paperProgress = Math.max(0, (progress - 0.76) / 0.24);
+    paperMaterial.opacity = paperProgress * 0.48;
+    paperLight.scale.set(0.01 + paperProgress * 4.39, 0.01 + paperProgress * 2.34, 1);
+    paperLight.position.z = 1.15 + paperProgress * 0.35;
 
     renderer.render(scene, camera);
     if (!sampleReported) {
@@ -214,11 +202,13 @@ export function createP00Scene({
       window.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("webglcontextlost", onLost);
       scene.traverse((object) => {
-        if (!(object instanceof THREE.Mesh || object instanceof THREE.Points)) return;
-        object.geometry.dispose();
+        if (!(object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Sprite)) return;
+        if ("geometry" in object) object.geometry.dispose();
         const materials = Array.isArray(object.material) ? object.material : [object.material];
         materials.forEach((material) => material.dispose());
       });
+      glowTexture.dispose();
+      paperTexture.dispose();
       renderer.dispose();
     },
     loseContextForTest() {
@@ -229,7 +219,6 @@ export function createP00Scene({
     replay() {
       introStartedAt = performance.now();
       settled = false;
-      parchment.scale.setScalar(0.01);
       if (!paused) renderer.setAnimationLoop(render);
     },
     setPaused(nextPaused) {
