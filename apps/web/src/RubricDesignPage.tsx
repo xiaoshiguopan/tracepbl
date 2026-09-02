@@ -71,7 +71,7 @@ function RubricBand({ dimension, index, activities, errors, showErrors, proposal
   );
 }
 
-export function RubricDesignPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void }) {
+export function RubricDesignPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
   const initialActivities = scenario === "missing-activities" ? [] : defaultLesson.activities;
   const initialDraft = createRubricDraft(initialActivities);
@@ -132,7 +132,7 @@ export function RubricDesignPage({ onBack, onReturnContext, onReturnQuestion, on
     }
     const confirmedDraft = { ...draft, confirmed: true };
     setDraft(confirmedDraft); setSaveState("saving");
-    void saveRubricDraft(storageKey, confirmedDraft).then(() => { setSaveState("saved"); setFeedback("评价量规已确认。下一步设计检查尚未实现。"); }, () => { setSaveState("failed"); setFeedback("量规已确认，但本机保存失败。当前内容仍保留在本页。"); });
+    void saveRubricDraft(storageKey, confirmedDraft).then(() => { setSaveState("saved"); onNext(); }, () => { setSaveState("failed"); setFeedback("量规已确认，但本机保存失败。当前内容仍保留在本页。"); });
   };
 
   return (
@@ -169,7 +169,7 @@ export function RubricDesignPage({ onBack, onReturnContext, onReturnQuestion, on
               {summary.omittedCoreDimension ? <div className="rubric-impact" role="alert">当前少于默认四维，会降低 MUST-007 的评价覆盖。确认前请判断是否确实不适用于本课。</div> : <p className="rubric-aligned">四维均能追到本课活动与成果。</p>}
               <strong className="no-score">不计算总分</strong><p className="rubric-purpose">仅用于形成性判断与反馈。</p>
               <button className="context-primary rubric-next" type="button" onClick={confirm}>确认评价量规</button>
-              <p className="next-step-note">下一步：设计检查（尚未实现）</p>
+              <p className="next-step-note">下一步：设计检查</p>
             </aside>
           </div>
         )}

@@ -1,7 +1,7 @@
 # 组件架构与状态归属
 
 > 状态：阶段 5 已批准归档
-> 当前修订：2026-09-02 P03/MUST-004 组件职责已随阶段 6.6 获准归档
+> 当前修订：2026-09-02 P08 与“最终确认与导出”合并决策已在阶段 6.10 同步，等待归档
 > 边界：定义前端内部结构和数据流，不是业务代码、数据库模型或具体后端 API
 
 ## 1. 分层
@@ -31,9 +31,9 @@ App shell / routes
 | P05 | 关系概览与等价列表 | `EvidenceMapOverview`、`EvidenceRelationList`、`RelationEditorDialog`、`EvidenceGapPanel` |
 | P06 | 活动、时长和支架 | `LessonScore`、`ActivityMovement`、`TimeLedger`、按需展开的活动/证据产物/支架编辑器 |
 | P07 | 连续评阅标尺与活动对齐 | `RubricBand`、按需展开的表现描述编辑器、`RubricProof`；不建立权重、总分或学生评分组件 |
-| P08 | 审计运行与结果 | `AuditRunPanel`、`AuditSummary`、`AuditFindingList`、`TeacherRationaleForm` |
-| P09 | 审阅与批准 | `ReviewSectionList`、`ApprovalControl`、`ImpactSummary`、`DeliveryReadiness` |
-| P10 | 导出预览与任务 | `ExportFormatPicker`、`RightsSubstitutionPreview`、`ExportJobStatus` |
+| P08 | 预生成设计检查、异常优先审阅、教师确认与上游失效恢复 | `AuditChain`、`AuditFindingList`、`AuditLedger`、`TeacherRationaleEditor`；已通过项渐进展开，不建立“先运行审计”的空操作 |
+| P09 | 最终确认与导出合并页 | `ReviewSectionList`、`ApprovalControl`、`ImpactSummary`、`DeliveryReadiness`、`ExportFormatPicker`、`RightsSubstitutionPreview`、`ExportJobStatus` |
+| P10 | 无独立页面；导出能力并入 P09 | 不建立独立 route/page/store；复用 P09 的预览、格式与生成状态 |
 | P11 | 数据说明与清除 | `DataBoundarySummary`、`ClearItemDialog`、`ClearTaskDialog` |
 | 全局 | 布局与状态 | `EvidenceTrail`、`DemoModeBadge`、`TaskStatusBanner`、`OfflineBanner` |
 

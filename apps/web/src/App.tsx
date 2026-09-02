@@ -19,6 +19,9 @@ const LessonDesignPage = lazy(() =>
 const RubricDesignPage = lazy(() =>
   import("./RubricDesignPage").then((module) => ({ default: module.RubricDesignPage })),
 );
+const DesignAuditPage = lazy(() =>
+  import("./DesignAuditPage").then((module) => ({ default: module.DesignAuditPage })),
+);
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -76,7 +79,7 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-type Route = "demo" | "context" | "question" | "sources" | "evidence" | "lesson" | "rubric";
+type Route = "demo" | "context" | "question" | "sources" | "evidence" | "lesson" | "rubric" | "audit";
 
 function readRoute(): Route {
   if (typeof window === "undefined") return "demo";
@@ -90,6 +93,7 @@ function readRoute(): Route {
   if (/^\/tasks\/[^/]+\/evidence-map\/?$/.test(path)) return "evidence";
   if (/^\/tasks\/[^/]+\/lesson\/?$/.test(path)) return "lesson";
   if (/^\/tasks\/[^/]+\/rubric\/?$/.test(path)) return "rubric";
+  if (/^\/tasks\/[^/]+\/audit\/?$/.test(path)) return "audit";
   return "demo";
 }
 
@@ -139,7 +143,12 @@ export function App() {
   );
   if (route === "rubric") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开评价量规…</main>}>
-      <RubricDesignPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} onReturnEvidence={() => navigate("tasks/demo-tang-45m/evidence-map")} onReturnLesson={() => navigate("tasks/demo-tang-45m/lesson")} />
+      <RubricDesignPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} onReturnEvidence={() => navigate("tasks/demo-tang-45m/evidence-map")} onReturnLesson={() => navigate("tasks/demo-tang-45m/lesson")} onNext={() => navigate("tasks/demo-tang-45m/audit")} />
+    </Suspense>
+  );
+  if (route === "audit") return (
+    <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开设计检查…</main>}>
+      <DesignAuditPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} onReturnEvidence={() => navigate("tasks/demo-tang-45m/evidence-map")} onReturnLesson={() => navigate("tasks/demo-tang-45m/lesson")} onReturnRubric={() => navigate("tasks/demo-tang-45m/rubric")} />
     </Suspense>
   );
   return <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />;

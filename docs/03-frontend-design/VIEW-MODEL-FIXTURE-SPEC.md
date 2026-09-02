@@ -112,7 +112,7 @@ fixture 中不写可被误认成真实史料的 AI 引文。若需要验证长�
 | 字段 | 值 |
 |---|---|
 | `scenarioId` | `S06-TIMEOUT` |
-| `trigger` | 动作语义，如 `audit.run` |
+| `trigger` | 动作语义，如 `audit.complete`、`audit.rerunAffected` |
 | `latencyClass` | `instant/normal/slow/over30s`，测试用假时钟 |
 | `result` | `success/partial/problem/cancelled/conflict` |
 | `problemCode` | 稳定 code；成功时为空 |

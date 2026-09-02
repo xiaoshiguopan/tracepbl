@@ -9,6 +9,7 @@ import "./source-discovery.css";
 import "./evidence-map.css";
 import "./lesson-design.css";
 import "./rubric-design.css";
+import "./design-audit.css";
 
 const root = document.getElementById("root");
 

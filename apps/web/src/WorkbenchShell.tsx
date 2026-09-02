@@ -8,8 +8,7 @@ export const taskSteps = [
   "设计活动",
   "评价量规",
   "设计检查",
-  "最终确认",
-  "导出",
+  "最终确认与导出",
 ];
 
 type StepCopy = Partial<Record<number, string>>;

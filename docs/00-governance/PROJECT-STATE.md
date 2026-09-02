@@ -5,11 +5,11 @@
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
 - 当前阶段：阶段 6：前端编码
-- 当前子阶段：阶段 6.9：P07“评价量规”前端编码与验证
-- 状态：阶段 6.9 P07 已完成实现与验证，等待用户确认归档
-- 当前唯一任务：提交 P07 阶段报告并等待用户回复“批准归档”；不得进入 P08—P12
-- 允许修改的精确路径：`apps/web/src/App.tsx`、`apps/web/src/LessonDesignPage.tsx`、`apps/web/src/RubricDesignPage.tsx`、`apps/web/src/WorkbenchShell.tsx`、`apps/web/src/main.tsx`、`apps/web/src/rubric-design.css`、`apps/web/src/rubric-design.test.tsx`、`apps/web/src/rubric-design.ts`、`apps/web/src/teaching-context-store.ts`、`apps/web/src/teaching-context.test.tsx`、`docs/00-governance/PROJECT-STATE.md`、`docs/03-frontend-design/COMPONENT-ARCHITECTURE.md`、`docs/03-frontend-design/PAGE-SPECIFICATIONS.md`、`docs/03-frontend-design/PAGE-STATE-MATRIX.md`、`docs/06-development/P07-IMPLEMENTATION-VALIDATION.md`、`docs/06-development/LEARNING-CARD-6.9.md`、`docs/06-development/STAGE-6.9-REPORT.md`
-- 明确禁止的动作：实现 P08—P12；新增或升级依赖；数据库表/Schema 设计或实现；具体后端 API 设计或后端业务代码；真实联网 RAG/搜索/AI 调用；模型微调；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
+- 当前子阶段：阶段 6.10：P08“设计检查”前端编码与验证
+- 状态：阶段 6.10 P08 已完成实现与验证，等待用户确认归档
+- 当前唯一任务：提交 P08 阶段报告并等待用户回复“批准归档”；不得进入 P09—P12
+- 允许修改的精确路径：`apps/web/src/App.tsx`、`apps/web/src/DesignAuditPage.tsx`、`apps/web/src/RubricDesignPage.tsx`、`apps/web/src/WorkbenchShell.tsx`、`apps/web/src/design-audit.css`、`apps/web/src/design-audit.test.tsx`、`apps/web/src/design-audit.ts`、`apps/web/src/main.tsx`、`apps/web/src/teaching-context-store.ts`、`apps/web/src/teaching-context.test.tsx`、`docs/00-governance/PROJECT-STATE.md`、`docs/03-frontend-design/COMPONENT-ARCHITECTURE.md`、`docs/03-frontend-design/FRONTEND-DATA-CONTRACT.md`、`docs/03-frontend-design/INFORMATION-ARCHITECTURE.md`、`docs/03-frontend-design/PAGE-SPECIFICATIONS.md`、`docs/03-frontend-design/PAGE-STATE-MATRIX.md`、`docs/03-frontend-design/USER-FLOWS.md`、`docs/03-frontend-design/VIEW-MODEL-FIXTURE-SPEC.md`、`docs/06-development/P08-IMPLEMENTATION-VALIDATION.md`、`docs/06-development/LEARNING-CARD-6.10.md`、`docs/06-development/STAGE-6.10-REPORT.md`
+- 明确禁止的动作：实现 P09—P12；新增或升级依赖；数据库表/Schema 设计或实现；具体后端 API 设计或后端业务代码；真实联网 RAG/搜索/AI 调用；模型微调；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 已归档 PRD 0.3 及其四份立项输入；阶段 2 已归档 `TECHNOLOGY-DECISION.md` 0.3；阶段 3 已归档 `PROJECT-HANDBOOK.md` 0.5；阶段 4 已归档八份总体规划、`DESIGN-REVIEW-STANDARD.md` 及 `PLANNING-REVIEW.md`；阶段 5 已归档全部前端设计、原型验证与 `FRONTEND-REVIEW.md`；阶段 6.4 已由提交 `5850d8c` 归档 P00/P01
 - 阶段 2 唯一结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 完整保留在公开仓库、本地和 CI 中，不伪装为在线服务；AI 基于公开资料选择阿里云百炼北京地域 `qwen3.8-max`、`text-embedding-v4`、`qwen3-rerank`，明确未做 API 横评；未来真实上线沿同一 OCI/PostgreSQL/S3 架构部署并另行批准
 - 本阶段验收标准：原阶段 5 产物继续保留；新增 `DESIGN-REVIEW-STANDARD.md` 的完备性门和编码就绪门，补齐视觉方向/代表页高保真、逐页布局交互、字段与文案、复合状态优先级、前端视图模型与可执行 fixture、浏览器/性能/资产基线及原型验证；P00 采用经用户确认的混合 3D，具有四级降级与阶段 6 技术原型/最终视觉双门禁；P0 为零后重做 `FRONTEND-REVIEW.md`。MUST-001—010 与 NFR-001—012 有落点；史料不得合成且只采用官方权威公开来源；前端权限展示不冒充安全授权；没有数据库表、具体后端 API、正式代码、依赖或外部动作
@@ -60,3 +60,6 @@
 - 阶段 6.8 归档批准与提交：用户于 2026-09-02 明确回复“批准归档”，本地提交 `3b5db5c feat(web): implement P06 lesson design workspace`；不含 `push`、部署或 P07。
 - P07 方案与编码授权：用户认可“从摘抄到历史解释的评阅标尺”方案，随后确认同视觉方向桌面效果图，并明确回复“认可”授权编码。授权仅含 P07、P06 相邻导航、必要测试和阶段文档；不含 P08—P12、依赖、数据库、后端、归档、`push` 或部署。
 - 阶段 6.9 验证摘要：P07 已实现连续四维评阅标尺、三阶段可观察行为、三项课堂成果和对齐校样；支持逐维编辑、局部替代、删除/撤销、上游活动变化待复核、空泛/重叠描述阻断及本机恢复。TypeScript、ESLint、Vitest（7 文件、35 项）、production build、生产依赖审计（0 漏洞）和 `git diff --check` 通过；真实 Chromium 覆盖正常、加载、空、缺上游、校验失败、系统失败、不可用、超时、离线、成功、P06 往返、390px、320px、键盘与焦点。
+- 阶段 6.9 归档批准与提交：用户于 2026-09-02 明确回复“批准归档”，本地提交 `f796989 feat(web): implement P07 evidence-aligned rubric`；不含 `push`、部署或 P08。
+- P08 方案与编码授权：用户认可“异常优先的审校长卷 + 检查校样”方案，确认桌面效果图后明确回复“认可”授权编码；随后提出最终确认与导出合并为一个页面并认可该流程。授权仅含 P08、P07 相邻导航、必要规划同步、测试和阶段文档；不含 P09—P12、依赖、数据库、后端、归档、`push` 或部署。
+- 阶段 6.10 验证摘要：P08 已实现 18 项确定性设计检查、异常优先长卷、教师首选处理、可编辑确认理由、上游类别级失效和检查校样；阻断、未知、失败、超时与离线均不能假通过。TypeScript、ESLint、Vitest、production build、生产依赖审计和 `git diff --check` 的最终数字以 `STAGE-6.10-REPORT.md` 为准；真实 Chromium 已覆盖正常、加载、空、缺上游、校验失败、系统失败、不可用、超时、离线、阻断、失效、成功、P07 往返、390px、320px、键盘与焦点。
