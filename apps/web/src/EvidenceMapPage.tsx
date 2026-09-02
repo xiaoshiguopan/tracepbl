@@ -50,7 +50,7 @@ function ClaimSlip({ claim, relations, onClaimChange, onToggleGap, onRelationCha
   );
 }
 
-export function EvidenceMapPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void }) {
+export function EvidenceMapPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
   const initialSources = scenario === "empty-sources" ? [] : DEFAULT_SOURCE_IDS;
   const initialDraft = createEvidenceMapDraft(DEFAULT_QUESTION, initialSources);
@@ -119,7 +119,9 @@ export function EvidenceMapPage({ onBack, onReturnContext, onReturnQuestion, onR
   };
   const confirm = () => {
     if (!summary.ready) { setError("请处理未关联命题或重新确认受影响关系；明确保留的证据缺口可以继续。"); requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-needs-attention], .claim-slip:not([data-gap])")?.focus()); return; }
-    setDraft((current) => ({ ...current, confirmed: true })); setError(""); setFeedback("关系已确认。本阶段演示开放至组织证据，设计活动页尚未实现。");
+    const confirmedDraft = { ...draft, confirmed: true };
+    setDraft(confirmedDraft); setError(""); setSaveState("saving");
+    void saveEvidenceDraft(storageKey, confirmedDraft).then(() => { setSaveState("saved"); onNext(); }, () => { setSaveState("failed"); setFeedback("关系已确认，但本机保存失败。当前内容仍保留在本页。"); });
   };
 
   return (

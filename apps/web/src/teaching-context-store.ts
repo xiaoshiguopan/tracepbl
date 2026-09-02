@@ -2,13 +2,15 @@ import type { TeachingContextDraft } from "./teaching-context";
 import type { QuestionWorkspaceDraft } from "./question-workspace";
 import type { SourceDiscoveryDraft } from "./source-discovery";
 import type { EvidenceMapDraft } from "./evidence-map";
+import type { LessonDesignDraft } from "./lesson-design";
 
 const DB_NAME = "tracepbl-demo";
 const CONTEXT_STORE = "teaching-context-drafts";
 const QUESTION_STORE = "question-workspace-drafts";
 const SOURCE_STORE = "source-discovery-drafts";
 const EVIDENCE_STORE = "evidence-map-drafts";
-const DB_VERSION = 4;
+const LESSON_STORE = "lesson-design-drafts";
+const DB_VERSION = 5;
 
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -25,6 +27,9 @@ function openDatabase() {
       }
       if (!request.result.objectStoreNames.contains(EVIDENCE_STORE)) {
         request.result.createObjectStore(EVIDENCE_STORE);
+      }
+      if (!request.result.objectStoreNames.contains(LESSON_STORE)) {
+        request.result.createObjectStore(LESSON_STORE);
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -64,3 +69,5 @@ export const loadSourceDraft = (taskRef: string) => loadDraft<SourceDiscoveryDra
 export const saveSourceDraft = (taskRef: string, draft: SourceDiscoveryDraft) => saveDraft(SOURCE_STORE, taskRef, draft);
 export const loadEvidenceDraft = (taskRef: string) => loadDraft<EvidenceMapDraft>(EVIDENCE_STORE, taskRef);
 export const saveEvidenceDraft = (taskRef: string, draft: EvidenceMapDraft) => saveDraft(EVIDENCE_STORE, taskRef, draft);
+export const loadLessonDraft = (taskRef: string) => loadDraft<LessonDesignDraft>(LESSON_STORE, taskRef);
+export const saveLessonDraft = (taskRef: string, draft: LessonDesignDraft) => saveDraft(LESSON_STORE, taskRef, draft);

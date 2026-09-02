@@ -13,6 +13,9 @@ const SourceDiscoveryPage = lazy(() =>
 const EvidenceMapPage = lazy(() =>
   import("./EvidenceMapPage").then((module) => ({ default: module.EvidenceMapPage })),
 );
+const LessonDesignPage = lazy(() =>
+  import("./LessonDesignPage").then((module) => ({ default: module.LessonDesignPage })),
+);
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -70,7 +73,7 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-type Route = "demo" | "context" | "question" | "sources" | "evidence";
+type Route = "demo" | "context" | "question" | "sources" | "evidence" | "lesson";
 
 function readRoute(): Route {
   if (typeof window === "undefined") return "demo";
@@ -82,6 +85,7 @@ function readRoute(): Route {
   if (/^\/tasks\/[^/]+\/question\/?$/.test(path)) return "question";
   if (/^\/tasks\/[^/]+\/sources\/?$/.test(path)) return "sources";
   if (/^\/tasks\/[^/]+\/evidence-map\/?$/.test(path)) return "evidence";
+  if (/^\/tasks\/[^/]+\/lesson\/?$/.test(path)) return "lesson";
   return "demo";
 }
 
@@ -121,7 +125,12 @@ export function App() {
   );
   if (route === "evidence") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开证据关系…</main>}>
-      <EvidenceMapPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} />
+      <EvidenceMapPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} onNext={() => navigate("tasks/demo-tang-45m/lesson")} />
+    </Suspense>
+  );
+  if (route === "lesson") return (
+    <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开课堂排演稿…</main>}>
+      <LessonDesignPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} onReturnEvidence={() => navigate("tasks/demo-tang-45m/evidence-map")} />
     </Suspense>
   );
   return <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />;
