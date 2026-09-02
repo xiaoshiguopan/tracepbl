@@ -30,7 +30,7 @@
 
 | View-model | 必需字段 |
 |---|---|
-| `AppEnvironmentVM` | `mode`、`isOnline`、`storageState`、`demoNoticeVersion`、`soundPreference`、`motionPreference`、`introSeen` |
+| `AppEnvironmentVM` | `mode`、`isOnline`、`storageState`、`demoNoticeVersion`、`motionPreference`、`dataPreference`、`filmState` |
 | `NarrativeExperienceVM` | `level: full3d/lightMotion/static/safeColor`、`mediaState`、`contextState`、`canReplay`、`shouldAutoRun`；只描述本机体验能力，不进入业务 adapter |
 | `TaskShellVM` | `taskRef`、`title`、`currentStep`、`steps[]`、`highestPriorityNotice`、`saveState`、`lastSafeVersion` |
 | `StepVM` | `id`、`label`、`href`、`state`、`highestCount`、`entryRequirement` |
@@ -129,5 +129,5 @@ fixture 中不写可被误认成真实史料的 AI 引文。若需要验证长�
 2. Demo/API adapter 通过同一行为契约测试；API adapter 不连接未批准服务。
 3. `PAGE-STATE-MATRIX.md` 每格至少映射一个 scenario + assertion。
 4. fixture 搜索确认没有真实个人/学生数据、秘密、伪造史料、未授权全文或图片。
-5. P00 3D/动画/声音/首次观看偏好与任务业务快照分离；视觉资源加载、解码或上下文失败不破坏任务数据。
+5. P00 影片/海报状态与任务业务快照分离；项目不包含声音；视觉资源加载或解码失败不破坏任务数据。
 6. P00 至少有完整增强、轻量动态、静态、纯色、reduced-motion、首次访问、再次访问、主动重看和上下文丢失场景；断言主动作始终可用。

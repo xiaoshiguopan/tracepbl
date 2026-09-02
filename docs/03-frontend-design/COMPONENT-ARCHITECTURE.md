@@ -22,8 +22,8 @@ App shell / routes
 
 | 页面 | 页面组件职责 | 业务组件 |
 |---|---|---|
-| P00 | 非阻塞混合 3D 叙事、四级降级、演示/艺术边界、声音、开始/继续 | `NarrativeHero`、`HybridSceneHost`、`NarrativeMediaLayer`、`ParallaxController`、`ScrollTransition`、`IntroReplayControl`、`NarrativeArtLabel`、`AmbientSoundControl`、`DemoBoundaryNotice`、`StartTaskCard`、`LocalResumeCard` |
-| P01 | 情境表单与简报 | `TeachingContextForm`、`ContextConflictPanel`、`TaskBriefPreview` |
+| P00 | 非阻塞预渲染电影、静态/纯色降级、演示/艺术边界、一次点击进入/继续 | `NarrativeHero`、`CinematicMedia`、`NarrativeArtLabel`、`DemoBoundaryNotice`、`StartTaskCard`、`LocalResumeCard`；不再拆实时场景、视差或飞纸组件 |
+| P01 | 最小情境表单、即时条件摘要和一次确认 | `TeachingContextForm`、`ContextConflictPanel`、`ContextSummary`、`StepRail`；不建立页签状态、生成态或第二套简报状态 |
 | P02 | 类型诊断与问题确认 | `InputTypeReview`、`QuestionProposalList`、`EvidenceOutcomeEditor` |
 | P03 | 候选列表、筛选与添加 | `SourceFilters`、`CandidateSourceList`、`AddMaterialPanel`、`SourceStatusSummary` |
 | P04 | 价值卡编辑/核验 | `SourceIdentitySection`、`LocatorEditor`、`ProcessingChain`、`ValueLimitationEditor` |
@@ -55,8 +55,8 @@ App shell / routes
 | 交互临时状态 | 组件局部 | disclosure、dialog、hover、当前选择 | URL（除需深链） |
 | 异步操作状态 | 操作 view-model | queued/running/partial/succeeded/failed/cancelled | 只靠按钮 disabled 推断 |
 | 领域状态 | 契约返回/领域规则 | 待核验、阻断、教师批准 | UI 自行根据颜色/字段拼出 |
-| 全局环境状态 | app shell | demo/complete、online/offline、storage unavailable、sound preference、motion preference、page visibility | 每页重复请求/复制逻辑 |
-| P00 体验能力状态 | `HybridSceneHost` + app environment | `full-3d`/`light-motion`/`static`/`safe-color`、media ready、context lost、intro seen | 业务任务快照、URL、史料状态 |
+| 全局环境状态 | app shell | demo/complete、online/offline、storage unavailable、motion preference、page visibility | 每页重复请求/复制逻辑 |
+| P00 媒体能力状态 | `CinematicMedia` + app environment | `film`/`poster`/`safe-color`、media loading/ready/error、motion/data preference | 业务任务快照、URL、史料状态 |
 | P00 导演式时间线 | `NarrativeHero` 局部编排 | 当前镜头段、收束、用户主动重看 | 全局业务 store、服务端状态 |
 
 状态提升只在两个以上相邻消费者确实需要时发生。服务器/领域派生状态不由客户端回算。URL 中的 task ID 只定位，capability 不进入查询参数、日志或持久可复制状态。
@@ -80,8 +80,8 @@ form draft → client experience validation → command intent
 - 完整模式每次读取、保存、核验、批准、导出、取消和清除都必须由后续服务端校验当前 capability 与资源归属。
 - 无权限与不存在共享安全展示，前端不显示资源标题、来源或所有者信息。
 - Demo adapter 只操作本机的合成非史料数据与官方史料元数据夹具；它不证明完整模式授权安全，也不把官方公开等同于可复制许可。
-- `NarrativeHero` 只消费艺术资产和环境偏好，不能向史料组件提供事实；艺术图、预渲染媒体或 3D 上下文损坏时，真实页面内容保持完整。
-- `HybridSceneHost` 只选择体验层级并报告安全诊断，不自行推断设备身份；Canvas/视频不拥有主按钮、标题、艺术声明或声音控制。
+- `NarrativeHero` 只消费艺术资产和环境偏好，不能向史料组件提供事实；艺术图或预渲染媒体损坏时，真实页面内容保持完整。
+- `CinematicMedia` 只选择影片/海报/纯色层并报告安全诊断，不自行推断设备身份；视频不拥有主按钮、标题或艺术声明。
 - `ParallaxController` 只驱动有上限的镜头/深度参数，不直接移动真实 UI，不请求陀螺仪权限，不把指针轨迹持久化。
 
 ## 7. 组合与复用规则
@@ -104,6 +104,6 @@ form draft → client experience validation → command intent
 
 - 逐页组成、字段和文案：`PAGE-SPECIFICATIONS.md`
 - 视图模型、adapter 能力与 fixture 结构：`VIEW-MODEL-FIXTURE-SPEC.md`
-- 浏览器、性能、图片、动效、声音和资产：`BROWSER-PERFORMANCE-ASSETS.md`
+- 浏览器、性能、图片、动效与资产：`BROWSER-PERFORMANCE-ASSETS.md`
 - 敦煌叙事与代表页：`VISUAL-DIRECTION.md`
-- P00 混合 3D 分层、时序、降级和双门禁：`HYBRID-3D-OPENING-SPEC.md`
+- P00 预渲染电影分层、时序、降级和完成门：`HYBRID-3D-OPENING-SPEC.md`

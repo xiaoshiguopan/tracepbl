@@ -7,9 +7,25 @@
       name="description"
       content="史证工坊：面向历史教师的可追溯证据探究工作台演示。"
     />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23171917'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='40' fill='%23c8a96b'%3E%E5%8F%B2%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/assets/p00/fonts.css" />
     <title>史证工坊 · TracePBL</title>
   </head>
   <body>
+    <script>
+      try {
+        const recoveredPath = sessionStorage.getItem("tracepbl:spa-path:v1");
+        if (recoveredPath && recoveredPath.startsWith("/tracepbl/")) {
+          sessionStorage.removeItem("tracepbl:spa-path:v1");
+          history.replaceState(null, "", recoveredPath);
+        }
+      } catch {
+        // The root page remains usable when session storage is unavailable.
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
