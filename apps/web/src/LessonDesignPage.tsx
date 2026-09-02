@@ -92,7 +92,7 @@ function ActivityMovement({ activity, index, isLast, startMinute, selectedIds, e
   );
 }
 
-export function LessonDesignPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void }) {
+export function LessonDesignPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
   const defaultSourceIds = scenario === "empty-sources" ? [] : DEFAULT_SOURCE_IDS;
   const defaultEvidence = createEvidenceMapDraft(DEFAULT_QUESTION, defaultSourceIds);
@@ -152,8 +152,9 @@ export function LessonDesignPage({ onBack, onReturnContext, onReturnQuestion, on
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-activity-invalid], .time-ledger[data-over]")?.focus());
       return;
     }
-    setDraft((current) => ({ ...current, confirmed: true }));
-    setFeedback("课堂流程已确认。本阶段演示开放至设计活动，评价与检查尚未实现。");
+    const confirmedDraft = { ...draft, confirmed: true };
+    setDraft(confirmedDraft); setSaveState("saving");
+    void saveLessonDraft(storageKey, confirmedDraft).then(() => { setSaveState("saved"); onNext(); }, () => { setSaveState("failed"); setFeedback("课堂流程已确认，但本机保存失败。当前内容仍保留在本页。"); });
   };
 
   let elapsed = 0;

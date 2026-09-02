@@ -30,7 +30,7 @@ describe("P01 教学情境", () => {
     expect(html).toContain("不代表安全授权");
     expect(html).toContain("下一步");
     expect(html).toContain("探究问题");
-    expect(html).toContain("查看后续 6 步");
+    expect(html).toContain("查看后续 7 步");
   });
 
   it("接受已批准的 45 分钟合成情境", () => {

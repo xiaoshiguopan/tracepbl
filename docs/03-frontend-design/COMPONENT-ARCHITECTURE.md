@@ -30,7 +30,7 @@ App shell / routes
 | P04 | 无独立页面；MUST-004 视图组合进 P03 | 复用 `SourceEvidenceDisclosure` 内的 `SourceIdentitySection`、`ProcessingChain`、`ValueLimitationSummary`；不建立独立 route/page/form store |
 | P05 | 关系概览与等价列表 | `EvidenceMapOverview`、`EvidenceRelationList`、`RelationEditorDialog`、`EvidenceGapPanel` |
 | P06 | 活动、时长和支架 | `LessonScore`、`ActivityMovement`、`TimeLedger`、按需展开的活动/证据产物/支架编辑器 |
-| P07 | 量规与映射 | `RubricDimensionList`、`PerformanceLevelEditor`、`ActivityRubricMapping` |
+| P07 | 连续评阅标尺与活动对齐 | `RubricBand`、按需展开的表现描述编辑器、`RubricProof`；不建立权重、总分或学生评分组件 |
 | P08 | 审计运行与结果 | `AuditRunPanel`、`AuditSummary`、`AuditFindingList`、`TeacherRationaleForm` |
 | P09 | 审阅与批准 | `ReviewSectionList`、`ApprovalControl`、`ImpactSummary`、`DeliveryReadiness` |
 | P10 | 导出预览与任务 | `ExportFormatPicker`、`RightsSubstitutionPreview`、`ExportJobStatus` |

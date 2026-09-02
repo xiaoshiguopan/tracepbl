@@ -8,6 +8,7 @@ import "./question-workspace.css";
 import "./source-discovery.css";
 import "./evidence-map.css";
 import "./lesson-design.css";
+import "./rubric-design.css";
 
 const root = document.getElementById("root");
 
