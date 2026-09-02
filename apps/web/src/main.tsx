@@ -5,6 +5,7 @@ import "./styles.css";
 import "./workbench.css";
 import "./workbench-form.css";
 import "./question-workspace.css";
+import "./source-discovery.css";
 
 const root = document.getElementById("root");
 

@@ -4,7 +4,6 @@ export const taskSteps = [
   "教学情境",
   "探究问题",
   "查找史料",
-  "核验史料",
   "组织证据",
   "设计活动",
   "评价与检查",
@@ -92,7 +91,7 @@ export function WorkbenchShell({
         <div><span className="workbench-badge">公开演示</span><span className="local-data">仅存本机</span></div>
       </header>
       <div className="mobile-step">
-        <span>第 {currentStep + 1}/9 步 · {currentLabel}</span>
+        <span>第 {currentStep + 1}/{taskSteps.length} 步 · {currentLabel}</span>
         <strong>下一步：{nextLabel}</strong>
         {mobileTarget !== null && onNavigateStep ? <button type="button" onClick={() => onNavigateStep(mobileTarget)}>{stepActionLabels?.[mobileTarget] || `返回${taskSteps[mobileTarget]}`}</button> : null}
       </div>

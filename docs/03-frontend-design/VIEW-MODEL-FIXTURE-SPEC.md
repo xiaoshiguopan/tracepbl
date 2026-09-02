@@ -3,6 +3,7 @@
 > 版本：0.1
 > 日期：2026-08-31
 > 状态：阶段 5 已批准归档
+> 当前修订：2026-09-02 P03/MUST-004 view-model 边界已随阶段 6.6 获准归档
 > 地位：阶段 6 实现输入；不是数据库 Schema、ORM 模型或具体 HTTP API
 
 ## 1. 目的
@@ -39,7 +40,7 @@
 | `OperationVM` | `operationId`、`state`、`startedAt`、`elapsedMs`、`completedCount?`、`totalCount?`、`canCancel`、`parts[]` |
 | `ImpactVM` | `summary`、`items[]`；每项含对象标签、旧/新状态、原因、修复 href |
 | `RightsVM` | `state`、`label`、`basis`、`allowedPresentation`、`officialUrl` |
-| `SourceSummaryVM` | `sourceRef`、`title`、`creatorOrInstitution`、`type`、`identifier?`、`verification`、`rights`、`selection`、`failure?` |
+| `SourceSummaryVM` | `sourceRef`、`title`、`creatorOrInstitution`、`dateLabel`、`type`、`identifier`、`discoveryScope`、`verification`、`rights`、`presentation`、`recommendationTier`、`recommendationReasons[]`、`helpsAssess[]`、`cannotEstablish[]`、`selection`、`failure?` |
 
 `iconName` 只是视觉提示，不决定状态；状态来自 `kind/state`。任何 view-model 都不得含 capability、秘密、数据库列名、厂商原始响应、完整日志或他人资源存在性。
 
@@ -51,7 +52,7 @@
 |---|---|---|---|
 | 环境/任务 | 读取演示边界、当前任务壳 | 建立/继续任务 | 本机版本化快照 |
 | 情境/问题 | 读取 P01/P02 view | 保存、确认、诊断、比较提案 | 确定性预生成结果 |
-| 史料 | 读取集合/价值卡 | 纳入、排除、保存、模拟核验 | 只用登记的权威元数据；状态是演示 |
+| 史料 | 读取 P03 推荐/更多结果、内嵌证据记录和发现状态 | 选择、排除、调整条件、录入材料元数据、模拟自动核验 | 只用登记的权威史料与允许展示范围；检索、核验、推荐均为确定性预生成演示，不伪装真实在线能力 |
 | 关系/课程/量规 | 读取 P05—P07 | 增删改、排序、生成提案 | 合成内容，保留教师编辑 |
 | 审计/批准 | 读取检查与审阅 | 运行/取消、记录理由、批准/退回 | 确定性规则，不证明真实服务端授权 |
 | 导出 | 读取预览 | 生成/取消 | 只生成本机文件；格式按阶段 6 实测开放 |
@@ -78,14 +79,24 @@
       { "id": "question", "label": "探究问题", "state": "complete" },
       { "id": "sources", "label": "候选史料", "state": "current", "highestCount": 2 }
     ],
+    "sourceDiscovery": {
+      "strategy": "registeredKnowledgeBaseThenExternal",
+      "resultCount": 10,
+      "recommendedCount": 4,
+      "status": "succeeded"
+    },
     "sources": [
       {
         "sourceRef": "AUTH-SRC-001",
         "title": "《贞观政要》版本记录",
         "creatorOrInstitution": "国家图书馆（国家古籍保护中心）",
-        "verification": "pending",
+        "verification": "conditional",
         "rights": "restrictedMetadataOnly",
-        "allowedPresentation": "metadataAndOfficialLink"
+        "allowedPresentation": "metadataAndOfficialLink",
+        "recommendationTier": "recommended",
+        "recommendationReasons": ["与当前问题相关；可与不同类型史料形成互证"],
+        "helpsAssess": ["官方版本记录及其可定位性"],
+        "cannotEstablish": ["不能单独概括唐朝前期整体社会状况"]
       }
     ]
   }

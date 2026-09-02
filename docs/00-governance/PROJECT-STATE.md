@@ -5,11 +5,11 @@
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
 - 当前阶段：阶段 6：前端编码
-- 当前子阶段：阶段 6.5：P02“探究问题”前端编码
-- 状态：阶段 6.5 P02 已获批准并本地归档；等待用户另行授权开始 P03
-- 当前唯一任务：停止在 P03 开工门禁前，不实施 P03—P12
-- 允许修改的精确路径：`STAGE-6.5-REPORT.md` 第 7 节列出的 18 个路径；批准前不扩大范围
-- 明确禁止的动作：实现 P03—P12；新增或升级依赖；数据库表/Schema设计；数据库实现；具体后端 API 设计或后端业务代码；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
+- 当前子阶段：阶段 6.6：P03“查找史料”前端编码与验证
+- 状态：阶段 6.6 P03 已获用户批准，按阶段报告所列 37 个路径执行本地归档；归档后等待用户另行授权 P05
+- 当前唯一任务：完成阶段 6.6 本地归档并停止；不得进入 P05—P12
+- 允许修改的精确路径：`PROJECT-HANDBOOK.md`、`docs/00-governance/PROJECT-STATE.md`、`docs/01-initiation/PRD.md`、`docs/01-initiation/PROJECT-CHARTER.md`、`docs/01-initiation/GO-NO-GO.md`、`docs/02-planning/MASTER-PLAN.md`、`docs/02-planning/TEST-STRATEGY.md`、`docs/03-frontend-design/P03-SOURCE-DISCOVERY-DESIGN.md`、`docs/03-frontend-design/SOURCE-FIXTURE-RESEARCH.md`、`docs/03-frontend-design/INFORMATION-ARCHITECTURE.md`、`docs/03-frontend-design/USER-FLOWS.md`、`docs/03-frontend-design/PAGE-SPECIFICATIONS.md`、`docs/03-frontend-design/FRONTEND-DATA-CONTRACT.md`、`docs/03-frontend-design/PAGE-STATE-MATRIX.md`、`docs/03-frontend-design/COMPONENT-ARCHITECTURE.md`、`docs/03-frontend-design/VIEW-MODEL-FIXTURE-SPEC.md`、`docs/03-frontend-design/MOCK-AND-FIXTURES.md`、`docs/03-frontend-design/VISUAL-DIRECTION.md`、`docs/03-frontend-design/FRONTEND-REVIEW.md`、`docs/03-frontend-design/assets/README.md`、`docs/README.md`；页面预览图仅保留在 Codex 生成图片目录，不进入项目资产
+- 明确禁止的动作：实现 P05—P12；新增或升级依赖；数据库表/Schema设计；数据库实现；具体后端 API 设计或后端业务代码；真实联网 RAG/搜索/AI 调用；模型微调；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 已归档 PRD 0.3 及其四份立项输入；阶段 2 已归档 `TECHNOLOGY-DECISION.md` 0.3；阶段 3 已归档 `PROJECT-HANDBOOK.md` 0.5；阶段 4 已归档八份总体规划、`DESIGN-REVIEW-STANDARD.md` 及 `PLANNING-REVIEW.md`；阶段 5 已归档全部前端设计、原型验证与 `FRONTEND-REVIEW.md`；阶段 6.4 已由提交 `5850d8c` 归档 P00/P01
 - 阶段 2 唯一结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 完整保留在公开仓库、本地和 CI 中，不伪装为在线服务；AI 基于公开资料选择阿里云百炼北京地域 `qwen3.8-max`、`text-embedding-v4`、`qwen3-rerank`，明确未做 API 横评；未来真实上线沿同一 OCI/PostgreSQL/S3 架构部署并另行批准
 - 本阶段验收标准：原阶段 5 产物继续保留；新增 `DESIGN-REVIEW-STANDARD.md` 的完备性门和编码就绪门，补齐视觉方向/代表页高保真、逐页布局交互、字段与文案、复合状态优先级、前端视图模型与可执行 fixture、浏览器/性能/资产基线及原型验证；P00 采用经用户确认的混合 3D，具有四级降级与阶段 6 技术原型/最终视觉双门禁；P0 为零后重做 `FRONTEND-REVIEW.md`。MUST-001—010 与 NFR-001—012 有落点；史料不得合成且只采用官方权威公开来源；前端权限展示不冒充安全授权；没有数据库表、具体后端 API、正式代码、依赖或外部动作
@@ -46,4 +46,7 @@
 - P02 第三轮视觉返修授权：用户于 2026-09-02 否决问题批注笺成品，要求以教学情境页为模板先生成页面图、确认后再编码；用户随后明确确认“双栏纸张工作卡 + 即时摘要”效果图，并要求 P03“查找史料”及后续页面都先讨论方案、生成页面图、确认后编码，视觉上同样以 P01 为母版。本授权只允许返修 P02，不允许提前实现 P03—P12。
 - 阶段 6.5 验证摘要：TypeScript、ESLint、Vitest（3 文件、17 项）、production build、生产依赖审计（0 漏洞）和 `git diff --check` 通过；第三轮视觉合同与旧默认问题迁移均经过先失败后通过。development Chromium 验证 P01↔P02 清洁往返、P01 修改/撤销/确认后返回、完整上游快照重建、P01 同款双栏、重点切换、按需编辑、答案预设错误聚焦、成功反馈且无 P03 假入口；故障场景覆盖加载、空输入、系统失败、不可用、离线和超时。1440×900、390×844、320×800 无主任务水平溢出，可见按钮最低 44px，无音频。完整人工 Tab 遍历、200%/400% 缩放、读屏和 Safari/Firefox 仍需发布前设备矩阵复验。
 - 阶段 6.5 归档批准：用户于 2026-09-02 明确回复“批准归档”，授权阶段 6.5 报告第 7 节所列 18 个精确路径进行一次本地提交；不含 push、部署或进入 P03。
-- 下一步门禁：等待用户另行明确授权开始 P03；P03 及后续页面必须先按最新 P01/P02 和总体计划校准方案，以 P01 为视觉母版生成页面图，用户确认后方可编码。视频 AAC 音轨物理移除继续后置到最终视频资产定稿。
+- P03 产品边界变更授权：用户于 2026-09-02 明确提出 P02 应由 AI 帮助收束模糊需求；P03 应先检索轻量 RAG、覆盖不足时联网搜索，页面内直接阅读史料并看到 AI 推荐理由，提供更多候选与优先排序；原 P04 教师核验页取消，核验改为系统内部必经流程。用户随后回复“认可”。本授权允许同步现役产品/前端规划并重做 P03 页面图，不授权数据库、具体后端 API、真实 RAG/联网/AI、模型微调或 P03 代码。
+- P03 直接编码授权：用户于 2026-09-02 在图片生成服务连续网络失败后明确回复“这次不用生成图片了，直接改吧”，仅取消本次 P03 页面图确认前置条件；后续页面仍遵循先讨论、页面图确认、再编码。以 `P03-SOURCE-DISCOVERY-DESIGN.md` 为 P03/MUST-004 当前边界，只实施 P03。P04 不再是独立教师页面，但其溯源、加工、价值与局限门禁不能删除或假绿。
+- 阶段 6.6 验证摘要：P03 已实现“史料阅览纸 + 推荐目录”，使用 10 条官方来源候选、4 条优先推荐与有条件可用边界；独立 P04 步骤已移除，MUST-004 依据嵌入 P03。TypeScript、ESLint、Vitest（4 文件、21 项）、production build、生产依赖审计（0 漏洞）和 `git diff --check` 通过；真实 Chromium 覆盖桌面、390px、320px、选择/排除、刷新恢复、相邻页往返、加载、空、校验失败、系统失败、不可用、超时和离线。
+- 阶段 6.6 归档批准：用户于 2026-09-02 明确回复“批准归档”，授权阶段 6.6 报告第 5 节所列 37 个精确路径进行一次本地提交；不含 `push`、部署或进入 P05。

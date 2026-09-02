@@ -10,6 +10,7 @@
 coverage/
 test-results/
 playwright-report/
+.playwright-cli/
 
 # Node and frontend build output
 node_modules/

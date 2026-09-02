@@ -33,7 +33,7 @@ export function ClarifyingChoice({ current, primary, alternative, onChoose }: { 
   );
 }
 
-export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm }: { draft: QuestionWorkspaceDraft; errors: QuestionErrors; disabled: boolean; onChange: (field: "centralQuestion" | "evidenceOutcome", value: string) => void; onConfirm: () => void }) {
+export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm, onNext }: { draft: QuestionWorkspaceDraft; errors: QuestionErrors; disabled: boolean; onChange: (field: "centralQuestion" | "evidenceOutcome", value: string) => void; onConfirm: () => void; onNext: () => void }) {
   const [editing, setEditing] = useState(false);
   const [questionValue, setQuestionValue] = useState(draft.centralQuestion);
   const [evidenceValue, setEvidenceValue] = useState(draft.evidenceOutcome);
@@ -67,7 +67,7 @@ export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm }: 
       {editing && errors.evidenceOutcome ? <label className="field" data-invalid="true"><span>学生如何使用证据</span><textarea name="evidenceOutcome" maxLength={240} rows={3} value={evidenceValue} aria-invalid="true" aria-describedby="question-evidenceOutcome-error" onChange={(event) => setEvidenceValue(event.target.value)} /><QuestionFieldError field="evidenceOutcome" errors={errors} /></label> : null}
       <div className="act-actions question-actions">
         {editing ? <div className="question-edit-actions"><button type="button" onClick={() => setEditing(false)}>取消修改</button><button type="button" onClick={finishEditing}>完成修改</button></div> : <button type="button" onClick={startEditing}>修改中心问题</button>}
-        <button className="context-primary" type="button" disabled={disabled || draft.confirmed || editing} onClick={onConfirm}>{draft.confirmed ? "探究问题已确认" : editing ? "先完成修改" : "确认探究问题"}</button>
+        <button className="context-primary" type="button" disabled={disabled || editing} onClick={draft.confirmed ? onNext : onConfirm}>{draft.confirmed ? "进入查找史料" : editing ? "先完成修改" : "确认探究问题"}</button>
       </div>
     </section>
   );

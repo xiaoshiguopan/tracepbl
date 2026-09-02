@@ -1,0 +1,84 @@
+.sources-main { max-width: 82rem; }
+.inquiry-strip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; margin-block: 1.25rem 0.85rem; border-block: 1px solid var(--desk-line); padding-block: 0.8rem; }
+.inquiry-strip span { color: var(--desk-muted); font-size: 0.76rem; }
+.inquiry-strip p { margin: 0; font-family: "Songti SC", STSong, SimSun, serif; font-size: 1rem; line-height: 1.65; }
+.inquiry-strip button { border: 0; border-block-end: 1px solid var(--action-blue); padding: 0.5rem 0.2rem; color: var(--action-blue); background: transparent; cursor: pointer; }
+.source-workspace { display: grid; grid-template-columns: minmax(0, 1.72fr) minmax(18rem, 0.68fr); gap: clamp(1rem, 2.2vw, 1.8rem); align-items: start; }
+.source-sheet, .source-index, .source-empty { border: 1px solid rgb(81 94 88 / 42%); background: var(--desk-surface); box-shadow: 0 1.1rem 2.8rem rgb(31 40 37 / 8%); }
+.source-sheet { min-width: 0; padding: clamp(1.25rem, 3vw, 2.4rem); }
+.source-sheet-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; border-block-end: 1px solid rgb(86 96 92 / 24%); padding-block-end: 1.1rem; }
+.source-sheet h2, .source-index h2, .source-empty h2 { margin: 0; font-family: "Songti SC", STSong, SimSun, serif; font-weight: 500; }
+.source-sheet h2 { font-size: clamp(1.7rem, 3vw, 2.45rem); line-height: 1.35; }
+.source-availability { flex: none; border: 1px solid #b18b4c; padding: 0.35rem 0.55rem; color: #654b1e; font-size: 0.72rem; }
+.source-meta { margin: 0.85rem 0 1.5rem; color: var(--desk-muted); font-size: 0.8rem; line-height: 1.7; }
+.source-excerpt { border-inline-start: 0.2rem solid var(--action-blue); padding: clamp(1rem, 2.5vw, 1.6rem); background: #f3f0e7; }
+.source-excerpt small { color: var(--review-ochre); font-weight: 700; }
+.source-excerpt blockquote { margin: 0.8rem 0; font-family: "Songti SC", STSong, SimSun, serif; font-size: clamp(1.35rem, 2.8vw, 2rem); line-height: 1.7; }
+.source-excerpt p, .source-reason p, .source-boundaries p { line-height: 1.75; }
+.source-excerpt p { margin: 0; color: var(--desk-muted); font-size: 0.82rem; }
+.source-reason { margin-block: 1.5rem 1.25rem; }
+.source-reason > p:not(.eyebrow) { margin: 0.45rem 0; }
+.source-reason small { color: var(--desk-muted); }
+.source-boundaries { display: grid; grid-template-columns: 1fr 1fr; border-block: 1px solid rgb(86 96 92 / 30%); }
+.source-boundaries section { padding: 1rem; }
+.source-boundaries section + section { border-inline-start: 1px solid rgb(86 96 92 / 30%); }
+.source-boundaries span { color: var(--desk-muted); font-size: 0.74rem; }
+.source-boundaries p { margin: 0.35rem 0 0; }
+.source-basis { margin-block-start: 1.1rem; border-block-end: 1px solid var(--desk-line); padding-block-end: 0.8rem; }
+.source-basis summary, .more-sources summary, .source-controls summary { min-height: 2.75rem; color: var(--action-blue); font-weight: 700; cursor: pointer; }
+.source-basis dl { margin: 0.5rem 0; }
+.source-basis dl div { display: grid; grid-template-columns: 7rem 1fr; gap: 0.75rem; padding-block: 0.5rem; border-block-start: 1px solid rgb(86 96 92 / 18%); }
+.source-basis dt { color: var(--desk-muted); font-size: 0.75rem; }
+.source-basis dd { margin: 0; font-size: 0.82rem; line-height: 1.6; }
+.source-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding-block-start: 1.25rem; }
+.source-actions button:not(.context-primary), .source-actions a { min-height: 2.75rem; border: 0; border-block-end: 1px solid currentColor; padding: 0.65rem 0.25rem; color: var(--action-blue); background: transparent; text-decoration: none; cursor: pointer; }
+.source-actions .source-selected { border: 1px solid var(--verified-green); padding-inline: 0.9rem; color: var(--verified-green); background: #dce8e2; }
+.source-index { position: sticky; inset-block-start: 1.5rem; overflow: hidden; border-block-start: 0.2rem solid var(--action-blue); }
+.source-index > header, .source-set-summary, .source-controls { padding: 1.15rem; }
+.source-index > header > span { display: block; margin-block-start: 0.35rem; color: var(--desk-muted); font-size: 0.72rem; }
+.source-index ol, .source-index ul { margin: 0; padding: 0; list-style: none; }
+.source-index li button { display: grid; grid-template-columns: 2rem minmax(0, 1fr); width: 100%; min-height: 4.5rem; border: 0; border-block-start: 1px solid rgb(86 96 92 / 24%); padding: 0.75rem 1rem; color: inherit; background: transparent; text-align: start; cursor: pointer; }
+.source-index li button > span { grid-row: 1 / 3; color: var(--review-ochre); font-family: "Songti SC", STSong, serif; }
+.source-index li button strong { line-height: 1.45; }
+.source-index li button small { margin-block-start: 0.2rem; color: var(--desk-muted); }
+.source-index li[data-active="true"] button { box-shadow: inset 0.2rem 0 var(--action-blue); background: #dce6e3; }
+.source-index li[data-selected="true"] small { color: var(--verified-green); font-weight: 700; }
+.source-index li[data-excluded="true"] { opacity: 0.58; }
+.more-sources { border-block: 1px solid var(--desk-line); padding: 0.75rem 1rem; }
+.more-sources li button { min-height: 3.5rem; padding-inline: 0; }
+.source-set-summary { background: #dedfd7; }
+.source-set-summary > span { color: var(--desk-muted); font-size: 0.74rem; }
+.source-set-summary > strong { display: block; margin-block: 0.3rem; font-family: "Songti SC", STSong, serif; font-size: 1.25rem; font-weight: 500; }
+.source-set-summary p, .source-controls p { margin: 0; color: var(--desk-muted); font-size: 0.78rem; line-height: 1.6; }
+.source-next { width: calc(100% - 2rem); margin: 0 1rem 1rem; }
+.selection-feedback { margin-block-end: 1rem; border-inline-start: 0.2rem solid var(--verified-green); padding: 0.7rem 0.9rem; color: #204f43; background: #dce8e2; font-size: 0.82rem; }
+.source-controls form { display: grid; gap: 0.75rem; margin-block-start: 0.8rem; }
+.source-controls label { display: grid; gap: 0.3rem; color: var(--desk-muted); font-size: 0.74rem; }
+.source-controls input { width: 100%; min-height: 2.75rem; border: 1px solid #8e9993; padding: 0.55rem 0.65rem; color: var(--desk-ink); background: var(--desk-raised); }
+.source-controls button { min-height: 2.75rem; border: 1px solid var(--action-blue); padding: 0.55rem; color: var(--action-blue); background: transparent; cursor: pointer; }
+.source-empty { padding: clamp(1.5rem, 4vw, 3rem); }
+.source-empty > p:not(.eyebrow) { max-width: 42rem; color: var(--desk-muted); line-height: 1.75; }
+.source-skeleton { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.68fr); gap: 1.5rem; }
+.source-skeleton span { height: 38rem; border: 1px solid var(--desk-line); background: linear-gradient(90deg, var(--desk-surface), #d8dbd4, var(--desk-surface)); background-size: 200% 100%; animation: workbench-loading 1.5s ease infinite; }
+.source-skeleton span + span { height: 32rem; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 59.99rem) {
+  .source-workspace, .source-skeleton { grid-template-columns: 1fr; }
+  .source-index { position: static; }
+  .source-index ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .source-skeleton span + span { display: none; }
+}
+@media (max-width: 39.99rem) {
+  .inquiry-strip { grid-template-columns: 1fr; gap: 0.35rem; }
+  .inquiry-strip button { justify-self: start; }
+  .source-index ol { grid-template-columns: 1fr; }
+  .source-boundaries { grid-template-columns: 1fr; }
+  .source-boundaries section + section { border-block-start: 1px solid rgb(86 96 92 / 30%); border-inline-start: 0; }
+  .source-sheet-heading { flex-direction: column; }
+  .source-actions { align-items: stretch; flex-direction: column; }
+  .source-actions > * { width: 100%; text-align: center; }
+  .source-basis dl div { grid-template-columns: 1fr; gap: 0.2rem; }
+}
+@media (prefers-reduced-motion: reduce) { .source-skeleton span { animation: none; background: #e5eae7; } }
+@media (forced-colors: active) { .source-sheet, .source-index, .source-empty, .source-availability { border: 1px solid ButtonText; } }

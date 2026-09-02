@@ -7,7 +7,7 @@ import { syntheticFixture } from "./teaching-context";
 
 describe("P02 探究问题", () => {
   it("复用教学情境页的双栏模板呈现精简决策和即时摘要", () => {
-    const html = renderToStaticMarkup(<QuestionWorkspacePage onBack={() => undefined} onReturnContext={() => undefined} />);
+    const html = renderToStaticMarkup(<QuestionWorkspacePage onBack={() => undefined} onReturnContext={() => undefined} onNext={() => undefined} />);
 
     expect(html).toContain("探究问题");
     expect(html).toContain("当前探究问题");

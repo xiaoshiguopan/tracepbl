@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ClarifyingChoice, PreferredPlan, QuestionBrief, UnderstandingLine } from "./QuestionWorkspaceForm";
 import { applyQuestionProposal, createQuestionDraft, createQuestionGuidance, normalizeQuestionDraft, validateQuestionConfirmation, validateQuestionInput, type InputType, type QuestionErrors, type QuestionWorkspaceDraft } from "./question-workspace";
-import { loadContextDraft, loadQuestionDraft, saveQuestionDraft } from "./teaching-context-store";
+import { loadContextDraft, loadQuestionDraft, loadSourceDraft, saveQuestionDraft } from "./teaching-context-store";
 import { isSameTeachingContext, syntheticFixture, type TeachingContextDraft } from "./teaching-context";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
@@ -21,7 +21,7 @@ function focusQuestionError(errors: QuestionErrors) {
   requestAnimationFrame(() => requestAnimationFrame(() => document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus()));
 }
 
-export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () => void; onReturnContext: () => void }) {
+export function QuestionWorkspacePage({ onBack, onReturnContext, onNext }: { onBack: () => void; onReturnContext: () => void; onNext: () => void }) {
   const scenario = useMemo(readScenario, []);
   const initialContext = scenario === "empty" ? { ...syntheticFixture, inquiryQuestion: "" } : syntheticFixture;
   const [context, setContext] = useState<TeachingContextDraft>(initialContext);
@@ -30,6 +30,7 @@ export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () 
   const [loading, setLoading] = useState(() => typeof window !== "undefined" && (scenario === "ready" || scenario === "loading"));
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [upstreamChanged, setUpstreamChanged] = useState(false);
+  const [sourceReached, setSourceReached] = useState(false);
   const [online, setOnline] = useState(() => scenario !== "offline" && (typeof navigator === "undefined" || navigator.onLine !== false));
   const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
   const guidance = draft.originalInput.trim() ? createQuestionGuidance(draft.originalInput, context) : null;
@@ -41,7 +42,7 @@ export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () 
       return () => window.clearTimeout(timer);
     }
     if (scenario !== "ready") return;
-    void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey)]).then(([storedContext, storedQuestion]) => {
+    void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey), loadSourceDraft(storageKey)]).then(([storedContext, storedQuestion, storedSources]) => {
       const nextContext = storedContext || syntheticFixture;
       setContext(nextContext);
       if (!storedQuestion) setDraft(createQuestionDraft(nextContext));
@@ -49,6 +50,7 @@ export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () 
         setDraft(createQuestionDraft(nextContext));
         setUpstreamChanged(true);
       } else setDraft(normalizeQuestionDraft(storedQuestion, nextContext));
+      setSourceReached(Boolean(storedSources));
     }, () => setSaveState("failed")).finally(() => setLoading(false));
   }, [scenario, storageKey]);
 
@@ -94,8 +96,17 @@ export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () 
     setDraft((current) => ({ ...current, confirmed: true }));
   };
 
+  const openSources = () => {
+    const nextErrors = validateQuestionConfirmation(draft, context);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) { focusQuestionError(nextErrors); return; }
+    const confirmed = { ...draft, confirmed: true };
+    setDraft(confirmed);
+    void saveQuestionDraft(storageKey, confirmed).then(onNext, () => setSaveState("failed"));
+  };
+
   return (
-    <WorkbenchShell currentStep={1} currentLabel={draft.confirmed ? "探究问题已确认" : "探究问题"} nextLabel="查找史料" onBack={onBack} onNavigateStep={(step) => step === 0 && onReturnContext()}>
+    <WorkbenchShell currentStep={1} reachedStep={sourceReached ? 2 : 1} currentLabel={draft.confirmed ? "探究问题已确认" : "探究问题"} nextLabel="查找史料" onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 2 ? openSources() : undefined} stepActionLabels={sourceReached ? { 2: draft.confirmed ? "返回查找史料" : "确认修改并返回查找史料" } : undefined} stepHints={sourceReached && !draft.confirmed ? { 2: "有修改 · 确认后返回" } : undefined}>
       <main className="context-main question-main" id="main-content" tabIndex={-1}>
         <header className="page-heading"><div><p className="eyebrow">从教学情境进入探究问题</p><h1>探究问题</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
         <p className="page-intro">系统已承接教学情境，你只需确认两个关键判断。</p>
@@ -120,7 +131,7 @@ export function QuestionWorkspacePage({ onBack, onReturnContext }: { onBack: () 
                 <header className="section-heading"><span aria-hidden="true">贰</span><div><h2 id="question-form-heading">把初步方向收束成一个问题</h2><p>系统已承接教学情境，你只需确认两个关键判断。</p></div></header>
                 <UnderstandingLine draft={draft} errors={errors} onTypeChange={(inputType: InputType) => setDraft((current) => ({ ...current, inputType, typeReason: `已按教师判断作为“${inputType}”处理。`, confirmed: false }))} />
                 <ClarifyingChoice current={draft.focus} primary={guidance.primary} alternative={guidance.alternative} onChoose={choosePlan} />
-                <PreferredPlan key={draft.focus} draft={draft} errors={errors} disabled={false} onChange={updateDraft} onConfirm={confirm} />
+                <PreferredPlan key={draft.focus} draft={draft} errors={errors} disabled={false} onChange={updateDraft} onConfirm={confirm} onNext={openSources} />
               </section>
               <aside className="brief-panel question-brief desktop-brief" aria-label="当前探究问题摘要"><QuestionBrief draft={draft} omission={selectedPlan.omission} /></aside>
             </div>

@@ -7,6 +7,9 @@ const TeachingContextPage = lazy(() =>
 const QuestionWorkspacePage = lazy(() =>
   import("./QuestionWorkspacePage").then((module) => ({ default: module.QuestionWorkspacePage })),
 );
+const SourceDiscoveryPage = lazy(() =>
+  import("./SourceDiscoveryPage").then((module) => ({ default: module.SourceDiscoveryPage })),
+);
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -64,7 +67,7 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-type Route = "demo" | "context" | "question";
+type Route = "demo" | "context" | "question" | "sources";
 
 function readRoute(): Route {
   if (typeof window === "undefined") return "demo";
@@ -74,6 +77,7 @@ function readRoute(): Route {
     : window.location.pathname;
   if (/^\/tasks\/[^/]+\/context\/?$/.test(path)) return "context";
   if (/^\/tasks\/[^/]+\/question\/?$/.test(path)) return "question";
+  if (/^\/tasks\/[^/]+\/sources\/?$/.test(path)) return "sources";
   return "demo";
 }
 
@@ -103,7 +107,12 @@ export function App() {
   );
   if (route === "question") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开探究问题…</main>}>
-      <QuestionWorkspacePage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} />
+      <QuestionWorkspacePage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onNext={() => navigate("tasks/demo-tang-45m/sources")} />
+    </Suspense>
+  );
+  if (route === "sources") return (
+    <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开史料阅览台…</main>}>
+      <SourceDiscoveryPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} />
     </Suspense>
   );
   return <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />;

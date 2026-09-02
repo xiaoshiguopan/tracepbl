@@ -1,6 +1,7 @@
 # 组件架构与状态归属
 
 > 状态：阶段 5 已批准归档
+> 当前修订：2026-09-02 P03/MUST-004 组件职责已随阶段 6.6 获准归档
 > 边界：定义前端内部结构和数据流，不是业务代码、数据库模型或具体后端 API
 
 ## 1. 分层
@@ -24,9 +25,9 @@ App shell / routes
 |---|---|---|
 | P00 | 非阻塞预渲染电影、静态/纯色降级、演示/艺术边界、一次点击进入/继续 | `NarrativeHero`、`CinematicMedia`、`NarrativeArtLabel`、`DemoBoundaryNotice`、`StartTaskCard`、`LocalResumeCard`；不再拆实时场景、视差或飞纸组件 |
 | P01 | 最小情境表单、即时条件摘要和一次确认 | `TeachingContextForm`、`ContextConflictPanel`、`ContextSummary`、`StepRail`；不建立页签状态、生成态或第二套简报状态 |
-| P02 | 类型诊断与问题确认 | `InputTypeReview`、`QuestionProposalList`、`EvidenceOutcomeEditor` |
-| P03 | 候选列表、筛选与添加 | `SourceFilters`、`CandidateSourceList`、`AddMaterialPanel`、`SourceStatusSummary` |
-| P04 | 价值卡编辑/核验 | `SourceIdentitySection`、`LocatorEditor`、`ProcessingChain`、`ValueLimitationEditor` |
+| P02 | 自动承接情境、有限问题方案、关键确认与按需编辑 | `QuestionProposalList`、`QuestionFocusChooser`、`QuestionInlineEditor`、`QuestionSummary` |
+| P03 | 知识库/外部发现状态、优先推荐、直接阅读、自动核验依据、选择与材料元数据输入 | `SourceDiscoveryStatus`、`RecommendedSourceList`、`SourceReadingCard`、`SourceRationale`、`SourceEvidenceDisclosure`、`SourceSetSummary`、`SourceFilters`、`AddMaterialMetadataPanel` |
+| P04 | 无独立页面；MUST-004 视图组合进 P03 | 复用 `SourceEvidenceDisclosure` 内的 `SourceIdentitySection`、`ProcessingChain`、`ValueLimitationSummary`；不建立独立 route/page/form store |
 | P05 | 关系概览与等价列表 | `EvidenceMapOverview`、`EvidenceRelationList`、`RelationEditorDialog`、`EvidenceGapPanel` |
 | P06 | 活动、时长和支架 | `LessonTimeline`、`ActivityCard`、`EvidenceProductEditor`、`ScaffoldEditor` |
 | P07 | 量规与映射 | `RubricDimensionList`、`PerformanceLevelEditor`、`ActivityRubricMapping` |
@@ -48,7 +49,7 @@ App shell / routes
 
 | 状态 | 所有者 | 例子 | 不应放置 |
 |---|---|---|---|
-| URL 状态 | 路由 | 页签、筛选、分页、当前 source/claim | 临时输入、秘密、完整正文 |
+| URL 状态 | 路由 | 筛选、分页、P03 当前展开 source、当前 claim | 临时输入、秘密、完整正文、核验状态 |
 | 远端/持久任务状态 | data port 缓存 | 情境、史料卡、批准、审计结果 | React 隐式全局单例 |
 | Demo 持久状态 | Demo adapter/IndexedDB | 当前浏览器的任务快照、schema 版本 | 组件直接读写 IndexedDB |
 | 表单草稿 | 最接近的页面/业务表单 | 未提交字段、dirty、客户端错误 | 全应用 store |
@@ -70,7 +71,7 @@ form draft → client experience validation → command intent
 ```
 
 - 表单可做即时体验校验，但后续真实 adapter 的结果是最终事实。
-- 乐观更新只用于可安全撤销的低风险操作（如本机筛选、非关键排序）。批准、删除、核验状态、审计和导出不做假成功。
+- 乐观更新只用于可安全撤销的低风险操作（如本机筛选、非关键排序和可撤销的本机选择）。批准、删除、核验状态、审计和导出不做假成功。
 - 所有写入有 pending/succeeded/failed/cancelled；重复触发共享同一进行中结果或被安全拒绝。
 - 上游改变由返回的影响清单驱动 UI，不由组件自行猜哪些下游失效。
 
