@@ -5,11 +5,11 @@
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
 - 当前阶段：阶段 6：前端编码
-- 当前子阶段：阶段 6.11：P09“最终确认与导出”前端编码与验证
-- 状态：阶段 6.11 P09 已完成实现与验证，等待用户确认归档
-- 当前唯一任务：提交 P09 阶段报告并等待用户回复“批准归档”；不得进入 P11/P12
-- 允许修改的精确路径：`apps/web/src/App.tsx`、`apps/web/src/DesignAuditPage.tsx`、`apps/web/src/FinalReviewPage.tsx`、`apps/web/src/final-review.css`、`apps/web/src/final-review.test.tsx`、`apps/web/src/final-review.ts`、`apps/web/src/main.tsx`、`apps/web/src/teaching-context-store.ts`、`docs/00-governance/PROJECT-STATE.md`、`docs/03-frontend-design/COMPONENT-ARCHITECTURE.md`、`docs/03-frontend-design/FRONTEND-DATA-CONTRACT.md`、`docs/03-frontend-design/FRONTEND-REVIEW.md`、`docs/03-frontend-design/INFORMATION-ARCHITECTURE.md`、`docs/03-frontend-design/PAGE-SPECIFICATIONS.md`、`docs/03-frontend-design/PAGE-STATE-MATRIX.md`、`docs/03-frontend-design/USER-FLOWS.md`、`docs/03-frontend-design/VIEW-MODEL-FIXTURE-SPEC.md`、`docs/06-development/P09-IMPLEMENTATION-VALIDATION.md`、`docs/06-development/LEARNING-CARD-6.11.md`、`docs/06-development/STAGE-6.11-REPORT.md`
-- 明确禁止的动作：实现 P11/P12 或恢复独立 P10；新增或升级依赖；数据库表/Schema 设计或实现；具体后端 API 设计或后端业务代码；真实联网 RAG/搜索/AI 调用；模型微调；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
+- 当前子阶段：阶段 6.12：P12“任务不可用”已批准归档
+- 状态：阶段 6 页面编码已完成 P00—P09 与 P12；P04/P10 能力已并入相邻页面，P11 按用户决定取消且明确未满足
+- 当前唯一任务：等待用户在新对话启动“前端全方位深度优化与阶段 6 总审查”；未获新对话明确授权前不修改代码
+- 允许修改的精确路径：`apps/web/src/App.tsx`、`apps/web/src/App.test.tsx`、`apps/web/src/WorkbenchShell.tsx`、`apps/web/src/workbench.css`、`docs/00-governance/PROJECT-STATE.md`、`docs/03-frontend-design/COMPONENT-ARCHITECTURE.md`、`docs/03-frontend-design/FRONTEND-DATA-CONTRACT.md`、`docs/03-frontend-design/FRONTEND-REVIEW.md`、`docs/03-frontend-design/INFORMATION-ARCHITECTURE.md`、`docs/03-frontend-design/PAGE-SPECIFICATIONS.md`、`docs/03-frontend-design/PAGE-STATE-MATRIX.md`、`docs/03-frontend-design/USER-FLOWS.md`、`docs/06-development/P12-IMPLEMENTATION-VALIDATION.md`、`docs/06-development/LEARNING-CARD-6.12.md`、`docs/06-development/STAGE-6.12-REPORT.md`
+- 明确禁止的动作：实现 P11 或恢复独立 P10；以 P12 冒充真实授权；新增或升级依赖；数据库表/Schema 设计或实现；具体后端 API 设计或后端业务代码；真实联网 RAG/搜索/AI 调用；模型微调；真实学生/用户数据；史料合成或未授权史料；插件账号连接或权限变化；用户批准本子阶段归档前执行 `git add`、`git commit`、`git tag`、`git push`；远程仓库、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 已归档 PRD 0.3 及其四份立项输入；阶段 2 已归档 `TECHNOLOGY-DECISION.md` 0.3；阶段 3 已归档 `PROJECT-HANDBOOK.md` 0.5；阶段 4 已归档八份总体规划、`DESIGN-REVIEW-STANDARD.md` 及 `PLANNING-REVIEW.md`；阶段 5 已归档全部前端设计、原型验证与 `FRONTEND-REVIEW.md`；阶段 6.4 已由提交 `5850d8c` 归档 P00/P01
 - 阶段 2 唯一结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 完整保留在公开仓库、本地和 CI 中，不伪装为在线服务；AI 基于公开资料选择阿里云百炼北京地域 `qwen3.8-max`、`text-embedding-v4`、`qwen3-rerank`，明确未做 API 横评；未来真实上线沿同一 OCI/PostgreSQL/S3 架构部署并另行批准
 - 本阶段验收标准：原阶段 5 产物继续保留；新增 `DESIGN-REVIEW-STANDARD.md` 的完备性门和编码就绪门，补齐视觉方向/代表页高保真、逐页布局交互、字段与文案、复合状态优先级、前端视图模型与可执行 fixture、浏览器/性能/资产基线及原型验证；P00 采用经用户确认的混合 3D，具有四级降级与阶段 6 技术原型/最终视觉双门禁；P0 为零后重做 `FRONTEND-REVIEW.md`。MUST-001—010 与 NFR-001—012 有落点；史料不得合成且只采用官方权威公开来源；前端权限展示不冒充安全授权；没有数据库表、具体后端 API、正式代码、依赖或外部动作
@@ -66,3 +66,7 @@
 - 阶段 6.10 归档批准与提交：用户于 2026-09-02 明确回复“批准归档”，本地提交 `731e468 feat(web): implement P08 design audit`；不含 `push`、部署或 P09。
 - P09 方案与编码授权：用户认可“教学包装订清样 + 一次教师签发 + 同页导出”方案，确认桌面效果图后要求缩小中心问题字号、其余保持，并明确授权直接改代码。授权仅含 P09、P08 相邻导航、必要现役契约同步、测试和阶段文档；不含 P11/P12、依赖、数据库、后端、归档、`push` 或部署。
 - 阶段 6.11 验证摘要：P09 已实现连续装订清样、上游决定复用、一次教师签发、权利替代预览、安全文件名和浏览器原生打印；上游变化使旧签发失效，打印反馈不冒充文件已保存。TypeScript、ESLint、Vitest、production build、生产依赖审计和 `git diff --check` 的最终数字以 `STAGE-6.11-REPORT.md` 为准；真实 Chromium 已覆盖正常、加载、空、校验失败、系统失败、不可用、超时、离线、缺上游、成功、P08 往返、1440px、390px、320px、键盘与焦点。
+- 阶段 6.11 归档批准与提交：用户于 2026-09-02 明确回复“批准归档”，本地提交 `f330f7a feat(web): implement P09 final review and export`；不含 `push` 或部署。
+- P11 取消与 P12 授权：用户于 2026-09-02 明确要求不做 P11、直接做 P12，并确认“安全落页”页面图后授权编码。P11 本机数据查看/清除入口因此明确未实现，P12 不得冒充该能力；授权仅含 P12、必要现役规划同步、测试和阶段文档，不含依赖、数据库、后端、归档、`push` 或部署。
+- 阶段 6.12 验证摘要：P12 已实现 `/task-unavailable` 统一安全结果、对象零读取、未知参数等价处理、标题程序焦点和两个安全出口。TypeScript、ESLint、Vitest（9 文件、46 项）、production build（47 模块）、生产依赖审计（0 漏洞）、敏感模式扫描和 `git diff --check` 通过；初始 JS 64.58kB gzip，CSS 13.05kB gzip。应用内 Chromium 验证 1440×900、390×844、320×800 无横向溢出、按钮至少 44px、未知参数不回显、P01/P00 导航、无音频和控制台 0 warning/error。P11 取消导致 MUST-010 的应用内主动查看/清除能力明确未满足。
+- 阶段 6.12 归档批准：用户于 2026-09-03 明确回复“批准归档”，授权 `STAGE-6.12-REPORT.md` 第 5 节所列 15 个精确路径进行一次本地提交；不含 `tag`、`push`、部署、数据库或后端工作。归档后用户将在新对话启动前端全方位深度优化。

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 export const taskSteps = [
   "教学情境",
@@ -48,14 +48,48 @@ function StepRail({ currentStep, reachedStep, stepActionLabels, stepHints, onNav
   );
 }
 
-export function TaskUnavailable({ onBack }: { onBack: () => void }) {
+export function TaskUnavailable({ onBack, onNewTask }: { onBack: () => void; onNewTask?: () => void }) {
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  const startNewTask = () => {
+    if (onNewTask) {
+      onNewTask();
+      return;
+    }
+    window.location.assign(`${import.meta.env.BASE_URL}tasks/demo-tang-45m/context`);
+  };
+
   return (
-    <main className="unavailable-state" id="main-content" tabIndex={-1}>
-      <p className="eyebrow">无法打开任务</p>
-      <h1>此任务不可使用</h1>
-      <p>它可能已过期、已清除，或不属于当前访问。为保护内容，我们不会显示更多信息。</p>
-      <button className="context-primary" type="button" onClick={onBack}>返回演示首页</button>
-    </main>
+    <div className="task-unavailable-page">
+      <a className="workbench-skip" href="#main-content">跳至主要内容</a>
+      <main className="unavailable-state" id="main-content">
+        <header>
+          <p className="eyebrow">安全返回</p>
+          <h1 ref={headingRef} tabIndex={-1}>此任务不可使用</h1>
+          <p className="unavailable-intro">它可能已过期、已清除，或不属于当前访问。为保护内容，我们不会显示更多信息。</p>
+        </header>
+
+        <div className="unavailable-grid">
+          <section className="protected-folio" aria-labelledby="protected-content-title">
+            <div>
+              <h2 id="protected-content-title">内容已保护性隐藏</h2>
+              <p>这里不会显示任务标题、所有者或其他内容。</p>
+            </div>
+          </section>
+
+          <aside className="safe-next-step" aria-labelledby="safe-next-step-title">
+            <p className="eyebrow" id="safe-next-step-title">重新开始</p>
+            <p>演示数据仅保存在此浏览器</p>
+            <button className="unavailable-primary" type="button" onClick={startNewTask}>新建演示任务</button>
+            <button className="unavailable-secondary" type="button" onClick={onBack}>返回演示说明</button>
+          </aside>
+        </div>
+      </main>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { P00Experience } from "./P00Experience";
+import { TaskUnavailable } from "./WorkbenchShell";
 
 const TeachingContextPage = lazy(() =>
   import("./TeachingContextPage").then((module) => ({ default: module.TeachingContextPage })),
@@ -82,14 +83,12 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-type Route = "demo" | "context" | "question" | "sources" | "evidence" | "lesson" | "rubric" | "audit" | "review";
+type Route = "demo" | "context" | "question" | "sources" | "evidence" | "lesson" | "rubric" | "audit" | "review" | "unavailable";
 
-function readRoute(): Route {
-  if (typeof window === "undefined") return "demo";
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const path = window.location.pathname.startsWith(base)
-    ? window.location.pathname.slice(base.length)
-    : window.location.pathname;
+export function routeForPath(rawPath: string, base: string): Route {
+  const pathname = rawPath.split(/[?#]/, 1)[0];
+  const path = pathname.startsWith(base) ? pathname.slice(base.length) : pathname;
+  if (/^\/task-unavailable\/?$/.test(path)) return "unavailable";
   if (/^\/tasks\/[^/]+\/context\/?$/.test(path)) return "context";
   if (/^\/tasks\/[^/]+\/question\/?$/.test(path)) return "question";
   if (/^\/tasks\/[^/]+\/sources\/?$/.test(path)) return "sources";
@@ -99,6 +98,12 @@ function readRoute(): Route {
   if (/^\/tasks\/[^/]+\/audit\/?$/.test(path)) return "audit";
   if (/^\/tasks\/[^/]+\/review\/?$/.test(path)) return "review";
   return "demo";
+}
+
+function readRoute(): Route {
+  if (typeof window === "undefined") return "demo";
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return routeForPath(window.location.pathname, base);
 }
 
 export function App() {
@@ -119,6 +124,13 @@ export function App() {
     };
     updateRoute();
   };
+
+  if (route === "unavailable") return (
+    <TaskUnavailable
+      onBack={() => navigate("")}
+      onNewTask={() => navigate("tasks/demo-tang-45m/context")}
+    />
+  );
 
   if (route === "context") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开教学情境…</main>}>

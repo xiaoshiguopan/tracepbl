@@ -34,7 +34,8 @@ App shell / routes
 | P08 | 预生成设计检查、异常优先审阅、教师确认与上游失效恢复 | `AuditChain`、`AuditFindingList`、`AuditLedger`、`TeacherRationaleEditor`；已通过项渐进展开，不建立“先运行审计”的空操作 |
 | P09 | 最终确认与导出合并页 | `FinalReviewPage` 组合连续装订清样、交付校样、一次签发、权利替代预览与浏览器原生打印；不建立逐项批准组件或格式选择器 |
 | P10 | 无独立页面；导出能力并入 P09 | 不建立独立 route/page/store；复用 P09 的预览、格式与生成状态 |
-| P11 | 数据说明与清除 | `DataBoundarySummary`、`ClearItemDialog`、`ClearTaskDialog` |
+| P11 | 用户明确取消 | 不建立 route/page/store 或清除组件；P12 不代理清除 |
+| P12 | 统一安全结果 | 复用 `TaskUnavailable`；只接收安全导航动作，不接收或渲染任务对象 |
 | 全局 | 布局与状态 | `EvidenceTrail`、`DemoModeBadge`、`TaskStatusBanner`、`OfflineBanner` |
 
 名称是设计语汇，编码时允许在不改变职责的前提下调整；不得生成一个接收所有对象和状态的万能 `Workspace` 组件。

@@ -360,9 +360,58 @@
 .context-skeleton { display: grid; gap: 1rem; max-width: 50rem; }
 .context-skeleton span { display: block; height: 8rem; border: 1px solid var(--desk-line); border-radius: 0.125rem; background: linear-gradient(90deg, var(--desk-surface), #d8dbd4, var(--desk-surface)); background-size: 200% 100%; animation: workbench-loading 1.5s ease infinite; }
 .context-skeleton span:nth-child(2) { height: 14rem; }
-.unavailable-state { display: grid; min-height: 100svh; place-content: center; max-width: 42rem; margin: auto; padding: 2rem; color: var(--desk-ink); }
-.unavailable-state p { line-height: 1.8; }
-.unavailable-state .context-primary { justify-self: start; }
+.task-unavailable-page {
+  --desk-ink: #202927;
+  --desk-muted: #56605c;
+  --desk-line: #aab5af;
+  --action-blue: #0f6265;
+  --workbench-focus: #654fd1;
+  min-height: 100svh;
+  color: var(--desk-ink);
+  background: #d7d9d2;
+}
+
+.task-unavailable-page button { font: inherit; }
+.task-unavailable-page button:focus-visible,
+.task-unavailable-page a:focus-visible {
+  outline: 0.1875rem solid var(--workbench-focus);
+  outline-offset: 0.1875rem;
+}
+
+.unavailable-state {
+  width: min(82rem, calc(100% - 2rem));
+  margin-inline: auto;
+  padding: clamp(2rem, 5vw, 4.75rem) 0;
+}
+
+.unavailable-state > header { border-block-end: 1px solid var(--desk-line); padding-block-end: 2rem; }
+.unavailable-state h1 {
+  font-size: clamp(2.7rem, 5.2vw, 4.8rem);
+  letter-spacing: 0.04em;
+}
+.unavailable-intro { max-width: 50rem; margin: 1rem 0 0; color: var(--desk-muted); font-size: clamp(1rem, 1.5vw, 1.18rem); line-height: 1.75; }
+
+.unavailable-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+  min-height: clamp(25rem, 48vh, 34rem);
+  margin-block-start: 1.75rem;
+  border: 1px solid var(--desk-line);
+}
+
+.protected-folio { padding: clamp(1.5rem, 4vw, 3rem); border-inline-end: 1px solid var(--desk-line); }
+.protected-folio > div { min-height: 100%; border-inline-start: 0.2rem solid var(--action-blue); padding: 1.75rem 0 1.75rem clamp(1.5rem, 3vw, 2.5rem); }
+.protected-folio h2 { margin: 0; color: var(--action-blue); font-size: 1rem; letter-spacing: 0.05em; }
+.protected-folio p,
+.safe-next-step > p:not(.eyebrow) { margin: 1.5rem 0 0; color: var(--desk-muted); line-height: 1.75; }
+
+.safe-next-step { display: flex; align-items: flex-start; flex-direction: column; padding: clamp(2rem, 4vw, 3rem); }
+.safe-next-step .eyebrow { border-block-end: 1px solid currentColor; padding-block-end: 0.45rem; font-size: 1rem; }
+.unavailable-primary,
+.unavailable-secondary { min-height: 2.75rem; cursor: pointer; }
+.unavailable-primary { width: 100%; margin-block-start: 2rem; border: 1px solid var(--action-blue); padding: 0.8rem 1rem; color: var(--action-blue); background: transparent; font-weight: 700; }
+.unavailable-primary:hover { color: #fff; background: var(--action-blue); }
+.unavailable-secondary { margin-block-start: 1rem; border: 0; border-block-end: 1px solid currentColor; padding: 0.55rem 0; color: var(--action-blue); background: transparent; font-weight: 700; }
 
 @keyframes workbench-loading { to { background-position: -200% 0; } }
 
@@ -373,6 +422,8 @@
   .mobile-step span { color: var(--desk-muted); font-size: 0.78rem; }
   .mobile-step button { min-height: 2.75rem; border: 0; border-block-end: 1px solid var(--action-blue); padding-inline: 0.25rem; color: var(--action-blue); background: transparent; font-weight: 700; cursor: pointer; }
   .context-columns { grid-template-columns: 1fr; }
+  .unavailable-grid { grid-template-columns: 1fr; }
+  .protected-folio { min-height: 18rem; border-inline-end: 0; border-block-end: 1px solid var(--desk-line); }
 }
 
 @media (max-width: 39.99rem) {
@@ -388,6 +439,14 @@
   .page-heading h1 { font-size: 2.25rem; }
   .save-status { align-self: flex-end; margin-block-start: -2rem; }
   .status-banner { flex-direction: column; gap: 0; }
+  .unavailable-state { width: min(100% - 2rem, 36rem); padding-block: 2rem; }
+  .unavailable-state h1 { font-size: clamp(2.4rem, 13vw, 3.25rem); }
+  .unavailable-state > header { padding-block-end: 1.5rem; }
+  .unavailable-grid { min-height: 0; margin-block-start: 1.25rem; }
+  .protected-folio { min-height: 13rem; padding: 1.25rem; }
+  .protected-folio > div { padding: 1rem 0 1rem 1.25rem; }
+  .safe-next-step { padding: 1.5rem 1.25rem 2rem; }
+  .unavailable-primary { min-height: 3rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -397,4 +456,5 @@
 @media (forced-colors: active) {
   .workbench-shell { background: Canvas; }
   .context-primary { border: 1px solid ButtonText; }
+  .task-unavailable-page { background: Canvas; }
 }
