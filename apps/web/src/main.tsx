@@ -6,6 +6,7 @@ import "./workbench.css";
 import "./workbench-form.css";
 import "./question-workspace.css";
 import "./source-discovery.css";
+import "./evidence-map.css";
 
 const root = document.getElementById("root");
 

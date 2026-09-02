@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { loadQuestionDraft, loadSourceDraft, saveSourceDraft } from "./teaching-context-store";
+import { loadEvidenceDraft, loadQuestionDraft, loadSourceDraft, saveSourceDraft } from "./teaching-context-store";
 import { emptySourceDraft, excludeSource, getSourceSetSummary, sourceFixture, toggleSourceSelection, type SourceDiscoveryDraft, type SourceRecord } from "./source-discovery";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
@@ -40,7 +40,7 @@ function SourceReader({ source, selected, excluded, onToggle, onExclude }: { sou
   );
 }
 
-export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void }) {
+export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion, onNext }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onNext: () => void }) {
   const scenario = useMemo(readScenario, []);
   const visibleSources = scenario === "empty" ? [] : sourceFixture;
   const [activeId, setActiveId] = useState(sourceFixture[0].id);
@@ -50,6 +50,7 @@ export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const [feedback, setFeedback] = useState("");
   const [materialSaved, setMaterialSaved] = useState(false);
+  const [evidenceReached, setEvidenceReached] = useState(false);
   const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
   const activeSource = visibleSources.find((source) => source.id === activeId) || visibleSources[0];
   const summary = getSourceSetSummary(draft);
@@ -57,9 +58,10 @@ export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion 
   useEffect(() => {
     if (scenario === "loading") { const timer = window.setTimeout(() => setLoading(false), 5000); return () => window.clearTimeout(timer); }
     if (scenario !== "ready") { setLoading(false); return; }
-    void Promise.all([loadQuestionDraft(storageKey), loadSourceDraft(storageKey)]).then(([storedQuestion, storedSources]) => {
+    void Promise.all([loadQuestionDraft(storageKey), loadSourceDraft(storageKey), loadEvidenceDraft(storageKey)]).then(([storedQuestion, storedSources, storedEvidence]) => {
       if (storedQuestion?.centralQuestion) setQuestion(storedQuestion.centralQuestion);
       if (storedSources) setDraft(storedSources);
+      setEvidenceReached(Boolean(storedEvidence));
     }, () => setSaveState("failed")).finally(() => setLoading(false));
   }, [scenario, storageKey]);
 
@@ -85,7 +87,7 @@ export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion 
   };
 
   return (
-    <WorkbenchShell currentStep={2} currentLabel="查找史料" nextLabel="组织证据" reachedStep={2} onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 1 ? onReturnQuestion() : undefined}>
+    <WorkbenchShell currentStep={2} currentLabel="查找史料" nextLabel="组织证据" reachedStep={evidenceReached ? 3 : 2} onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 1 ? onReturnQuestion() : step === 3 ? onNext() : undefined}>
       <main className="context-main sources-main" id="main-content" tabIndex={-1}>
         <header className="page-heading"><div><p className="eyebrow">围绕问题建立证据组合</p><h1>查找史料</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
         <p className="page-intro">先读史料，再判断它是否值得进入你的证据组合。</p>
@@ -111,7 +113,7 @@ export function SourceDiscoveryPage({ onBack, onReturnContext, onReturnQuestion 
               <details className="more-sources"><summary>更多可用史料 6 条</summary><ul>{sourceFixture.filter((source) => !source.recommended).map((source) => <li key={source.id}><button type="button" onClick={() => setActiveId(source.id)}><strong>{source.title}</strong><small>{source.kind} · 查看登记</small></button></li>)}</ul></details>
               <section className="source-set-summary" aria-label="史料组合进度"><span>本课史料组</span><strong>{summary.selectedCount} / 建议 4—6 条</strong><p>{summary.kindCount} 种史料类型 · {summary.gap}</p></section>
               <details className="source-controls" open={scenario === "invalid-material" || undefined}><summary>调整查找范围与录入自有材料</summary><p>静态演示不发起真实搜索或上传；这里只保存你有权使用的材料元数据。</p><form onSubmit={(event) => { event.preventDefault(); setMaterialSaved(true); setFeedback("自有材料元数据已保存在本机；尚未完成在线核验。"); }}><label><span>材料题名</span><input name="materialTitle" required autoFocus={scenario === "invalid-material"} aria-invalid={scenario === "invalid-material" || undefined} aria-describedby={scenario === "invalid-material" ? "material-title-error" : undefined} /></label>{scenario === "invalid-material" ? <small className="field-error" id="material-title-error">请填写材料题名。</small> : null}<label><span>稳定来源地址</span><input name="materialUrl" type="url" required placeholder="https://…" /></label><button type="submit">保存材料元数据</button>{materialSaved ? <small>已保存在本机，未标记为已核验。</small> : null}</form></details>
-              <button className="context-primary source-next" type="button" disabled={!summary.ready} onClick={() => setFeedback("本阶段演示开放至史料选择；组织证据页尚未实现。")}>选够后组织史料关系</button>
+              <button className="context-primary source-next" type="button" disabled={!summary.ready} onClick={() => void saveSourceDraft(storageKey, draft).then(onNext, () => setSaveState("failed"))}>选够后组织史料关系</button>
             </aside>
           </div>
         )}

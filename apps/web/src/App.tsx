@@ -10,6 +10,9 @@ const QuestionWorkspacePage = lazy(() =>
 const SourceDiscoveryPage = lazy(() =>
   import("./SourceDiscoveryPage").then((module) => ({ default: module.SourceDiscoveryPage })),
 );
+const EvidenceMapPage = lazy(() =>
+  import("./EvidenceMapPage").then((module) => ({ default: module.EvidenceMapPage })),
+);
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -67,7 +70,7 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-type Route = "demo" | "context" | "question" | "sources";
+type Route = "demo" | "context" | "question" | "sources" | "evidence";
 
 function readRoute(): Route {
   if (typeof window === "undefined") return "demo";
@@ -78,6 +81,7 @@ function readRoute(): Route {
   if (/^\/tasks\/[^/]+\/context\/?$/.test(path)) return "context";
   if (/^\/tasks\/[^/]+\/question\/?$/.test(path)) return "question";
   if (/^\/tasks\/[^/]+\/sources\/?$/.test(path)) return "sources";
+  if (/^\/tasks\/[^/]+\/evidence-map\/?$/.test(path)) return "evidence";
   return "demo";
 }
 
@@ -112,7 +116,12 @@ export function App() {
   );
   if (route === "sources") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开史料阅览台…</main>}>
-      <SourceDiscoveryPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} />
+      <SourceDiscoveryPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onNext={() => navigate("tasks/demo-tang-45m/evidence-map")} />
+    </Suspense>
+  );
+  if (route === "evidence") return (
+    <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开证据关系…</main>}>
+      <EvidenceMapPage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} onReturnQuestion={() => navigate("tasks/demo-tang-45m/question")} onReturnSources={() => navigate("tasks/demo-tang-45m/sources")} />
     </Suspense>
   );
   return <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />;

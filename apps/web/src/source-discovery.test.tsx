@@ -5,7 +5,7 @@ import { emptySourceDraft, excludeSource, getSourceSetSummary, sourceFixture, to
 
 describe("P03 查找史料", () => {
   it("以史料阅览纸和推荐目录直接呈现史料、理由与边界", () => {
-    const html = renderToStaticMarkup(<SourceDiscoveryPage onBack={() => undefined} onReturnContext={() => undefined} onReturnQuestion={() => undefined} />);
+    const html = renderToStaticMarkup(<SourceDiscoveryPage onBack={() => undefined} onReturnContext={() => undefined} onReturnQuestion={() => undefined} onNext={() => undefined} />);
     expect(html).toContain("查找史料");
     expect(html).toContain("source-sheet");
     expect(html).toContain("推荐目录");
