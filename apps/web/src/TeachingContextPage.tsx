@@ -3,13 +3,15 @@ import { TeachingContextForm } from "./TeachingContextForm";
 import {
   getContextSummary,
   getContextConflict,
+  isSameTeachingContext,
   normalizeTeachingContextDraft,
   syntheticFixture,
   validateTeachingContext,
   type FieldErrors,
   type TeachingContextDraft,
 } from "./teaching-context";
-import { loadContextDraft, saveContextDraft } from "./teaching-context-store";
+import { loadContextDraft, loadQuestionDraft, saveContextDraft } from "./teaching-context-store";
+import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
 const TASK_REF = "demo-tang-45m";
 const emptyDraft: TeachingContextDraft = {
@@ -21,18 +23,6 @@ const emptyDraft: TeachingContextDraft = {
   minutes: "",
   inquiryQuestion: "",
 };
-
-const steps = [
-  "教学情境",
-  "探究问题",
-  "查找史料",
-  "核验史料",
-  "组织证据",
-  "设计活动",
-  "评价与检查",
-  "最终确认",
-  "导出",
-];
 
 type Scenario = "ready" | "loading" | "empty" | "failure" | "timeout" | "offline" | "unavailable";
 type SaveState = "idle" | "saving" | "saved" | "failed";
@@ -53,40 +43,6 @@ function focusFirstError(errors: FieldErrors) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelector<HTMLElement>(`[name="${firstField}"]`)?.focus();
   }));
-}
-
-function StepRail({ confirmed }: { confirmed: boolean }) {
-  return (
-    <nav className="step-rail" aria-label="证据脉络">
-      <p>证据脉络</p>
-      <ol className="visible-steps">
-        {steps.slice(0, 2).map((step, index) => (
-          <li className={index === 0 ? confirmed ? "current complete" : "current" : "next"} key={step}>
-            <span aria-hidden="true">{index + 1}</span>
-            <strong aria-current={index === 0 ? "step" : undefined}>{step}<small>{index === 0 ? confirmed ? "已确认" : "正在填写" : "下一步"}</small></strong>
-          </li>
-        ))}
-      </ol>
-      <details className="future-steps">
-        <summary>查看后续 7 步</summary>
-        <ol start={3}>
-          {steps.slice(2).map((step, index) => <li key={step}><span aria-hidden="true">{index + 3}</span><strong>{step}</strong></li>)}
-        </ol>
-      </details>
-      <p className="permission-note">此处状态只帮助导航，不代表安全授权。</p>
-    </nav>
-  );
-}
-
-function TaskUnavailable({ onBack }: { onBack: () => void }) {
-  return (
-    <main className="unavailable-state" id="main-content" tabIndex={-1}>
-      <p className="eyebrow">无法打开任务</p>
-      <h1>此任务当前不可用</h1>
-      <p>它可能不存在、已被移除，或当前演示无法访问。这里不会显示任务标题、学情或其他内容。</p>
-      <button className="context-primary" type="button" onClick={onBack}>返回演示首页</button>
-    </main>
-  );
 }
 
 function ContextSummary({
@@ -111,8 +67,10 @@ function ContextSummary({
 
 export function TeachingContextPage({
   onBack,
+  onNext,
 }: {
   onBack: () => void;
+  onNext: () => void;
 }) {
   const scenario = useMemo(readScenario, []);
   const [draft, setDraft] = useState<TeachingContextDraft>(() =>
@@ -124,14 +82,16 @@ export function TeachingContextPage({
   );
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [submitting, setSubmitting] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [confirmedDraft, setConfirmedDraft] = useState<TeachingContextDraft | null>(null);
+  const [questionReached, setQuestionReached] = useState(false);
   const [systemFailure, setSystemFailure] = useState(false);
-  const [notice, setNotice] = useState("");
   const [online, setOnline] = useState(() =>
-    scenario === "offline" ? false : typeof navigator === "undefined" || navigator.onLine,
+    scenario === "offline" ? false : typeof navigator === "undefined" || navigator.onLine !== false,
   );
   const summary = getContextSummary(draft);
   const conflict = getContextConflict(draft);
+  const dirty = confirmedDraft ? !isSameTeachingContext(draft, confirmedDraft) : true;
+  const actionLabel = questionReached ? dirty ? "确认修改并返回探究问题" : "返回探究问题" : "确认教学情境";
   const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
 
   useEffect(() => {
@@ -140,8 +100,18 @@ export function TeachingContextPage({
       return () => window.clearTimeout(timer);
     }
     if (scenario !== "ready") return;
-    void loadContextDraft(storageKey)
-      .then((stored) => stored && setDraft(normalizeTeachingContextDraft(stored)), () => setSaveState("failed"))
+    void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey)])
+      .then(([storedContext, storedQuestion]) => {
+        const nextDraft = storedContext ? normalizeTeachingContextDraft(storedContext) : syntheticFixture;
+        setDraft(nextDraft);
+        if (storedQuestion) {
+          setQuestionReached(true);
+          const snapshot = storedQuestion.contextSnapshot
+            ? normalizeTeachingContextDraft(storedQuestion.contextSnapshot)
+            : nextDraft;
+          setConfirmedDraft(snapshot);
+        }
+      }, () => setSaveState("failed"))
       .finally(() => setLoading(false));
   }, [scenario, storageKey]);
 
@@ -184,8 +154,6 @@ export function TeachingContextPage({
       delete next[key];
       return next;
     });
-    if (confirmed) setNotice("已确认的情境发生变化；重新确认前，后续内容应视为待复核。");
-    setConfirmed(false);
     setSystemFailure(false);
   };
 
@@ -217,23 +185,26 @@ export function TeachingContextPage({
       }, 1200);
       return;
     }
-    setConfirmed(true);
-    setNotice("");
+    const confirmedValue = { ...draft, lessonTypes: [...draft.lessonTypes] };
+    setConfirmedDraft(confirmedValue);
+    setQuestionReached(true);
+    void saveContextDraft(storageKey, confirmedValue).then(onNext, () => setSaveState("failed"));
+  };
+
+  const openQuestion = () => {
+    if (dirty) submit();
+    else onNext();
+  };
+
+  const undoChanges = () => {
+    if (!confirmedDraft) return;
+    setDraft({ ...confirmedDraft, lessonTypes: [...confirmedDraft.lessonTypes] });
+    setErrors({});
+    setSystemFailure(false);
   };
 
   return (
-    <div className="workbench-shell">
-      <a className="workbench-skip" href="#main-content">跳至主要内容</a>
-      <header className="workbench-topbar">
-        <button className="workbench-brand" type="button" onClick={onBack} aria-label="返回史证工坊首页">
-          <span aria-hidden="true">史</span><strong>史证工坊</strong>
-        </button>
-        <div><span className="workbench-badge">公开演示</span><span className="local-data">仅存本机</span></div>
-      </header>
-
-      <div className="mobile-step"><span>第 1/9 步 · {confirmed ? "教学情境已确认" : "教学情境"}</span><strong>下一步：探究问题</strong></div>
-      <div className="workbench-layout">
-        <StepRail confirmed={confirmed} />
+    <WorkbenchShell currentStep={0} reachedStep={questionReached ? 1 : 0} currentLabel={questionReached && !dirty ? "教学情境已确认" : "教学情境"} nextLabel="探究问题" onBack={onBack} onNavigateStep={(step) => step === 1 && openQuestion()} stepActionLabels={questionReached ? { 1: actionLabel } : undefined} stepHints={questionReached && dirty ? { 1: "有修改 · 确认后返回" } : undefined}>
         <main className="context-main" id="main-content" tabIndex={-1}>
           <header className="page-heading">
             <div><p className="eyebrow">从课堂问题开始</p><h1>教学情境</h1></div>
@@ -250,7 +221,7 @@ export function TeachingContextPage({
 
           {!online ? <div className="status-banner warning" role="status"><strong>当前离线</strong><span>仍可编辑，草稿会保存在本机；恢复网络后无需重新填写。</span></div> : null}
           {saveState === "failed" ? <div className="status-banner warning" role="status"><strong>本地保存不可用</strong><span>内容仍保留在当前页面。请在关闭前复制当前填写内容。</span></div> : null}
-          {notice ? <div className="status-banner info" role="status"><strong>步骤提示</strong><span>{notice}</span></div> : null}
+          {questionReached && dirty ? <div className="context-change-bar" role="status"><span><strong>教学情境有修改</strong>确认后，探究问题会按新情境重新收束。</span><button type="button" onClick={undoChanges}>撤销本次修改</button></div> : null}
 
           {loading ? (
             <div className="context-skeleton" aria-busy="true" aria-label="正在加载教学情境">
@@ -279,7 +250,7 @@ export function TeachingContextPage({
                   draft={draft}
                   errors={errors}
                   disabled={submitting}
-                  confirmed={confirmed}
+                  actionLabel={actionLabel}
                   onChange={changeField}
                   onToggle={toggleChoice}
                   onSubmit={submit}
@@ -289,18 +260,17 @@ export function TeachingContextPage({
                   <p className="eyebrow">当前教学情境</p>
                   <h2 id="brief-heading">{draft.lesson || "课程信息待补充"}</h2>
                   <ContextSummary draft={draft} summary={summary} />
-                  {confirmed ? <div className="success-feedback" role="status"><strong>教学情境已确认</strong><span>下一步：收束探究问题。当前演示暂开放至本步骤。</span></div> : null}
+                  {questionReached && !dirty ? <div className="success-feedback" role="status"><strong>教学情境已确认</strong><span>可以直接返回探究问题。</span></div> : null}
                 </aside>
               </div>
               <details className="mobile-brief">
                 <summary>查看当前教学情境</summary>
                 <ContextSummary draft={draft} summary={summary} />
-                {confirmed ? <div className="success-feedback" role="status"><strong>教学情境已确认</strong><span>下一步：收束探究问题。当前演示暂开放至本步骤。</span></div> : null}
+                {questionReached && !dirty ? <div className="success-feedback" role="status"><strong>教学情境已确认</strong><span>可以直接返回探究问题。</span></div> : null}
               </details>
             </>
           )}
         </main>
-      </div>
-    </div>
+    </WorkbenchShell>
   );
 }

@@ -41,6 +41,17 @@ export function normalizeTeachingContextDraft(value: TeachingContextDraft) {
   } satisfies TeachingContextDraft;
 }
 
+export function isSameTeachingContext(left: TeachingContextDraft, right: TeachingContextDraft) {
+  return left.stage === right.stage
+    && left.grade === right.grade
+    && left.textbook === right.textbook
+    && left.lesson === right.lesson
+    && left.minutes === right.minutes
+    && left.inquiryQuestion === right.inquiryQuestion
+    && left.lessonTypes.length === right.lessonTypes.length
+    && left.lessonTypes.every((value, index) => value === right.lessonTypes[index]);
+}
+
 const sensitivePattern = /(身份证|手机号|联系电话|学生姓名|班级名单|家庭住址)/;
 
 export function validateTeachingContext(draft: TeachingContextDraft): FieldErrors {

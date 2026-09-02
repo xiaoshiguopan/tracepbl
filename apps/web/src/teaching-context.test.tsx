@@ -1,8 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { TeachingContextPage } from "./TeachingContextPage";
+import { WorkbenchShell } from "./WorkbenchShell";
 import {
   getContextConflict,
+  isSameTeachingContext,
   normalizeTeachingContextDraft,
   syntheticFixture,
   validateTeachingContext,
@@ -11,7 +13,7 @@ import {
 
 describe("P01 教学情境", () => {
   it("只呈现当前决策所需字段和一个确认动作", () => {
-    const html = renderToStaticMarkup(<TeachingContextPage onBack={() => undefined} />);
+    const html = renderToStaticMarkup(<TeachingContextPage onBack={() => undefined} onNext={() => undefined} />);
 
     expect(html).toContain("合成示范课 · 可自由编辑");
     expect(html).toContain("请勿填写个人或敏感信息");
@@ -80,5 +82,21 @@ describe("P01 教学情境", () => {
     } as unknown as TeachingContextDraft);
 
     expect(validateTeachingContext(migrated)).toEqual({});
+  });
+
+  it("只把真实字段变化视为需要重新确认", () => {
+    expect(isSameTeachingContext(syntheticFixture, { ...syntheticFixture, lessonTypes: [...syntheticFixture.lessonTypes] })).toBe(true);
+    expect(isSameTeachingContext(syntheticFixture, { ...syntheticFixture, minutes: "40" })).toBe(false);
+  });
+
+  it("当前位置和已到达进度分开，返回 P01 后仍能直接切回 P02", () => {
+    const html = renderToStaticMarkup(
+      <WorkbenchShell currentStep={0} reachedStep={1} currentLabel="教学情境" nextLabel="探究问题" onBack={() => undefined} onNavigateStep={() => undefined}>
+        <main>内容</main>
+      </WorkbenchShell>,
+    );
+
+    expect(html).toContain("返回探究问题");
+    expect(html).toContain("已确认 · 可返回");
   });
 });

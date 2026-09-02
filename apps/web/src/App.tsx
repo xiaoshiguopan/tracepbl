@@ -4,6 +4,9 @@ import { P00Experience } from "./P00Experience";
 const TeachingContextPage = lazy(() =>
   import("./TeachingContextPage").then((module) => ({ default: module.TeachingContextPage })),
 );
+const QuestionWorkspacePage = lazy(() =>
+  import("./QuestionWorkspacePage").then((module) => ({ default: module.QuestionWorkspacePage })),
+);
 
 const boundaryCopy =
   "教学情境和操作结果为合成演示；史料来自所列权威公开来源。数据只保存在当前浏览器，未连接在线 AI 或数据库。请勿输入真实学生或敏感信息。";
@@ -61,20 +64,24 @@ function DemoEntry({ onStart }: { onStart: () => void }) {
   );
 }
 
-function isContextRoute() {
-  if (typeof window === "undefined") return false;
+type Route = "demo" | "context" | "question";
+
+function readRoute(): Route {
+  if (typeof window === "undefined") return "demo";
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const path = window.location.pathname.startsWith(base)
     ? window.location.pathname.slice(base.length)
     : window.location.pathname;
-  return /^\/tasks\/[^/]+\/context\/?$/.test(path);
+  if (/^\/tasks\/[^/]+\/context\/?$/.test(path)) return "context";
+  if (/^\/tasks\/[^/]+\/question\/?$/.test(path)) return "question";
+  return "demo";
 }
 
 export function App() {
-  const [contextRoute, setContextRoute] = useState(isContextRoute);
+  const [route, setRoute] = useState<Route>(() => readRoute());
 
   useEffect(() => {
-    const onPopState = () => setContextRoute(isContextRoute());
+    const onPopState = () => setRoute(readRoute());
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
@@ -83,19 +90,23 @@ export function App() {
     const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
     const updateRoute = () => {
       window.history.pushState({}, "", `${base}${path}`);
-      setContextRoute(isContextRoute());
+      setRoute(readRoute());
       window.scrollTo({ top: 0, behavior: "auto" });
     };
     updateRoute();
   };
 
-  return contextRoute ? (
+  if (route === "context") return (
     <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开教学情境…</main>}>
-      <TeachingContextPage onBack={() => navigate("")} />
+      <TeachingContextPage onBack={() => navigate("")} onNext={() => navigate("tasks/demo-tang-45m/question")} />
     </Suspense>
-  ) : (
-    <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />
   );
+  if (route === "question") return (
+    <Suspense fallback={<main className="route-loading" aria-busy="true">正在打开探究问题…</main>}>
+      <QuestionWorkspacePage onBack={() => navigate("")} onReturnContext={() => navigate("tasks/demo-tang-45m/context")} />
+    </Suspense>
+  );
+  return <DemoEntry onStart={() => navigate("tasks/demo-tang-45m/context")} />;
 }
 
 export { boundaryCopy };

@@ -9,7 +9,7 @@ type TeachingContextFormProps = {
   draft: TeachingContextDraft;
   errors: FieldErrors;
   disabled: boolean;
-  confirmed: boolean;
+  actionLabel: string;
   onChange: <Key extends keyof TeachingContextDraft>(key: Key, value: TeachingContextDraft[Key]) => void;
   onToggle: (key: "lessonTypes", value: string) => void;
   onSubmit: () => void;
@@ -23,7 +23,7 @@ function describedBy(field: keyof TeachingContextDraft, errors: FieldErrors, hin
   return [hint, errors[field] ? `${field}-error` : null].filter(Boolean).join(" ") || undefined;
 }
 
-export function TeachingContextForm({ draft, errors, disabled, confirmed, onChange, onToggle, onSubmit }: TeachingContextFormProps) {
+export function TeachingContextForm({ draft, errors, disabled, actionLabel, onChange, onToggle, onSubmit }: TeachingContextFormProps) {
   return (
     <form className="context-form" noValidate onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>
       <section className="form-section" aria-labelledby="class-heading">
@@ -106,8 +106,8 @@ export function TeachingContextForm({ draft, errors, disabled, confirmed, onChan
         </aside>
 
         <div className="act-actions end">
-          <button className="context-primary" type="submit" disabled={disabled || confirmed}>
-            {confirmed ? "教学情境已确认" : disabled ? "正在确认…" : "确认教学情境"}
+          <button className="context-primary" type="submit" disabled={disabled}>
+            {disabled ? "正在确认…" : actionLabel}
           </button>
         </div>
       </section>
