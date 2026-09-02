@@ -10,6 +10,7 @@ import "./evidence-map.css";
 import "./lesson-design.css";
 import "./rubric-design.css";
 import "./design-audit.css";
+import "./final-review.css";
 
 const root = document.getElementById("root");
 

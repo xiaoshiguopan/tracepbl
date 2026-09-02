@@ -5,6 +5,7 @@ import type { EvidenceMapDraft } from "./evidence-map";
 import type { LessonDesignDraft } from "./lesson-design";
 import type { RubricDraft } from "./rubric-design";
 import type { AuditDraft } from "./design-audit";
+import type { FinalReviewDraft } from "./final-review";
 
 const DB_NAME = "tracepbl-demo";
 const CONTEXT_STORE = "teaching-context-drafts";
@@ -14,7 +15,8 @@ const EVIDENCE_STORE = "evidence-map-drafts";
 const LESSON_STORE = "lesson-design-drafts";
 const RUBRIC_STORE = "rubric-design-drafts";
 const AUDIT_STORE = "design-audit-drafts";
-const DB_VERSION = 7;
+const FINAL_REVIEW_STORE = "final-review-drafts";
+const DB_VERSION = 8;
 
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -40,6 +42,9 @@ function openDatabase() {
       }
       if (!request.result.objectStoreNames.contains(AUDIT_STORE)) {
         request.result.createObjectStore(AUDIT_STORE);
+      }
+      if (!request.result.objectStoreNames.contains(FINAL_REVIEW_STORE)) {
+        request.result.createObjectStore(FINAL_REVIEW_STORE);
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -85,3 +90,5 @@ export const loadRubricDraft = (taskRef: string) => loadDraft<RubricDraft>(RUBRI
 export const saveRubricDraft = (taskRef: string, draft: RubricDraft) => saveDraft(RUBRIC_STORE, taskRef, draft);
 export const loadAuditDraft = (taskRef: string) => loadDraft<AuditDraft>(AUDIT_STORE, taskRef);
 export const saveAuditDraft = (taskRef: string, draft: AuditDraft) => saveDraft(AUDIT_STORE, taskRef, draft);
+export const loadFinalReviewDraft = (taskRef: string) => loadDraft<FinalReviewDraft>(FINAL_REVIEW_STORE, taskRef);
+export const saveFinalReviewDraft = (taskRef: string, draft: FinalReviewDraft) => saveDraft(FINAL_REVIEW_STORE, taskRef, draft);

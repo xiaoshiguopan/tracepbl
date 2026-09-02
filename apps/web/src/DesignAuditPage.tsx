@@ -61,7 +61,7 @@ function AuditFindingRow({ finding, error, onAccept, onReasonChange, onReturnSou
   );
 }
 
-export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson, onReturnRubric }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void; onReturnRubric: () => void }) {
+export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson, onReturnRubric, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void; onReturnRubric: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
   const [input, setInput] = useState<AuditInput>(scenario === "missing-upstream" ? { ...defaultInput, rubric: { ...defaultRubric, dimensions: [] } } : defaultInput);
   const [draft, setDraft] = useState<AuditDraft>(() => createScenarioDraft(scenario));
@@ -105,6 +105,7 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
   const rebuild = () => { setDraft(createAuditDraft(input)); setFeedback("已根据当前内容恢复预生成检查结果。"); };
   const rerun = () => { setDraft((current) => rerunAudit(current, input)); setFeedback("受影响项目已使用当前演示规则重新检查。"); };
   const complete = () => {
+    if (draft.completed && summary.ready) { onNext(); return; }
     setShowErrors(true);
     if (!summary.ready) {
       setFeedback(summary.blockerCount ? `仍有 ${summary.blockerCount} 个阻断项，不能跳过。` : summary.unknownCount ? "仍有未完成或已失效的检查，不能把未知当作通过。" : "请先处理教师确认并检查理由。");
@@ -115,7 +116,7 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
     }
     const completedDraft = { ...draft, completed: true };
     setDraft(completedDraft); setSaveState("saving");
-    void saveAuditDraft(storageKey, completedDraft).then(() => { setSaveState("saved"); setFeedback("设计检查已完成。最终确认与导出尚未实现。"); }, () => { setSaveState("failed"); setFeedback("检查结果已确认，但本机保存失败。当前内容仍保留在本页。"); });
+    void saveAuditDraft(storageKey, completedDraft).then(() => { setSaveState("saved"); onNext(); }, () => { setSaveState("failed"); setFeedback("检查结果已确认，但本机保存失败。当前内容仍保留在本页。"); });
   };
 
   return (
@@ -154,8 +155,8 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
               <dl><div><dt>{summary.totalCount}</dt><dd>项检查</dd></div><div><dt>{summary.blockerCount}</dt><dd>个阻断</dd></div><div><dt>{summary.confirmationCount}</dt><dd>项待确认</dd></div><div><dt>{summary.suggestionCount}</dt><dd>项建议</dd></div><div><dt>{summary.passedCount}</dt><dd>项通过</dd></div>{summary.unknownCount ? <div><dt>{summary.unknownCount}</dt><dd>项未知或失效</dd></div> : null}</dl>
               <section className={summary.ready ? "audit-ready" : "audit-not-ready"}><strong>{draft.completed ? "本次设计检查已完成" : summary.ready ? "可以完成本次检查" : "当前还不能进入交付"}</strong><p>{summary.ready ? "所有阻断、未知和教师确认都已处理。" : summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断项。` : summary.unknownCount ? "先重新检查未知或已失效项目。" : hasReasonErrors ? "完善教师确认理由后即可完成本次检查。" : `处理 ${summary.confirmationCount} 项教师确认后即可完成本次检查。`}</p></section>
               <p className="audit-permission">前端状态只帮助判断，不代表安全授权。</p>
-              {summary.ready ? <button className="context-primary audit-next" type="button" onClick={complete}>{draft.completed ? "检查已完成" : "完成设计检查"}</button> : summary.unknownCount && draft.staleCategories.length ? <button className="context-primary audit-next" type="button" onClick={rerun}>重新检查受影响项</button> : hasReasonErrors ? <button className="context-primary audit-next" type="button" onClick={complete}>完善教师确认理由</button> : <button className="context-primary audit-next" type="button" disabled>{summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断` : summary.unknownCount ? "等待未知检查完成" : `先处理 ${summary.confirmationCount} 项待确认`}</button>}
-              <p className="next-step-note">下一步：最终确认与导出（尚未实现）</p>
+              {summary.ready ? <button className="context-primary audit-next" type="button" onClick={complete}>{draft.completed ? "进入最终确认与导出" : "完成设计检查"}</button> : summary.unknownCount && draft.staleCategories.length ? <button className="context-primary audit-next" type="button" onClick={rerun}>重新检查受影响项</button> : hasReasonErrors ? <button className="context-primary audit-next" type="button" onClick={complete}>完善教师确认理由</button> : <button className="context-primary audit-next" type="button" disabled>{summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断` : summary.unknownCount ? "等待未知检查完成" : `先处理 ${summary.confirmationCount} 项待确认`}</button>}
+              <p className="next-step-note">下一步：最终确认与导出</p>
             </aside>
           </div>
         )}
