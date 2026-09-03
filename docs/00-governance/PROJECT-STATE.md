@@ -4,20 +4,25 @@
 - 英文代号：TracePBL
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
-- 当前阶段：阶段 8 数据库编码已获用户批准归档；阶段 9 后端设计尚未开始
-- 当前子阶段：阶段 8 本地归档提交；下一步须由用户另行明确授权开始阶段 9
+- 当前阶段：阶段 9 后端设计已获用户批准归档；阶段 10 后端编码尚未开始
+- 当前子阶段：阶段 9 本地归档提交；下一步须由用户另行明确授权开始阶段 10
 - 状态：P00—P09 与 P12 已完成深度优化；P04 自动核验并入 P03，P10 真实 Word/PDF 导出并入 P09，P11 保持取消
-- 当前唯一任务：完成阶段 8 报告所列路径的一次本地归档提交；不授权 push、tag、部署或阶段 9
+- 当前唯一任务：完成 `docs/05-backend-design/STAGE-9-REPORT.md` 所列 15 个文档的一次本地归档提交；不授权阶段 10、migration 实现、依赖、真实 GLM、push、tag 或部署
 - 最近归档：阶段 6 状态收口已由本地提交 `3c708b8 docs: close frontend development stage` 归档；前端主归档提交为 `0d8d898 feat(web): unify the complete teaching workflow`
-- 明确禁止的动作：实现 P11 或恢复独立 P10；以本机任务、隐藏按钮或 task ID 冒充授权；数据库代码、迁移实现、seed、后端 API/业务代码；真实联网 RAG/搜索/AI 调用；读取或暴露密钥；真实学生/用户数据；史料合成或未授权史料；新增依赖；未经“批准归档”执行 `git add`/commit；未经单独授权执行 tag、push、远程仓库操作、部署、域名购买、备案或外发消息
+- 明确禁止的动作：实现 P11 或恢复独立 P10；以本机任务、隐藏按钮或 task ID 冒充授权；后端 API/Worker/RAG/Agent 代码、OpenAPI 文件、migration 实现或 seed 变更；真实联网 RAG/搜索/AI 调用；读取或暴露密钥；真实学生/用户数据；史料合成或未授权史料；新增依赖；未经“批准归档”执行 `git add`/commit；未经单独授权执行 tag、push、远程仓库操作、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 PRD、阶段 2 技术决策和阶段 3 项目手册已因阶段 7 明确产品决定形成现役修订草案；阶段 4 总体规划、阶段 5 前端设计及阶段 6 代码/验证为数据库设计输入；阶段 7 的完整路径见 `docs/04-database-design/STAGE-7-REPORT.md`
 - 当前唯一技术结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署并只用 IndexedDB/预生成结果；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 保留在公开仓库、本地和 CI；AI 采用可替换的智谱 GLM provider adapter，目标生成模型 `GLM-5.3-Flash`，embedding 为 `embedding-3` 1024 维 cosine；不启用联网搜索，型号可用性待后端阶段用非敏感最小调用验证
-- 本阶段验收标准：领域实体/关系/版本/约束/索引、事务/并发、workspace 隔离、RLS 取舍、审计、显式删除后 24 小时宽限与彻底删除、备份恢复、pgvector 边界、迁移回滚、测试和风险均有明确落点；官方资料与成熟 GitHub 案例研究完成；P0/P1 清零；只有文档，没有数据库或后端实现
+- 本阶段验收标准：模块/API/OpenAPI、workspace/task 授权、repository/事务、乐观锁/幂等、URL 安全、RAG/引用、GLM/预算、Worker/租约、LangGraph/checkpoint、SSE、删除/恢复、本地 Compose、日志审计、测试、实施顺序和回滚均有明确落点；官方资料与成熟 GitHub 案例研究完成；设计后评审 P0/P1 清零；只有文档，没有后端或 migration 实现
 - 阶段 7 方案确认：用户确认全部采用推荐方案并选择 1A（智谱国内 API），随后于 2026-09-03 明确回复“确认方案，写入文档”。授权仅含阶段 7 文档及必要现役契约同步，不含读取 `C:\Users\10342\Desktop\glm.txt`、数据库编码、后端、依赖、归档、push 或部署
 - 阶段 7 归档批准：用户于 2026-09-03 明确回复“批准归档”，仅授权 `docs/04-database-design/STAGE-7-REPORT.md` 所列 24 个文档做一次本地提交；不含 `output/`、push、tag、部署、阶段 8、后端或真实 GLM 调用
 - 阶段 8 开始授权：用户于 2026-09-03 在数据库设计归档后明确表示“没有的话就直接开工编码，期间不要我介入”；现有获批设计无阻断决定，因此授权数据库 schema、migration、最小 seed、数据库脚本/测试与阶段记录，不含后端/API、真实 GLM、生产/真实数据、归档、push 或部署
 - 阶段 8 验证摘要：PostgreSQL 18.6 + pgvector 0.8.6 空库 migration/seed/replay 通过；数据库集成测试 10 项、静态合同 4 项、前端 19 项、typecheck、lint、build、diff check 与 audit 通过；custom dump 已恢复至全新容器并核对版本、owner、migration/task/embedding 计数。`agent` 只保留隔离 schema，LangGraph 官方 checkpointer migration 按批准边界延后到阶段 10
 - 阶段 8 归档批准：用户于 2026-09-03 明确回复“批准归档”，仅授权 `docs/06-development/STAGE-8-REPORT.md` 第 4 节所列 23 个路径做一次本地提交；不含 `output/`、push、tag、部署、阶段 9 或真实 GLM 调用
+- 阶段 9 开始授权：用户于 2026-09-03 要求进入“后端设计对话”，在完整读取上游后先讨论其想法；只允许研究和设计，不允许后端代码、migration 修改、真实 GLM、依赖或部署
+- 阶段 9 决策：用户要求将需要其决定的问题一次问完，随后明确回复“全部按推荐方案”；冻结无登录本地会话、显式运行模式、AI 主动触发、建议后采用、短 Agent 流程、受限 URL、task-only 权利确认、无 Key 手工路径、硬预算和 Compose 标准环境
+- 阶段 9 写入授权：用户在阅读完整对话方案后于 2026-09-03 明确回复“确认方案，写入文档”；授权生成阶段 9 规划、设计、评审、学习卡、报告和状态同步，不含代码、OpenAPI/SQL、依赖、真实 GLM、归档、push 或部署
+- 阶段 9 设计摘要：采用 API/Worker 两进程的 TypeScript 模块化单体；`/api/v1` Zod/OpenAPI、If-Match/幂等、不可区分 404；PostgreSQL lease/fencing 与 job_events；task-scoped exact RAG/引用门禁；generated revision 后教师采用；固定 GLM 且无价格档案 fail closed；PostgresSaver 短线程/整线程删除；24 小时 checkpoint-first purge。阶段 10 只通过新增 0003 migration 补租约、取消、SSE、usage ledger 和运行证据，不改 0001/0002
+- 阶段 9 归档批准：用户于 2026-09-03 明确回复“批准归档”，仅授权 `docs/05-backend-design/STAGE-9-REPORT.md` 第 4 节所列 15 个路径做一次本地提交；不含 `output/`、阶段 10、真实 GLM、tag、push 或部署
 - 本次授权：用户于 2026-08-31 在新 Codex 对话中明确要求执行“阶段5：前端设计”，并列出全部设计产物、页面状态和边界；本次授权不含编码、依赖安装、数据库/后端设计、归档、推送或部署
 - 本次修订授权：阶段5期间允许按已批准治理规则复用现有 Skill、只读研究官方资料和成熟 GitHub 案例；用户补充授权全网检索官方公开权威材料并自行合成非史料数据，但史料不得合成；用户于 2026-08-31 要求先把第一性原理设计后审查写入规范，统一适用于后续数据库和后端设计；随后明确批准 P00 采用“预渲染人物/主镜头 + 实时空间增强”的混合 3D 推荐方案，并允许确认后写入文件；现有能力足够，不安装新 Skill，不连接插件账号
 - 最近批准：用户于 2026-08-31 明确回复“批准归档”，授权阶段 5 前端设计、混合 3D 修订与跨层设计审查规范按报告所列路径本地归档；不含 push、部署或依赖安装
