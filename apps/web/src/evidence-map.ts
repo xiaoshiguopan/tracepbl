@@ -1,109 +1,81 @@
-export type RelationKind = "支持" | "质疑" | "补充语境" | "不能支持";
+import { sourceFixture } from "./source-discovery";
+
+export type RelationKind = "背景条件" | "支持原因" | "关键转折" | "后续影响" | "质疑或限制";
 export type RelationStatus = "ready" | "needs-review";
+export type EvidenceClaim = { id: string; text: string; gapAccepted: boolean };
+export type EvidenceRelation = { id: string; claimId: string; sourceId: string; kind: RelationKind; reason: string; status: RelationStatus };
+export type EvidenceMapDraft = { fixtureVersion: 2; claims: EvidenceClaim[]; relations: EvidenceRelation[]; confirmed: boolean; questionSnapshot: string; sourceSnapshot: string[] };
 
-export type EvidenceClaim = {
-  id: string;
-  text: string;
-  gapAccepted: boolean;
-};
-
-export type EvidenceRelation = {
-  id: string;
-  claimId: string;
-  sourceId: string;
-  kind: RelationKind;
-  reason: string;
-  status: RelationStatus;
-};
-
-export type EvidenceMapDraft = {
-  fixtureVersion: 1;
-  claims: EvidenceClaim[];
-  relations: EvidenceRelation[];
-  confirmed: boolean;
-  questionSnapshot: string;
-  sourceSnapshot: string[];
-};
-
-const suggestedClaims: EvidenceClaim[] = [
-  { id: "CLAIM-001", text: "政治运行是否足以支持‘盛世’判断？", gapAccepted: false },
-  { id: "CLAIM-002", text: "物质文化与跨域交流能否说明社会活力？", gapAccepted: false },
-  { id: "CLAIM-003", text: "哪些群体、地区或时期尚未被当前史料覆盖？", gapAccepted: true },
+export const defaultSubQuestions = [
+  "唐朝前期的盛世局面建立在怎样的政治、经济与社会条件上？",
+  "安史之乱为什么成为唐朝由盛转衰的关键转折？",
+  "安史之乱后，哪些长期问题使唐朝难以恢复并最终灭亡？",
 ];
 
-const suggestedRelations: Omit<EvidenceRelation, "status">[] = [
-  { id: "REL-001", claimId: "CLAIM-001", sourceId: "AUTH-SRC-001", kind: "支持", reason: "呈现后世政治叙事如何概括贞观时期。" },
-  { id: "REL-002", claimId: "CLAIM-001", sourceId: "AUTH-SRC-003", kind: "补充语境", reason: "补入宫廷图像中的政治秩序与对外交往表达。" },
-  { id: "REL-003", claimId: "CLAIM-002", sourceId: "AUTH-SRC-002", kind: "支持", reason: "提供工艺、乐舞和胡汉交流的考古实物线索。" },
-  { id: "REL-004", claimId: "CLAIM-002", sourceId: "AUTH-SRC-004", kind: "补充语境", reason: "补入宫廷宴乐、金银器工艺和跨文化器形。" },
-];
+function suggestedKind(questionId: number, role: string): RelationKind {
+  if (role === "反例限制") return "质疑或限制";
+  if (role === "关键转折") return "关键转折";
+  if (questionId === 1) return role === "背景条件" ? "背景条件" : "支持原因";
+  return "后续影响";
+}
 
-export function createEvidenceMapDraft(question: string, selectedIds: string[]): EvidenceMapDraft {
-  return {
-    fixtureVersion: 1,
-    claims: suggestedClaims.map((claim) => ({ ...claim })),
-    relations: suggestedRelations
-      .filter((relation) => selectedIds.includes(relation.sourceId))
-      .map((relation) => ({ ...relation, status: "ready" })),
-    confirmed: false,
-    questionSnapshot: question,
-    sourceSnapshot: [...selectedIds],
-  };
+export function createEvidenceMapDraft(question: string, selectedIds: string[], subQuestions = defaultSubQuestions): EvidenceMapDraft {
+  const claims = (subQuestions.length ? subQuestions : [question]).map((text, index) => ({ id: `QUESTION-${index + 1}`, text, gapAccepted: false }));
+  const relations = selectedIds.flatMap((sourceId) => {
+    const source = sourceFixture.find((item) => item.id === sourceId);
+    if (!source) return [];
+    return source.questionIds.filter((id) => id <= claims.length).map((questionId) => ({
+      id: `REL-${sourceId}-${questionId}`,
+      claimId: `QUESTION-${questionId}`,
+      sourceId,
+      kind: suggestedKind(questionId, source.role),
+      reason: source.interpretation,
+      status: "ready" as const,
+    }));
+  });
+  return { fixtureVersion: 2, claims, relations, confirmed: false, questionSnapshot: question, sourceSnapshot: [...selectedIds] };
 }
 
 export function getEvidenceMapSummary(draft: EvidenceMapDraft, selectedIds: string[]) {
   const connected = new Set(draft.relations.map((relation) => relation.sourceId));
-  const gapCount = draft.claims.filter((claim) => claim.gapAccepted).length;
   return {
     claimCount: draft.claims.length,
     relationCount: draft.relations.length,
-    gapCount,
+    gapCount: draft.claims.filter((claim) => claim.gapAccepted).length,
     unconnectedSourceCount: selectedIds.filter((id) => !connected.has(id)).length,
-    ready: draft.claims.length > 0
-      && draft.claims.every((claim) => claim.gapAccepted || draft.relations.some((relation) => relation.claimId === claim.id))
-      && draft.relations.every((relation) => relation.status === "ready" && relation.reason.trim().length > 0),
+    ready: draft.claims.length > 0 && draft.claims.every((claim) => claim.gapAccepted || draft.relations.some((relation) => relation.claimId === claim.id)),
   };
 }
 
 export function updateEvidenceRelation(draft: EvidenceMapDraft, relationId: string, change: Pick<EvidenceRelation, "kind" | "reason">): EvidenceMapDraft {
-  return {
-    ...draft,
-    confirmed: false,
-    relations: draft.relations.map((relation) => relation.id === relationId ? { ...relation, ...change, status: "ready" } : relation),
-  };
+  return { ...draft, confirmed: false, relations: draft.relations.map((relation) => relation.id === relationId ? { ...relation, ...change, status: "ready" } : relation) };
 }
 
 export function removeEvidenceRelation(draft: EvidenceMapDraft, relationId: string): EvidenceMapDraft {
   return { ...draft, confirmed: false, relations: draft.relations.filter((relation) => relation.id !== relationId) };
 }
 
-export function addEvidenceRelation(draft: EvidenceMapDraft, input: Omit<EvidenceRelation, "id" | "status">): { draft: EvidenceMapDraft; error?: string } {
-  if (draft.relations.some((relation) => relation.claimId === input.claimId && relation.sourceId === input.sourceId)) {
-    return { draft, error: "这条史料已关联到该命题，请编辑原关系。" };
-  }
-  const nextNumber = draft.relations.reduce((highest, relation) => Math.max(highest, Number(relation.id.replace("REL-", "")) || 0), 0) + 1;
-  return {
-    draft: {
-      ...draft,
-      confirmed: false,
-      relations: [...draft.relations, { ...input, id: `REL-${String(nextNumber).padStart(3, "0")}`, status: "ready" }],
-    },
-  };
+export function moveEvidenceRelation(draft: EvidenceMapDraft, relationId: string, claimId: string): EvidenceMapDraft {
+  const moving = draft.relations.find((relation) => relation.id === relationId);
+  if (!moving || moving.claimId === claimId) return draft;
+  if (draft.relations.some((relation) => relation.id !== relationId && relation.claimId === claimId && relation.sourceId === moving.sourceId)) return draft;
+  return { ...draft, confirmed: false, relations: draft.relations.map((relation) => relation.id === relationId ? { ...relation, claimId } : relation) };
 }
 
-export function normalizeEvidenceMapDraft(draft: EvidenceMapDraft, question: string, selectedIds: string[]): EvidenceMapDraft {
-  if (draft.fixtureVersion !== 1) return createEvidenceMapDraft(question, selectedIds);
-  if (draft.sourceSnapshot.length === 0 && draft.relations.length === 0 && selectedIds.length > 0) {
-    return createEvidenceMapDraft(question, selectedIds);
-  }
+export function addEvidenceRelation(draft: EvidenceMapDraft, input: Omit<EvidenceRelation, "id" | "status">): { draft: EvidenceMapDraft; error?: string } {
+  if (draft.relations.some((relation) => relation.claimId === input.claimId && relation.sourceId === input.sourceId)) return { draft, error: "这条史料已经用于该问题。" };
+  return { draft: { ...draft, confirmed: false, relations: [...draft.relations, { ...input, id: crypto.randomUUID(), status: "ready" }] } };
+}
+
+export function normalizeEvidenceMapDraft(draft: EvidenceMapDraft, question: string, selectedIds: string[], subQuestions = defaultSubQuestions): EvidenceMapDraft {
+  if (draft.fixtureVersion !== 2) return createEvidenceMapDraft(question, selectedIds, subQuestions);
   const sourcesChanged = draft.sourceSnapshot.length !== selectedIds.length || draft.sourceSnapshot.some((id) => !selectedIds.includes(id));
-  const changed = draft.questionSnapshot !== question || sourcesChanged;
-  if (!changed) return draft;
-  return {
-    ...draft,
-    confirmed: false,
-    questionSnapshot: question,
-    sourceSnapshot: [...selectedIds],
-    relations: draft.relations.map((relation) => ({ ...relation, status: "needs-review" })),
-  };
+  const questionsChanged = draft.questionSnapshot !== question || draft.claims.map((claim) => claim.text).join("|") !== (subQuestions.length ? subQuestions : [question]).join("|");
+  if (!sourcesChanged && !questionsChanged) return draft;
+  const fresh = createEvidenceMapDraft(question, selectedIds, subQuestions);
+  const previous = new Map(draft.relations.map((relation) => [`${relation.claimId}|${relation.sourceId}`, relation]));
+  return { ...fresh, confirmed: false, relations: fresh.relations.map((relation) => {
+    const existing = previous.get(`${relation.claimId}|${relation.sourceId}`);
+    return existing ? { ...existing, status: "needs-review" as const } : relation;
+  }) };
 }

@@ -1,205 +1,95 @@
 import { useEffect, useMemo, useState } from "react";
-import { createEvidenceMapDraft, type EvidenceRelation } from "./evidence-map";
-import {
-  createActivityAlternative,
-  createLessonDesignDraft,
-  getLessonDesignSummary,
-  moveLessonActivity,
-  normalizeLessonDesignDraft,
-  updateLessonActivity,
-  type ActivityErrors,
-  type LessonActivity,
-  type LessonDesignDraft,
-} from "./lesson-design";
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { createEvidenceMapDraft } from "./evidence-map";
+import { createLessonDesignDraft, getLessonDesignSummary, normalizeLessonDesignDraft, updateLessonActivity, type LessonActivity, type LessonDesignDraft } from "./lesson-design";
 import { sourceFixture } from "./source-discovery";
 import { syntheticFixture } from "./teaching-context";
 import { loadContextDraft, loadEvidenceDraft, loadLessonDraft, loadQuestionDraft, loadSourceDraft, saveLessonDraft } from "./teaching-context-store";
+import { DragHandle, IconButton, InlineNotice, PageActionBar, SelectControl } from "./UiControls";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
-const TASK_REF = "demo-tang-45m";
-const DEFAULT_QUESTION = "依据不同类型的史料，‘盛世’能在多大程度上概括唐朝前期？";
+const DEFAULT_QUESTION = "唐朝为何由盛转衰？";
 const DEFAULT_SOURCE_IDS = sourceFixture.filter((source) => source.recommended).map((source) => source.id);
 const sourceById = new Map(sourceFixture.map((source) => [source.id, source]));
-const difficultyOptions = [
-  "区分材料信息、观点与历史解释",
-  "比较不同类型证据，避免只把材料并列罗列",
-  "把比较结果写成有依据、有限度的历史判断",
-];
+const actionPresets = ["提取并标注史料信息", "比较不同史料或阶段", "归纳多重原因并建立联系", "引用史料形成个人解释"];
 
-type Scenario = "ready" | "loading" | "empty" | "validation" | "failure" | "timeout" | "offline" | "unavailable" | "overtime" | "empty-sources";
-type SaveState = "idle" | "saving" | "saved" | "failed";
-
-function readScenario(): Scenario {
+function readScenario() {
   if (typeof window === "undefined" || !import.meta.env.DEV) return "ready";
-  const value = new URLSearchParams(window.location.search).get("p06-state");
-  return (["loading", "empty", "validation", "failure", "timeout", "offline", "unavailable", "overtime", "empty-sources"] as const).includes(value as Exclude<Scenario, "ready">) ? value as Scenario : "ready";
+  return new URLSearchParams(window.location.search).get("p06-state") || "ready";
 }
 
-function ActivityMovement({ activity, index, isLast, startMinute, selectedIds, errors, showErrors, proposalOpen, onChange, onMove, onRemove, onPropose, onApplyProposal, onDismissProposal }: {
-  activity: LessonActivity;
-  index: number;
-  isLast: boolean;
-  startMinute: number;
-  selectedIds: string[];
-  errors: ActivityErrors;
-  showErrors: boolean;
-  proposalOpen: boolean;
-  onChange: (change: Partial<Omit<LessonActivity, "id">>) => void;
-  onMove: (offset: -1 | 1) => void;
-  onRemove: () => void;
-  onPropose: () => void;
-  onApplyProposal: () => void;
-  onDismissProposal: () => void;
-}) {
-  const endMinute = startMinute + activity.minutes + activity.transitionMinutes;
-  const proposal = createActivityAlternative(activity);
-  const invalid = showErrors && Object.keys(errors).length > 0;
-  return (
-    <article className="lesson-movement" data-activity-invalid={invalid || undefined} data-review={activity.status === "needs-review" || undefined} tabIndex={invalid ? -1 : undefined}>
-      <div className="movement-time" aria-label={`第 ${startMinute} 到 ${endMinute} 分钟`}>
-        <strong>{startMinute}</strong><span aria-hidden="true" /><strong>{endMinute}</strong><small>分钟</small>
-      </div>
-      <div className="movement-body">
-        <header className="movement-heading">
-          <div><p>活动{["一", "二", "三", "四", "五"][index] || index + 1}{activity.teacherEdited ? <span>教师已调整</span> : null}</p><h3>{activity.title}</h3><small>{activity.minutes} 分钟任务 · 含 {activity.transitionMinutes} 分钟转换</small></div>
-          <div className="movement-order" aria-label="调整活动顺序"><button type="button" disabled={index === 0} onClick={() => onMove(-1)}>上移</button><button type="button" disabled={isLast} onClick={() => onMove(1)}>下移</button></div>
-        </header>
-        {activity.status === "needs-review" ? <div className="activity-review" role="status">上游问题或史料关系已变化，请检查这一段后重新确认。</div> : null}
-        <div className="evidence-chain">
-          <section><span>学生动作</span><p>{activity.studentAction}</p></section>
-          <span aria-hidden="true">→</span>
-          <section><span>使用史料</span><ul>{activity.sourceIds.map((id) => <li key={id}>{sourceById.get(id)?.title || "已移出的史料"}</li>)}</ul></section>
-          <span aria-hidden="true">→</span>
-          <section><span>留下成果</span><p>{activity.evidenceProduct}</p></section>
-        </div>
-        {invalid ? <div className="activity-errors" role="alert">{Object.values(errors).map((message) => <p key={message}>{message}</p>)}</div> : null}
-        <details className="activity-editor">
-          <summary>调整这一段</summary>
-          <div className="activity-editor-grid">
-            <label><span>活动名称</span><input value={activity.title} onChange={(event) => onChange({ title: event.target.value })} /></label>
-            <div className="minute-fields"><label><span>任务分钟</span><input type="number" min="1" max="60" value={activity.minutes} onChange={(event) => onChange({ minutes: Number(event.target.value) })} /></label><label><span>转换分钟</span><input type="number" min="0" max="15" value={activity.transitionMinutes} onChange={(event) => onChange({ transitionMinutes: Number(event.target.value) })} /></label></div>
-            <fieldset><legend>绑定史料</legend>{selectedIds.map((id) => <label className="source-check" key={id}><input type="checkbox" checked={activity.sourceIds.includes(id)} onChange={() => onChange({ sourceIds: activity.sourceIds.includes(id) ? activity.sourceIds.filter((sourceId) => sourceId !== id) : [...activity.sourceIds, id] })} /><span>{sourceById.get(id)?.title || id}</span></label>)}</fieldset>
-            <label><span>学生动作</span><textarea rows={3} value={activity.studentAction} onChange={(event) => onChange({ studentAction: event.target.value })} /></label>
-            <label><span>可观察成果</span><textarea rows={3} value={activity.evidenceProduct} onChange={(event) => onChange({ evidenceProduct: event.target.value })} /></label>
-            <label><span>学生最可能卡住的地方</span><select value={activity.difficulty} onChange={(event) => onChange({ difficulty: event.target.value })}>{difficultyOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-            <label><span>对应支架</span><textarea rows={3} value={activity.scaffold} onChange={(event) => onChange({ scaffold: event.target.value })} /></label>
-          </div>
-          <div className="activity-editor-actions"><button type="button" onClick={onPropose}>只生成本段替代建议</button><button type="button" onClick={onRemove}>移除这一段</button></div>
-        </details>
-        {proposalOpen ? <section className="activity-diff" aria-label="替代建议差异"><p className="eyebrow">合成替代建议 · 应用前预览</p><div><span>当前</span><del>{activity.studentAction}</del><span>建议</span><ins>{proposal.studentAction}</ins></div><p>{proposal.scaffold}</p><footer><button type="button" onClick={onDismissProposal}>保留当前内容</button><button type="button" onClick={onApplyProposal}>应用这项建议</button></footer></section> : null}
-      </div>
-    </article>
-  );
+function ActivityCard({ activity, index, startMinute, selectedIds, onChange, onDelete }: { activity: LessonActivity; index: number; startMinute: number; selectedIds: string[]; onChange: (change: Partial<Omit<LessonActivity, "id">>) => void; onDelete: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState(activity);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: activity.id });
+  const style = transform ? { transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`, transition } : { transition };
+  const update = <Key extends keyof LessonActivity>(key: Key, value: LessonActivity[Key]) => setEditDraft((current) => ({ ...current, [key]: value }));
+  const cancel = () => { setEditDraft(activity); setEditing(false); };
+  const save = () => { onChange(editDraft); setEditing(false); };
+  return <article ref={setNodeRef} id={`activity-${activity.id}`} className={`activity-card ${isDragging ? "is-dragging" : ""}`} style={style}>
+    <header className="activity-card-title"><DragHandle label={`拖动活动${index + 1}排序`} {...attributes} {...listeners} /><div><small>活动 {index + 1} · {startMinute}—{startMinute + activity.minutes} 分钟</small>{editing ? <input className="activity-title-input" value={editDraft.title} onChange={(event) => update("title", event.target.value)} /> : <h2>{activity.title}</h2>}</div><div className="activity-card-actions">{editing ? <><button className="ui-button quiet compact" type="button" onClick={cancel}>取消</button><button className="ui-button secondary compact" type="button" onClick={save}>保存修改</button></> : <><button className="ui-button quiet compact" type="button" onClick={() => { setEditDraft(activity); setEditing(true); }}><span>修改</span></button><IconButton icon="delete" tone="danger" label={`删除${activity.title}`} onClick={onDelete} /></>}</div></header>
+    {editing ? <div className="activity-edit-grid"><label><span>活动时间</span><span className="input-suffix"><input type="number" min="1" max="60" value={editDraft.minutes} onChange={(event) => update("minutes", Number(event.target.value))} /><span>分钟</span></span></label><label><span>学生动作</span><SelectControl value={actionPresets.includes(editDraft.studentAction) ? editDraft.studentAction : ""} onChange={(event) => event.target.value && update("studentAction", event.target.value)}><option value="">自定义动作</option>{actionPresets.map((item) => <option key={item}>{item}</option>)}</SelectControl><textarea value={editDraft.studentAction} onChange={(event) => update("studentAction", event.target.value)} /></label><fieldset><legend>使用史料</legend><div className="activity-source-options">{selectedIds.map((id) => <label key={id}><input type="checkbox" checked={editDraft.sourceIds.includes(id)} onChange={() => update("sourceIds", editDraft.sourceIds.includes(id) ? editDraft.sourceIds.filter((item) => item !== id) : [...editDraft.sourceIds, id])} /><span>{sourceById.get(id)?.title}</span></label>)}</div></fieldset><label><span>课堂成果</span><textarea value={editDraft.evidenceProduct} onChange={(event) => update("evidenceProduct", event.target.value)} /></label><label><span>学生最可能卡住</span><textarea value={editDraft.difficulty} onChange={(event) => update("difficulty", event.target.value)} /></label><label><span>教师追问或简化问题</span><textarea value={editDraft.scaffold} onChange={(event) => update("scaffold", event.target.value)} /></label></div> : <dl className="activity-read-grid"><div><dt>使用史料</dt><dd><ul>{activity.sourceIds.map((id) => <li key={id}>{sourceById.get(id)?.title || id}</li>)}</ul></dd></div><div><dt>学生动作</dt><dd>{activity.studentAction}</dd></div><div><dt>课堂成果</dt><dd>{activity.evidenceProduct}</dd></div><div className="activity-support"><dt>学生最可能卡住</dt><dd>{activity.difficulty}</dd><dt>教师追问或简化问题</dt><dd>{activity.scaffold}</dd></div></dl>}
+  </article>;
 }
 
-export function LessonDesignPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onNext?: () => void }) {
+export function LessonDesignPage({ taskId = "demo-tang-45m", onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onNext = () => undefined }: { taskId?: string; onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
-  const defaultSourceIds = scenario === "empty-sources" ? [] : DEFAULT_SOURCE_IDS;
-  const defaultEvidence = createEvidenceMapDraft(DEFAULT_QUESTION, defaultSourceIds);
-  const defaultDraft = createLessonDesignDraft(DEFAULT_QUESTION, defaultSourceIds, defaultEvidence.relations);
-  const scenarioDraft = scenario === "empty" ? { ...defaultDraft, activities: [] } : scenario === "validation" ? updateLessonActivity(defaultDraft, "ACT-002", { evidenceProduct: "" }) : scenario === "overtime" ? updateLessonActivity(defaultDraft, "ACT-001", { minutes: 20 }) : defaultDraft;
+  const storageKey = scenario === "ready" ? taskId : `${taskId}:scenario:${scenario}`;
+  const defaultEvidence = createEvidenceMapDraft(DEFAULT_QUESTION, DEFAULT_SOURCE_IDS);
   const [question, setQuestion] = useState(DEFAULT_QUESTION);
+  const [grade, setGrade] = useState(syntheticFixture.grade);
   const [availableMinutes, setAvailableMinutes] = useState(45);
-  const [selectedIds, setSelectedIds] = useState(defaultSourceIds);
-  const [relations, setRelations] = useState<EvidenceRelation[]>(defaultEvidence.relations);
-  const [draft, setDraft] = useState<LessonDesignDraft>(scenarioDraft);
-  const [loading, setLoading] = useState(() => typeof window !== "undefined" && (scenario === "ready" || scenario === "loading"));
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const [feedback, setFeedback] = useState("");
-  const [showErrors, setShowErrors] = useState(scenario === "validation" || scenario === "overtime");
-  const [proposalActivityId, setProposalActivityId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState(DEFAULT_SOURCE_IDS);
+  const [draft, setDraft] = useState<LessonDesignDraft>(() => createLessonDesignDraft(DEFAULT_QUESTION, DEFAULT_SOURCE_IDS, defaultEvidence.relations));
+  const [loading, setLoading] = useState(scenario === "ready");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const [removed, setRemoved] = useState<{ activity: LessonActivity; index: number } | null>(null);
-  const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
+  const [activeTitle, setActiveTitle] = useState("");
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const summary = getLessonDesignSummary(draft, availableMinutes);
 
   useEffect(() => {
-    if (scenario === "loading") { const timer = window.setTimeout(() => setLoading(false), 5000); return () => window.clearTimeout(timer); }
     if (scenario !== "ready") { setLoading(false); return; }
     void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey), loadSourceDraft(storageKey), loadEvidenceDraft(storageKey), loadLessonDraft(storageKey)]).then(([context, questionDraft, sourceDraft, evidenceDraft, lessonDraft]) => {
       const nextQuestion = questionDraft?.centralQuestion || DEFAULT_QUESTION;
-      const nextSources = sourceDraft?.selectedIds || DEFAULT_SOURCE_IDS;
-      const nextRelations = evidenceDraft?.relations || createEvidenceMapDraft(nextQuestion, nextSources).relations;
-      setQuestion(nextQuestion);
-      setAvailableMinutes(Number(context?.minutes || syntheticFixture.minutes));
-      setSelectedIds(nextSources);
-      setRelations(nextRelations);
+      const nextSources = sourceDraft?.selectedIds?.length ? sourceDraft.selectedIds : DEFAULT_SOURCE_IDS;
+      const nextRelations = evidenceDraft?.relations || createEvidenceMapDraft(nextQuestion, nextSources, questionDraft?.subQuestions).relations;
+      setQuestion(nextQuestion); setGrade(context?.grade || syntheticFixture.grade); setAvailableMinutes(Number(context?.minutes || syntheticFixture.minutes)); setSelectedIds(nextSources);
       setDraft(lessonDraft ? normalizeLessonDesignDraft(lessonDraft, nextQuestion, nextSources, nextRelations) : createLessonDesignDraft(nextQuestion, nextSources, nextRelations));
     }, () => setSaveState("failed")).finally(() => setLoading(false));
   }, [scenario, storageKey]);
-
   useEffect(() => {
-    if (loading || scenario === "unavailable" || selectedIds.length === 0) return;
+    if (loading) return;
     setSaveState("saving");
     const timer = window.setTimeout(() => void saveLessonDraft(storageKey, draft).then(() => setSaveState("saved"), () => setSaveState("failed")), 350);
     return () => window.clearTimeout(timer);
-  }, [draft, loading, scenario, selectedIds.length, storageKey]);
-
+  }, [draft, loading, storageKey]);
   if (scenario === "unavailable") return <TaskUnavailable onBack={onBack} />;
 
-  const changeActivity = (id: string, change: Partial<Omit<LessonActivity, "id">>) => { setDraft((current) => updateLessonActivity(current, id, change)); setFeedback(""); };
-  const removeActivity = (activity: LessonActivity, index: number) => { setDraft((current) => ({ ...current, confirmed: false, activities: current.activities.filter((item) => item.id !== activity.id) })); setRemoved({ activity, index }); setFeedback("这一段已移除，可撤销。"); };
-  const undoRemove = () => {
-    if (!removed) return;
-    setDraft((current) => { const activities = [...current.activities]; activities.splice(removed.index, 0, removed.activity); return { ...current, confirmed: false, activities }; });
-    setRemoved(null); setFeedback("已恢复刚才移除的活动。");
-  };
-  const applyProposal = (activity: LessonActivity) => { const proposal = createActivityAlternative(activity); changeActivity(activity.id, proposal); setProposalActivityId(null); setFeedback("替代建议已应用到这一段，其他活动没有改变。"); };
-  const rebuild = () => { setDraft(createLessonDesignDraft(question, selectedIds, relations)); setFeedback("已根据当前问题和证据关系排出三段课堂流程。"); };
-  const confirm = () => {
-    setShowErrors(true);
-    if (!summary.ready) {
-      setFeedback(summary.overBy ? `当前超出 ${summary.overBy} 分钟，请先调整时长。` : "还有活动信息需要处理，已定位到第一处问题。");
-      requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-activity-invalid], .time-ledger[data-over]")?.focus());
-      return;
-    }
-    const confirmedDraft = { ...draft, confirmed: true };
-    setDraft(confirmedDraft); setSaveState("saving");
-    void saveLessonDraft(storageKey, confirmedDraft).then(() => { setSaveState("saved"); onNext(); }, () => { setSaveState("failed"); setFeedback("课堂流程已确认，但本机保存失败。当前内容仍保留在本页。"); });
-  };
-
+  const change = (id: string, value: Partial<Omit<LessonActivity, "id">>) => setDraft((current) => updateLessonActivity(current, id, value));
+  const remove = (activity: LessonActivity, index: number) => { setDraft((current) => ({ ...current, activities: current.activities.filter((item) => item.id !== activity.id), confirmed: false })); setRemoved({ activity, index }); };
+  const newActivity = (): LessonActivity => ({ id: crypto.randomUUID(), title: "新的课堂活动", minutes: 5, transitionMinutes: 0, sourceIds: selectedIds.slice(0, 1), studentAction: "提取并标注史料信息", evidenceProduct: "一项可观察的证据成果。", difficulty: "学生可能停留在复述材料。", scaffold: "追问：这条材料怎样支持当前问题？", teacherEdited: true, status: "ready" });
+  const addActivity = (position: "start" | "end") => setDraft((current) => ({ ...current, confirmed: false, activities: position === "start" ? [newActivity(), ...current.activities] : [...current.activities, newActivity()] }));
+  const onDragStart = ({ active }: DragStartEvent) => setActiveTitle(draft.activities.find((item) => item.id === active.id)?.title || "课堂活动");
+  const onDragEnd = ({ active, over }: DragEndEvent) => { setActiveTitle(""); if (!over || active.id === over.id) return; setDraft((current) => { const from = current.activities.findIndex((item) => item.id === active.id); const to = current.activities.findIndex((item) => item.id === over.id); return from < 0 || to < 0 ? current : { ...current, confirmed: false, activities: arrayMove(current.activities, from, to) }; }); };
+  const confirm = () => { if (!summary.ready) return; const next = { ...draft, confirmed: true }; setDraft(next); void saveLessonDraft(storageKey, next).then(onNext, () => setSaveState("failed")); };
+  const longest = [...draft.activities].sort((a, b) => b.minutes - a.minutes)[0];
   let elapsed = 0;
-  return (
-    <WorkbenchShell currentStep={4} reachedStep={4} currentLabel="设计活动" nextLabel="评价与检查" onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 1 ? onReturnQuestion() : step === 2 ? onReturnSources() : step === 3 ? onReturnEvidence() : undefined}>
-      <main className="context-main lesson-main" id="main-content" tabIndex={-1}>
-        <header className="page-heading"><div><p className="eyebrow">把证据关系排成一堂可实施的课</p><h1>设计活动</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
-        <p className="page-intro">系统已排出一版 {availableMinutes} 分钟课堂流程。你只需检查节奏、难度和支架。</p>
-        <div className="lesson-context-line"><span>{syntheticFixture.grade} · {availableMinutes} 分钟 · 盛唐主题</span><button type="button" onClick={onReturnContext}>查看详情</button></div>
-        <section className="lesson-question" aria-label="当前中心问题"><p>{question}</p><button type="button" onClick={onReturnQuestion}>查看问题</button></section>
-        <details className="fixture-note"><summary>预生成合成活动建议 · 可逐段修改</summary><p>活动、困难和支架是合成演示建议，不是实时 AI 结果；绑定史料仍来自 P03 登记的官方公开来源。</p></details>
 
-        {scenario === "offline" ? <div className="status-banner warning" role="status"><strong>当前离线</strong><span>仍可编辑并保存本机草稿；不会假装已调用在线建议。</span></div> : null}
-        {scenario === "failure" || scenario === "timeout" ? <section className="system-failure" role="alert"><strong>{scenario === "timeout" ? "替代建议已等待 30 秒" : "暂时无法生成新的活动建议"}</strong><p>现有课堂排演稿和教师编辑全部保留，可以继续手工调整。</p><small>追踪编号：DEMO-P06-001</small></section> : null}
-        {saveState === "failed" ? <div className="status-banner warning" role="status"><strong>本地保存不可用</strong><span>当前编辑仍保留在此页，关闭后可能无法恢复。</span></div> : null}
-        {feedback ? <div className="selection-feedback lesson-feedback" role="status">{feedback}{removed ? <button type="button" onClick={undoRemove}>撤销</button> : null}</div> : null}
-
-        {loading ? <div className="lesson-skeleton" aria-busy="true" aria-label="正在整理课堂流程"><span /><span /></div> : selectedIds.length === 0 ? (
-          <section className="source-empty"><p className="eyebrow">还没有本课史料组</p><h2>先选择并组织证据，再设计活动</h2><p>系统不会生成脱离史料也能完成的课堂任务。</p><button className="context-primary" type="button" onClick={onReturnSources}>返回查找史料</button></section>
-        ) : draft.activities.length === 0 ? (
-          <section className="lesson-empty"><p className="eyebrow">课堂排演稿为空</p><h2>从已确认的证据关系开始</h2><p>系统会建立三段可编辑流程，不会写入历史结论或覆盖上游内容。</p><button className="context-primary" type="button" onClick={rebuild}>排出三段课堂流程</button></section>
-        ) : (
-          <div className="lesson-workspace">
-            <section className="lesson-score" aria-labelledby="lesson-score-heading">
-              <header><div><p className="eyebrow">连续计入任务与转换时间</p><h2 id="lesson-score-heading">课堂排演稿</h2></div><span>{draft.confirmed ? "已确认" : "待确认"}</span></header>
-              <div className="score-key" aria-hidden="true"><span>学生动作</span><span>使用史料</span><span>留下成果</span></div>
-              {draft.activities.map((activity, index) => {
-                const startMinute = elapsed;
-                elapsed += activity.minutes + activity.transitionMinutes;
-                return <ActivityMovement key={activity.id} activity={activity} index={index} isLast={index === draft.activities.length - 1} startMinute={startMinute} selectedIds={selectedIds} errors={summary.errors[activity.id]} showErrors={showErrors} proposalOpen={proposalActivityId === activity.id} onChange={(change) => changeActivity(activity.id, change)} onMove={(offset) => { setDraft((current) => moveLessonActivity(current, activity.id, offset)); setFeedback("活动顺序已调整。"); }} onRemove={() => removeActivity(activity, index)} onPropose={() => setProposalActivityId(activity.id)} onDismissProposal={() => setProposalActivityId(null)} onApplyProposal={() => applyProposal(activity)} />;
-              })}
-            </section>
-
-            <aside className="time-ledger" data-over={summary.overBy > 0 || undefined} tabIndex={summary.overBy > 0 ? -1 : undefined} aria-labelledby="time-ledger-heading">
-              <header><p className="eyebrow">本课可用 {availableMinutes} 分钟</p><h2 id="time-ledger-heading">课堂时间账簿</h2></header>
-              <p className="time-total"><strong>{summary.totalMinutes}</strong><span>/ {availableMinutes} 分钟</span></p>
-              <dl><div><dt>任务</dt><dd>{summary.taskMinutes} 分钟</dd></div><div><dt>转换</dt><dd>{summary.transitionMinutes} 分钟</dd></div><div><dt>史料</dt><dd>{summary.sourceCount} 条</dd></div></dl>
-              {summary.overBy ? <div className="time-warning" role="alert">超出 {summary.overBy} 分钟。请缩短任务或转换时间，不能把转换时间隐藏起来。</div> : summary.remaining ? <div className="time-remaining">尚余 {summary.remaining} 分钟，可保留机动或补充收束。</div> : <div className="time-balanced">时间已完整排入课堂。</div>}
-              <section className="difficulty-note"><strong>当前难点</strong><p>区分材料信息、观点与解释</p><small>不记录学生姓名、班级号或个人画像。</small></section>
-              <button className="context-primary lesson-next" type="button" onClick={confirm}>{summary.overBy ? `先调整 ${summary.overBy} 分钟` : "确认课堂流程"}</button>
-              <p className="next-step-note">下一步：评价与检查（尚未实现）</p>
-            </aside>
-          </div>
-        )}
-      </main>
-    </WorkbenchShell>
-  );
+  return <WorkbenchShell currentStep={4} reachedStep={4} currentLabel="设计活动" nextLabel="评价量规" onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 1 ? onReturnQuestion() : step === 2 ? onReturnSources() : step === 3 ? onReturnEvidence() : undefined}>
+    <main className="context-main lesson-main" id="main-content">
+      <header className="page-heading"><div><p className="eyebrow">把证据关系排成一堂可实施的课</p><h1>设计活动</h1></div><p className={`save-status ${saveState}`}>{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
+      <p className="page-intro">系统已形成可直接调整的课堂节奏。拖动左侧把手重排；修改活动时一次完成全部内容。</p>
+      <div className="lesson-context-line"><span>{draft.activities.length} 项活动 · {summary.totalMinutes}/{availableMinutes} 分钟 · {grade}</span><button className="ui-button secondary compact" type="button" onClick={onReturnContext}>查看教学情境</button></div>
+      <div className="lesson-thread"><span>整课线索</span><strong>{question}</strong></div>
+      {summary.overBy ? <div className="time-guidance" role="alert"><strong>当前超出 {summary.overBy} 分钟</strong><p>建议先将“{longest?.title}”缩短 {summary.overBy} 分钟，或删除一项重复活动。</p></div> : null}
+      {summary.reviewCount ? <InlineNotice tone="warning">上游内容已有变化，建议浏览相关活动；现有设计仍可继续使用。</InlineNotice> : null}
+      {removed ? <InlineNotice actionLabel="撤销" onAction={() => { setDraft((current) => { const activities = [...current.activities]; activities.splice(removed.index, 0, removed.activity); return { ...current, activities }; }); setRemoved(null); }}>已删除“{removed.activity.title}”</InlineNotice> : null}
+      <button className="add-module" type="button" onClick={() => addActivity("start")}>在开头添加活动</button>
+      {loading ? <div className="context-skeleton" aria-busy="true"><span /><span /></div> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveTitle("")}><SortableContext items={draft.activities.map((activity) => activity.id)} strategy={verticalListSortingStrategy}><section className="activity-stack">{draft.activities.map((activity, index) => { const start = elapsed; elapsed += activity.minutes; return <ActivityCard key={activity.id} activity={activity} index={index} startMinute={start} selectedIds={selectedIds} onChange={(value) => change(activity.id, value)} onDelete={() => remove(activity, index)} />; })}</section></SortableContext><DragOverlay>{activeTitle ? <div className="drag-overlay">{activeTitle}</div> : null}</DragOverlay></DndContext>}
+      <button className="add-module" type="button" onClick={() => addActivity("end")}>在末尾添加活动</button>
+      <PageActionBar status={`${draft.activities.length} 项活动 · ${summary.totalMinutes}/${availableMinutes} 分钟`} detail={summary.ready ? `${summary.sourceCount} 条史料已进入课堂` : "按上方引导补齐活动内容或调整时间"}><button className="ui-button primary" type="button" disabled={!summary.ready} onClick={confirm}>设计评价量规</button></PageActionBar>
+    </main>
+  </WorkbenchShell>;
 }

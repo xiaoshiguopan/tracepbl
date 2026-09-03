@@ -15,6 +15,9 @@ export type TeachingContextDraft = {
   lessonTypes: string[];
   minutes: string;
   inquiryQuestion: string;
+  priorKnowledge: string;
+  learningNeeds: string[];
+  profileNote: string;
 };
 
 export type FieldErrors = Partial<Record<keyof TeachingContextDraft, string>>;
@@ -26,7 +29,10 @@ export const syntheticFixture: TeachingContextDraft = {
   lesson: "第 6 课《从隋唐盛世到五代十国》",
   lessonTypes: ["新授", "微型 PBL"],
   minutes: "45",
-  inquiryQuestion: "依据哪些史料，我们可以把唐朝前期称为“盛世”？",
+  inquiryQuestion: "唐朝由盛转衰的原因",
+  priorKnowledge: "初中已接触隋唐基本史实、贞观之治和开元盛世",
+  learningNeeds: ["区分史料内容与历史解释", "区分长期原因、转折因素与直接原因"],
+  profileNote: "",
 };
 
 export function normalizeTeachingContextDraft(value: TeachingContextDraft) {
@@ -38,6 +44,9 @@ export function normalizeTeachingContextDraft(value: TeachingContextDraft) {
     lessonTypes: Array.isArray(value.lessonTypes) ? value.lessonTypes : [],
     minutes: value.minutes,
     inquiryQuestion: typeof value.inquiryQuestion === "string" ? value.inquiryQuestion : "",
+    priorKnowledge: typeof value.priorKnowledge === "string" ? value.priorKnowledge : syntheticFixture.priorKnowledge,
+    learningNeeds: Array.isArray(value.learningNeeds) ? value.learningNeeds : [...syntheticFixture.learningNeeds],
+    profileNote: typeof value.profileNote === "string" ? value.profileNote : "",
   } satisfies TeachingContextDraft;
 }
 
@@ -48,6 +57,10 @@ export function isSameTeachingContext(left: TeachingContextDraft, right: Teachin
     && left.lesson === right.lesson
     && left.minutes === right.minutes
     && left.inquiryQuestion === right.inquiryQuestion
+    && left.priorKnowledge === right.priorKnowledge
+    && left.profileNote === right.profileNote
+    && left.learningNeeds.length === right.learningNeeds.length
+    && left.learningNeeds.every((value, index) => value === right.learningNeeds[index])
     && left.lessonTypes.length === right.lessonTypes.length
     && left.lessonTypes.every((value, index) => value === right.lessonTypes[index]);
 }
@@ -70,15 +83,18 @@ export function validateTeachingContext(draft: TeachingContextDraft): FieldError
   }
   if (draft.inquiryQuestion.trim().length > 160) errors.inquiryQuestion = "初步探究方向请控制在 160 字以内。";
 
-  const freeText = [draft.textbook, draft.lesson, draft.inquiryQuestion].join(" ");
+  if (draft.profileNote.length > 240) errors.profileNote = "补充说明请控制在 240 字以内。";
+  const freeText = [draft.textbook, draft.lesson, draft.inquiryQuestion, draft.profileNote].join(" ");
   if (sensitivePattern.test(freeText)) {
-    errors.inquiryQuestion = "请移除姓名、联系方式或其他个人信息。";
+    if (sensitivePattern.test(draft.profileNote)) errors.profileNote = "请移除姓名、联系方式或其他个人信息。";
+    else errors.inquiryQuestion = "请移除姓名、联系方式或其他个人信息。";
   }
   return errors;
 }
 
 export function getContextConflict(draft: TeachingContextDraft) {
   const minutes = Number(draft.minutes);
+  if (minutes > 0 && minutes <= 10) return "当前课时更适合处理一个小问题。建议只选择 1—2 条史料，完成一次提取信息或比较判断。";
   if (draft.lessonTypes.includes("微型 PBL") && minutes > 0 && minutes < 30) {
     return "当前课时少于 30 分钟。建议缩小探究范围，或取消“微型 PBL”课型。";
   }

@@ -1,88 +1,58 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { inputTypes, type InputType, type QuestionErrors, type QuestionProposal, type QuestionWorkspaceDraft } from "./question-workspace";
+import { DragHandle, IconButton, PageActionBar, SelectControl } from "./UiControls";
 
-function QuestionFieldError({ field, errors }: { field: keyof QuestionErrors; errors: QuestionErrors }) {
-  return errors[field] ? <p className="field-error" id={`question-${field}-error`}>{errors[field]}</p> : null;
+function ErrorText({ field, errors }: { field: keyof QuestionErrors; errors: QuestionErrors }) {
+  return errors[field] ? <p className="field-error">{errors[field]}</p> : null;
 }
 
-export function UnderstandingLine({ draft, errors, onTypeChange }: { draft: QuestionWorkspaceDraft; errors: QuestionErrors; onTypeChange: (value: InputType) => void }) {
-  return (
-    <fieldset className="field-group question-type" aria-describedby={errors.inputType ? "question-inputType-error" : undefined}>
-      <legend>我理解你想探究的是</legend>
-      <div className="question-type-grid">
-        {inputTypes.map((type) => <label className="choice-card" key={type}><input type="radio" name="inputType" value={type} checked={draft.inputType === type} onChange={() => onTypeChange(type)} /><span>{type}</span></label>)}
-      </div>
-      <small>{draft.typeReason}</small>
-      <QuestionFieldError field="inputType" errors={errors} />
-    </fieldset>
-  );
+export function UnderstandingLine({ draft, onTypeChange }: { draft: QuestionWorkspaceDraft; errors: QuestionErrors; onTypeChange: (value: InputType) => void }) {
+  return <label className="inference-line"><span>问题类型</span><SelectControl value={draft.inputType} onChange={(event) => onTypeChange(event.target.value as InputType)}>{inputTypes.map((type) => <option key={type}>{type}</option>)}</SelectControl><small>{draft.typeReason}</small></label>;
 }
 
 export function ClarifyingChoice({ current, primary, alternative, onChoose }: { current: string; primary: QuestionProposal; alternative: QuestionProposal; onChoose: (proposal: QuestionProposal) => void }) {
-  const choices = [
-    { proposal: primary, label: "判断边界", note: "研究这个判断能在多大程度上成立。" },
-    { proposal: alternative, label: "比较视角", note: "研究不同对象、群体或史料的异同。" },
-  ];
-  return (
-    <fieldset className="field-group question-focus">
-      <legend>这节课更侧重</legend>
-      <div className="question-focus-grid">
-        {choices.map(({ proposal, label, note }) => <label className="choice-card" key={proposal.id}><input type="radio" name="questionFocus" value={proposal.id} checked={current === proposal.id} onChange={() => onChoose(proposal)} /><span><strong>{label}</strong><small>{note}</small></span></label>)}
-      </div>
-    </fieldset>
-  );
+  return <div className="scale-choice" role="group" aria-label="问题规模"><button className={current === "whole-lesson" ? "selected" : ""} type="button" onClick={() => onChoose(primary)}><strong>整课线索</strong><span>拆成2—4个递进问题</span></button><button className={current === "single" ? "selected" : ""} type="button" onClick={() => onChoose(alternative)}><strong>单个问题</strong><span>直接寻找3—5条史料</span></button></div>;
 }
 
-export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm, onNext }: { draft: QuestionWorkspaceDraft; errors: QuestionErrors; disabled: boolean; onChange: (field: "centralQuestion" | "evidenceOutcome", value: string) => void; onConfirm: () => void; onNext: () => void }) {
+function SortableSubQuestion({ id, index, question, onChange, onRemove }: { id: string; index: number; question: string; onChange: (value: string) => void; onRemove: () => void }) {
   const [editing, setEditing] = useState(false);
-  const [questionValue, setQuestionValue] = useState(draft.centralQuestion);
-  const [evidenceValue, setEvidenceValue] = useState(draft.evidenceOutcome);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = transform ? { transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`, transition } : { transition };
+  return <li ref={setNodeRef} className={isDragging ? "is-dragging" : ""} style={style}><DragHandle label={`拖动子问题${index + 1}排序`} {...attributes} {...listeners} /><span>{index + 1}</span>{editing ? <input autoFocus value={question} onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") setEditing(false); }} /> : <p>{question}</p>}<div className="icon-actions"><IconButton icon={editing ? "check" : "edit"} label={editing ? `完成修改子问题${index + 1}` : `修改子问题${index + 1}`} onClick={() => setEditing((value) => !value)} /><IconButton icon="delete" tone="danger" label={`删除子问题${index + 1}`} onClick={onRemove} /></div></li>;
+}
 
-  useEffect(() => {
-    if (!errors.centralQuestion && !errors.evidenceOutcome) return;
-    setQuestionValue(draft.centralQuestion);
-    setEvidenceValue(draft.evidenceOutcome);
-    setEditing(true);
-  }, [draft.centralQuestion, draft.evidenceOutcome, errors.centralQuestion, errors.evidenceOutcome]);
-
-  const startEditing = () => {
-    setQuestionValue(draft.centralQuestion);
-    setEvidenceValue(draft.evidenceOutcome);
-    setEditing(true);
+export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm, onNext }: {
+  draft: QuestionWorkspaceDraft; errors: QuestionErrors; disabled: boolean;
+  onChange: (field: "centralQuestion" | "evidenceOutcome" | "subQuestions", value: string | string[]) => void;
+  onConfirm: () => void; onNext: () => void;
+}) {
+  const [editingQuestion, setEditingQuestion] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const updateSub = (index: number, value: string) => onChange("subQuestions", draft.subQuestions.map((item, itemIndex) => itemIndex === index ? value : item));
+  const itemIds = draft.subQuestions.map((_, index) => `sub-${index}`);
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const from = itemIds.indexOf(String(active.id));
+    const to = itemIds.indexOf(String(over.id));
+    if (from >= 0 && to >= 0) onChange("subQuestions", arrayMove(draft.subQuestions, from, to));
   };
-
-  const finishEditing = () => {
-    onChange("centralQuestion", questionValue);
-    if (errors.evidenceOutcome) onChange("evidenceOutcome", evidenceValue);
-    setEditing(false);
-  };
-
   return (
-    <section className="question-editor" aria-labelledby="question-editor-heading">
-      <label className="field field-featured" data-invalid={Boolean(errors.centralQuestion)}>
-        <span id="question-editor-heading">中心问题</span>
-        {editing ? <textarea name="centralQuestion" maxLength={180} rows={3} value={questionValue} autoFocus aria-invalid={Boolean(errors.centralQuestion)} aria-describedby={errors.centralQuestion ? "question-centralQuestion-error" : undefined} onChange={(event) => setQuestionValue(event.target.value)} /> : <span className="question-value">{draft.centralQuestion}</span>}
-        <QuestionFieldError field="centralQuestion" errors={errors} />
-      </label>
-      {editing && errors.evidenceOutcome ? <label className="field" data-invalid="true"><span>学生如何使用证据</span><textarea name="evidenceOutcome" maxLength={240} rows={3} value={evidenceValue} aria-invalid="true" aria-describedby="question-evidenceOutcome-error" onChange={(event) => setEvidenceValue(event.target.value)} /><QuestionFieldError field="evidenceOutcome" errors={errors} /></label> : null}
-      <div className="act-actions question-actions">
-        {editing ? <div className="question-edit-actions"><button type="button" onClick={() => setEditing(false)}>取消修改</button><button type="button" onClick={finishEditing}>完成修改</button></div> : <button type="button" onClick={startEditing}>修改中心问题</button>}
-        <button className="context-primary" type="button" disabled={disabled || editing} onClick={draft.confirmed ? onNext : onConfirm}>{draft.confirmed ? "进入查找史料" : editing ? "先完成修改" : "确认探究问题"}</button>
-      </div>
+    <section className="question-editor">
+      <div className="inline-title"><div><span>中心问题</span>{editingQuestion ? <textarea name="centralQuestion" rows={2} value={draft.centralQuestion} onChange={(event) => onChange("centralQuestion", event.target.value)} /> : <h2>{draft.centralQuestion}</h2>}</div><IconButton icon={editingQuestion ? "check" : "edit"} label={editingQuestion ? "完成修改中心问题" : "修改中心问题"} onClick={() => setEditingQuestion((value) => !value)} /></div>
+      <ErrorText field="centralQuestion" errors={errors} />
+      {draft.focus === "whole-lesson" ? <section className="subquestion-editor"><header><div><span>递进子问题</span><small>拖动左侧把手即可调整课堂推进顺序</small></div><IconButton icon="add" label="添加子问题" onClick={() => onChange("subQuestions", [...draft.subQuestions, "新的子问题？"])} /></header><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}><SortableContext items={itemIds} strategy={verticalListSortingStrategy}><ol>{draft.subQuestions.map((question, index) => <SortableSubQuestion key={itemIds[index]} id={itemIds[index]} index={index} question={question} onChange={(value) => updateSub(index, value)} onRemove={() => onChange("subQuestions", draft.subQuestions.filter((_, itemIndex) => itemIndex !== index))} />)}</ol></SortableContext></DndContext></section> : null}
+      <label className="field outcome-field"><span>学生最终交付什么</span><textarea name="evidenceOutcome" rows={2} value={draft.evidenceOutcome} onChange={(event) => onChange("evidenceOutcome", event.target.value)} /><ErrorText field="evidenceOutcome" errors={errors} /></label>
+      <PageActionBar status={draft.focus === "whole-lesson" ? `${draft.subQuestions.length} 个子问题已形成` : "按单个问题查找史料"} detail="后续仍可返回查看和修改"><button className="ui-button primary" type="button" disabled={disabled || editingQuestion} onClick={draft.confirmed ? onNext : onConfirm}>查找相关史料</button></PageActionBar>
     </section>
   );
 }
 
-export function QuestionBrief({ draft, omission }: { draft: QuestionWorkspaceDraft; omission: string }) {
-  return (
-    <>
-      <p className="eyebrow">当前探究问题</p>
-      <h2>{draft.centralQuestion}</h2>
-      <dl>
-        <div><dt>学生如何使用证据</dt><dd>{draft.evidenceOutcome}</dd></div>
-        <div><dt>课堂边界</dt><dd>{draft.scopeBoundary}<small>{omission}</small></dd></div>
-      </dl>
-      <p className="question-next">{draft.confirmed ? "这一版已由教师确认" : "确认后进入查找史料"}</p>
-    </>
-  );
+export function QuestionBrief({ draft }: { draft: QuestionWorkspaceDraft; omission: string }) {
+  return <><p className="eyebrow">课堂线索</p><h2>{draft.centralQuestion}</h2>{draft.subQuestions.length ? <ol>{draft.subQuestions.map((question) => <li key={question}>{question}</li>)}</ol> : null}<p className="question-next">安史之乱是重要转折，但不等于唐朝立即灭亡。</p></>;
 }

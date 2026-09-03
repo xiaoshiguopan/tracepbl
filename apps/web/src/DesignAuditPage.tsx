@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { auditCategories, createAuditDraft, acceptAuditRecommendation, getAuditSummary, normalizeAuditDraft, rerunAudit, updateAuditReason, type AuditDraft, type AuditFinding, type AuditInput } from "./design-audit";
 import { createEvidenceMapDraft } from "./evidence-map";
-import { createLessonDesignDraft } from "./lesson-design";
-import { createRubricDraft } from "./rubric-design";
+import { createLessonDesignDraft, normalizeLessonDesignDraft } from "./lesson-design";
+import { createRubricDraft, normalizeRubricDraft } from "./rubric-design";
 import { sourceFixture } from "./source-discovery";
 import { syntheticFixture } from "./teaching-context";
 import { loadAuditDraft, loadContextDraft, loadEvidenceDraft, loadLessonDraft, loadQuestionDraft, loadRubricDraft, loadSourceDraft, saveAuditDraft } from "./teaching-context-store";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
+import { InlineNotice, PageActionBar } from "./UiControls";
 
-const TASK_REF = "demo-tang-45m";
-const DEFAULT_QUESTION = "依据不同类型的史料，‘盛世’能在多大程度上概括唐朝前期？";
+const DEFAULT_QUESTION = "唐朝为何由盛转衰？";
 const DEFAULT_SOURCE_IDS = sourceFixture.filter((source) => source.recommended).map((source) => source.id);
 const defaultEvidence = createEvidenceMapDraft(DEFAULT_QUESTION, DEFAULT_SOURCE_IDS);
 const defaultLesson = createLessonDesignDraft(DEFAULT_QUESTION, DEFAULT_SOURCE_IDS, defaultEvidence.relations);
@@ -61,16 +61,16 @@ function AuditFindingRow({ finding, error, onAccept, onReasonChange, onReturnSou
   );
 }
 
-export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson, onReturnRubric, onNext = () => undefined }: { onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void; onReturnRubric: () => void; onNext?: () => void }) {
+export function DesignAuditPage({ taskId = "demo-tang-45m", onBack, onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson, onReturnRubric, onNext = () => undefined }: { taskId?: string; onBack: () => void; onReturnContext: () => void; onReturnQuestion: () => void; onReturnSources: () => void; onReturnEvidence: () => void; onReturnLesson: () => void; onReturnRubric: () => void; onNext?: () => void }) {
   const scenario = useMemo(readScenario, []);
   const [input, setInput] = useState<AuditInput>(scenario === "missing-upstream" ? { ...defaultInput, rubric: { ...defaultRubric, dimensions: [] } } : defaultInput);
   const [draft, setDraft] = useState<AuditDraft>(() => createScenarioDraft(scenario));
-  const [classLine, setClassLine] = useState(`${syntheticFixture.grade} · ${syntheticFixture.minutes} 分钟 · 盛唐主题`);
+  const [classLine, setClassLine] = useState(`${syntheticFixture.grade} · ${syntheticFixture.minutes} 分钟 · 唐朝由盛转衰`);
   const [loading, setLoading] = useState(() => typeof window !== "undefined" && (scenario === "ready" || scenario === "loading"));
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [feedback, setFeedback] = useState(scenario === "success" ? "设计检查已完成，可以进入最终确认与导出。" : "");
   const [showErrors, setShowErrors] = useState(scenario === "validation");
-  const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
+  const storageKey = scenario === "ready" ? taskId : `${taskId}:scenario:${scenario}`;
   const summary = getAuditSummary(draft);
   const hasReasonErrors = Object.keys(summary.reasonErrors).length > 0;
   const missingUpstream = input.rubric.dimensions.length === 0 || input.lesson.activities.length === 0 || input.selectedSourceIds.length === 0;
@@ -79,14 +79,13 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
     if (scenario === "loading") { const timer = window.setTimeout(() => setLoading(false), 5000); return () => window.clearTimeout(timer); }
     if (scenario !== "ready") { setLoading(false); return; }
     void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey), loadSourceDraft(storageKey), loadEvidenceDraft(storageKey), loadLessonDraft(storageKey), loadRubricDraft(storageKey), loadAuditDraft(storageKey)]).then(([context, questionDraft, sourceDraft, evidenceDraft, lessonDraft, rubricDraft, auditDraft]) => {
-      const nextInput: AuditInput = {
-        question: questionDraft?.centralQuestion || DEFAULT_QUESTION,
-        selectedSourceIds: sourceDraft?.selectedIds || DEFAULT_SOURCE_IDS,
-        evidence: evidenceDraft || defaultEvidence,
-        lesson: lessonDraft || defaultLesson,
-        rubric: rubricDraft || defaultRubric,
-      };
-      setClassLine(`${context?.grade || syntheticFixture.grade} · ${context?.minutes || syntheticFixture.minutes} 分钟 · 盛唐主题`);
+      const nextQuestion = questionDraft?.centralQuestion || DEFAULT_QUESTION;
+      const nextSourceIds = sourceDraft?.selectedIds?.length ? sourceDraft.selectedIds : DEFAULT_SOURCE_IDS;
+      const nextEvidence = evidenceDraft || createEvidenceMapDraft(nextQuestion, nextSourceIds, questionDraft?.subQuestions);
+      const nextLesson = lessonDraft ? normalizeLessonDesignDraft(lessonDraft, nextQuestion, nextSourceIds, nextEvidence.relations) : createLessonDesignDraft(nextQuestion, nextSourceIds, nextEvidence.relations);
+      const nextRubric = rubricDraft ? normalizeRubricDraft(rubricDraft, nextLesson.activities) : createRubricDraft(nextLesson.activities);
+      const nextInput: AuditInput = { question: nextQuestion, selectedSourceIds: nextSourceIds, evidence: nextEvidence, lesson: nextLesson, rubric: nextRubric };
+      setClassLine(`${context?.grade || syntheticFixture.grade} · ${context?.minutes || syntheticFixture.minutes} 分钟 · 唐朝由盛转衰`);
       setInput(nextInput);
       setDraft(auditDraft ? normalizeAuditDraft(auditDraft, nextInput) : createAuditDraft(nextInput));
     }, () => setSaveState("failed")).finally(() => setLoading(false));
@@ -122,10 +121,9 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
   return (
     <WorkbenchShell currentStep={6} reachedStep={6} currentLabel="设计检查" nextLabel="最终确认与导出" onBack={onBack} onNavigateStep={(step) => step === 0 ? onReturnContext() : step === 1 ? onReturnQuestion() : step === 2 ? onReturnSources() : step === 3 ? onReturnEvidence() : step === 4 ? onReturnLesson() : step === 5 ? onReturnRubric() : undefined}>
       <main className="context-main audit-main" id="main-content" tabIndex={-1}>
-        <header className="page-heading"><div><p className="eyebrow">在交付前，把整条证据链逐项过一遍</p><h1>设计检查</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
-        <p className="page-intro">系统已检查问题、史料、论证、活动和量规。你只需处理真正影响课堂使用的地方。</p>
-        <p className="audit-class-line">{classLine}</p>
-        <section className="audit-chain" aria-label="当前证据设计链"><span>探究问题</span><i>✓</i><span>{input.selectedSourceIds.length} 条史料</span><i>✓</i><span>{input.evidence.claims.length} 个待判断命题</span><i>✓</i><span>{input.lesson.activities.length} 段课堂活动</span><i>✓</i><span>{input.rubric.dimensions.length} 个评价维度</span></section>
+        <header className="page-heading"><div><p className="eyebrow">只处理真正影响试教的事项</p><h1>设计检查</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}</p></header>
+        <p className="page-intro">系统已经检查问题、史料、论证、活动和量规。通过项默认收起；有问题时直接告诉你影响和下一步。</p>
+        <p className="audit-class-line">{classLine} · {input.selectedSourceIds.length} 条史料 · {input.lesson.activities.length} 段活动 · {input.rubric.dimensions.length} 个评价维度</p>
         <details className="fixture-note"><summary>预生成演示检查 · 内容未变化时可复用</summary><p>结果来自当前公开/合成 fixture 和确定性前端规则，不是实时链接检查、AI 审计或安全授权；未知状态不会计为通过。</p></details>
 
         {scenario === "offline" ? <div className="status-banner warning" role="status"><strong>当前离线</strong><span>本机已有内容仍可查看，但外部来源无法重新检查，未知不会计为通过。</span></div> : null}
@@ -138,11 +136,10 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
         ) : !draft.findings.length && !draft.passedChecks.length ? (
           <section className="audit-empty"><p className="eyebrow">尚未形成检查结果</p><h2>从当前问题、史料、活动和量规开始</h2><p>演示会建立一份可复核结果，不会连接真实审计服务。</p><button className="context-primary" type="button" onClick={rebuild}>形成预生成检查</button></section>
         ) : (
-          <div className="audit-workspace">
+          <div className="audit-workspace audit-workspace-single">
             <section className="audit-galley" aria-labelledby="audit-galley-heading">
               <header><div><p className="eyebrow">通过项已经收起，先看会改变教学包的事项</p><h2 id="audit-galley-heading">需要你处理</h2></div><span>{draft.completed ? "检查完成" : `${summary.blockerCount + summary.confirmationCount + summary.unknownCount} 项待处理`}</span></header>
-              {draft.staleCategories.length ? <section className="audit-stale" role="alert"><strong>上游内容已有变化</strong><p>{draft.staleCategories.join("、")}需要重新检查；其他仍有效结果已保留。</p><button type="button" onClick={rerun}>重新检查受影响项</button></section> : null}
-              <div className="audit-proof-line" aria-hidden="true"><span>问题</span><span>史料</span><span>论证</span><span>活动</span><span>量规</span></div>
+              {draft.staleCategories.length ? <InlineNotice tone="warning" actionLabel="重新检查" onAction={rerun}>上游内容已有变化：{draft.staleCategories.join("、")}。建议复查，但不影响继续进入最终确认。</InlineNotice> : null}
               <div className="audit-findings">{draft.findings.map((finding) => <AuditFindingRow key={finding.id} finding={finding} error={showErrors ? summary.reasonErrors[finding.id] : undefined} onAccept={() => accept(finding.id)} onReasonChange={(value) => { setDraft((current) => updateAuditReason(current, finding.id, value)); setFeedback(""); }} onReturnSources={onReturnSources} onReturnLesson={onReturnLesson} />)}</div>
               <details className="passed-audit-checks"><summary>{draft.passedChecks.length} 项已通过的检查</summary><dl>{auditCategories.map((category) => {
                 const checks = draft.passedChecks.filter((check) => check.category === category);
@@ -150,14 +147,7 @@ export function DesignAuditPage({ onBack, onReturnContext, onReturnQuestion, onR
               })}</dl></details>
             </section>
 
-            <aside className="audit-ledger" aria-labelledby="audit-ledger-heading">
-              <header><p className="eyebrow">交付前校样</p><h2 id="audit-ledger-heading">检查校样</h2></header>
-              <dl><div><dt>{summary.totalCount}</dt><dd>项检查</dd></div><div><dt>{summary.blockerCount}</dt><dd>个阻断</dd></div><div><dt>{summary.confirmationCount}</dt><dd>项待确认</dd></div><div><dt>{summary.suggestionCount}</dt><dd>项建议</dd></div><div><dt>{summary.passedCount}</dt><dd>项通过</dd></div>{summary.unknownCount ? <div><dt>{summary.unknownCount}</dt><dd>项未知或失效</dd></div> : null}</dl>
-              <section className={summary.ready ? "audit-ready" : "audit-not-ready"}><strong>{draft.completed ? "本次设计检查已完成" : summary.ready ? "可以完成本次检查" : "当前还不能进入交付"}</strong><p>{summary.ready ? "所有阻断、未知和教师确认都已处理。" : summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断项。` : summary.unknownCount ? "先重新检查未知或已失效项目。" : hasReasonErrors ? "完善教师确认理由后即可完成本次检查。" : `处理 ${summary.confirmationCount} 项教师确认后即可完成本次检查。`}</p></section>
-              <p className="audit-permission">前端状态只帮助判断，不代表安全授权。</p>
-              {summary.ready ? <button className="context-primary audit-next" type="button" onClick={complete}>{draft.completed ? "进入最终确认与导出" : "完成设计检查"}</button> : summary.unknownCount && draft.staleCategories.length ? <button className="context-primary audit-next" type="button" onClick={rerun}>重新检查受影响项</button> : hasReasonErrors ? <button className="context-primary audit-next" type="button" onClick={complete}>完善教师确认理由</button> : <button className="context-primary audit-next" type="button" disabled>{summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断` : summary.unknownCount ? "等待未知检查完成" : `先处理 ${summary.confirmationCount} 项待确认`}</button>}
-              <p className="next-step-note">下一步：最终确认与导出</p>
-            </aside>
+            <PageActionBar status={summary.ready ? "可以进入最终确认" : `${summary.blockerCount + summary.confirmationCount + summary.unknownCount} 项待处理`} detail={summary.ready ? `${summary.passedCount} 项已通过；前端状态不代表安全授权` : summary.blockerCount ? `先修复 ${summary.blockerCount} 个阻断` : hasReasonErrors ? "完善教师确认理由" : "按上方引导处理即可"}>{summary.ready ? <button className="ui-button primary" type="button" onClick={complete}>{draft.completed ? "进入最终确认与导出" : "完成设计检查"}</button> : summary.unknownCount && draft.staleCategories.length ? <button className="ui-button primary" type="button" onClick={rerun}>重新检查受影响项</button> : <button className="ui-button primary" type="button" onClick={complete}>定位待处理项</button>}</PageActionBar>
           </div>
         )}
       </main>

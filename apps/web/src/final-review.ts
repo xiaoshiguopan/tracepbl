@@ -11,7 +11,7 @@ export type FinalReviewInput = {
 };
 
 export type FinalReviewDraft = {
-  fixtureVersion: 1;
+  fixtureVersion: 2;
   approved: boolean;
   confirmedAt: string | null;
   inputSnapshot: string;
@@ -38,16 +38,16 @@ export function sanitizeTeachingPackFileName(value: string) {
 
 export function createFinalReviewDraft(input: FinalReviewInput): FinalReviewDraft {
   return {
-    fixtureVersion: 1,
+    fixtureVersion: 2,
     approved: false,
     confirmedAt: null,
     inputSnapshot: makeFinalReviewSnapshot(input),
-    fileName: "史证工坊-唐朝前期盛世",
+    fileName: "史证工坊-唐朝由盛转衰",
   };
 }
 
 export function normalizeFinalReviewDraft(draft: FinalReviewDraft, input: FinalReviewInput): FinalReviewDraft {
-  if (draft.fixtureVersion !== 1) return createFinalReviewDraft(input);
+  if (draft.fixtureVersion !== 2) return createFinalReviewDraft(input);
   const inputSnapshot = makeFinalReviewSnapshot(input);
   return inputSnapshot === draft.inputSnapshot ? draft : { ...draft, approved: false, confirmedAt: null, inputSnapshot };
 }
@@ -62,7 +62,6 @@ export function getFinalReviewSummary(input: FinalReviewInput, draft: FinalRevie
     && input.lesson.activities.length
     && input.rubric.dimensions.length
     && input.audit.completed
-    && input.audit.staleCategories.length === 0
     && snapshotCurrent,
   );
   return {

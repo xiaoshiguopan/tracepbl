@@ -114,7 +114,7 @@ export function getAuditSummary(draft: AuditDraft) {
   const blockerCount = draft.findings.filter((finding) => finding.severity === "blocker" && finding.resolution === "pending").length;
   const confirmationCount = draft.findings.filter((finding) => finding.severity === "confirmation" && finding.resolution === "pending").length;
   const suggestionCount = draft.findings.filter((finding) => finding.severity === "suggestion").length;
-  const unknownCount = draft.findings.filter((finding) => finding.severity === "unknown").length + draft.staleCategories.length;
+  const unknownCount = draft.findings.filter((finding) => finding.severity === "unknown").length;
   const acceptedCount = draft.findings.filter((finding) => finding.severity === "confirmation" && finding.resolution === "accepted").length;
   const reasonErrors = Object.fromEntries(draft.findings.filter((finding) => finding.severity === "confirmation" && finding.resolution === "accepted").flatMap((finding) => {
     const length = finding.teacherReason.trim().length;
@@ -151,7 +151,7 @@ export function normalizeAuditDraft(draft: AuditDraft, input: AuditInput): Audit
   const nextSnapshots = makeSnapshots(input);
   const staleCategories = auditCategories.filter((category) => draft.categorySnapshots[category] !== nextSnapshots[category]);
   if (!staleCategories.length) return draft;
-  return { ...draft, completed: false, staleCategories };
+  return { ...draft, staleCategories };
 }
 
 export function rerunAudit(draft: AuditDraft, input: AuditInput): AuditDraft {

@@ -13,7 +13,6 @@ import {
 import { loadContextDraft, loadQuestionDraft, saveContextDraft } from "./teaching-context-store";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
-const TASK_REF = "demo-tang-45m";
 const emptyDraft: TeachingContextDraft = {
   stage: "",
   grade: "",
@@ -22,6 +21,9 @@ const emptyDraft: TeachingContextDraft = {
   lessonTypes: [],
   minutes: "",
   inquiryQuestion: "",
+  priorKnowledge: "",
+  learningNeeds: [],
+  profileNote: "",
 };
 
 type Scenario = "ready" | "loading" | "empty" | "failure" | "timeout" | "offline" | "unavailable";
@@ -66,9 +68,11 @@ function ContextSummary({
 }
 
 export function TeachingContextPage({
+  taskId = "demo-tang-45m",
   onBack,
   onNext,
 }: {
+  taskId?: string;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -91,8 +95,8 @@ export function TeachingContextPage({
   const summary = getContextSummary(draft);
   const conflict = getContextConflict(draft);
   const dirty = confirmedDraft ? !isSameTeachingContext(draft, confirmedDraft) : true;
-  const actionLabel = questionReached ? dirty ? "确认修改并返回探究问题" : "返回探究问题" : "确认教学情境";
-  const storageKey = scenario === "ready" ? TASK_REF : `${TASK_REF}:scenario:${scenario}`;
+  const actionLabel = questionReached ? dirty ? "应用修改并返回探究问题" : "返回探究问题" : "继续形成探究问题";
+  const storageKey = scenario === "ready" ? taskId : `${taskId}:scenario:${scenario}`;
 
   useEffect(() => {
     if (scenario === "loading") {
@@ -158,7 +162,7 @@ export function TeachingContextPage({
   };
 
   const toggleChoice = (
-    key: "lessonTypes",
+    key: "lessonTypes" | "learningNeeds",
     value: string,
   ) => {
     const values = draft[key];
@@ -185,7 +189,7 @@ export function TeachingContextPage({
       }, 1200);
       return;
     }
-    const confirmedValue = { ...draft, lessonTypes: [...draft.lessonTypes] };
+    const confirmedValue = { ...draft, lessonTypes: [...draft.lessonTypes], learningNeeds: [...draft.learningNeeds] };
     setConfirmedDraft(confirmedValue);
     setQuestionReached(true);
     void saveContextDraft(storageKey, confirmedValue).then(onNext, () => setSaveState("failed"));
@@ -198,7 +202,7 @@ export function TeachingContextPage({
 
   const undoChanges = () => {
     if (!confirmedDraft) return;
-    setDraft({ ...confirmedDraft, lessonTypes: [...confirmedDraft.lessonTypes] });
+    setDraft({ ...confirmedDraft, lessonTypes: [...confirmedDraft.lessonTypes], learningNeeds: [...confirmedDraft.learningNeeds] });
     setErrors({});
     setSystemFailure(false);
   };
@@ -212,7 +216,7 @@ export function TeachingContextPage({
               {saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "仅保留在本页" : "本机草稿"}
             </p>
           </header>
-          <p className="page-intro">先用最少信息确定课程边界。探究问题、史料条件和班级适配会在真正需要时再填写。</p>
+          <p className="page-intro">用最少信息确定课次、时间与匿名学情，后续页面会据此形成问题、选择史料并安排课堂活动。</p>
 
           <details className="fixture-note">
             <summary>合成示范课 · 可自由编辑</summary>
@@ -245,7 +249,7 @@ export function TeachingContextPage({
                 </section>
               ) : null}
 
-              <div className="context-columns">
+              <div className="context-columns context-columns-single">
                 <TeachingContextForm
                   draft={draft}
                   errors={errors}
@@ -256,12 +260,6 @@ export function TeachingContextPage({
                   onSubmit={submit}
                 />
 
-                <aside className="brief-panel desktop-brief" aria-labelledby="brief-heading">
-                  <p className="eyebrow">当前教学情境</p>
-                  <h2 id="brief-heading">{draft.lesson || "课程信息待补充"}</h2>
-                  <ContextSummary draft={draft} summary={summary} />
-                  {questionReached && !dirty ? <div className="success-feedback" role="status"><strong>教学情境已确认</strong><span>可以直接返回探究问题。</span></div> : null}
-                </aside>
               </div>
               <details className="mobile-brief">
                 <summary>查看当前教学情境</summary>

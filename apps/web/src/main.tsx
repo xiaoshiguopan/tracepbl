@@ -11,6 +11,7 @@ import "./lesson-design.css";
 import "./rubric-design.css";
 import "./design-audit.css";
 import "./final-review.css";
+import "./optimization.css";
 
 const root = document.getElementById("root");
 
