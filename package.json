@@ -5,14 +5,20 @@
   "version": "0.0.0",
   "workspaces": [
     "apps/*",
+    "database",
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspace @tracepbl/web",
+    "db:migrate": "npm run migrate --workspace @tracepbl/database",
+    "db:seed": "npm run seed --workspace @tracepbl/database",
+    "db:test": "npm run test --workspace @tracepbl/database",
     "dev": "npm run dev --workspace @tracepbl/web",
-    "lint": "npm run lint --workspace @tracepbl/web",
-    "test": "npm run test --workspace @tracepbl/web",
-    "typecheck": "npm run typecheck --workspace @tracepbl/web"
+    "format:check": "git diff --check",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:integration": "npm run test:integration --workspace @tracepbl/database",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "engines": {
     "node": ">=24.19.0",
