@@ -2,13 +2,13 @@
 
 > 英文代号：TracePBL
 >
-> 文档版本：0.5
+> 文档版本：0.6
 >
-> 状态：0.5 已批准归档
+> 状态：0.6 已批准归档
 >
-> 当前修订：2026-09-02 P03/MUST-004 术语边界已随阶段 6.6 获准归档
+> 当前修订：2026-09-03 数据持久性、删除、GLM 与数据库边界已获方案确认
 >
-> 最后更新：2026-09-02
+> 最后更新：2026-09-03
 >
 > 地位：本项目每次开工必读的专属规范；记录已批准事实和稳定护栏
 
@@ -97,7 +97,7 @@
 - `MUST-007` 证据对齐的评价量规；
 - `MUST-008` 全链路设计审计与交付门禁；
 - `MUST-009` 教师审阅、修改、批准与导出；
-- `MUST-010` 临时数据、任务隔离与清除；
+- `MUST-010` 本地数据、任务隔离与清除；
 - `NFR-001` 来源完整性；
 - `NFR-002` 隐私；
 - `NFR-003` 任务隔离；
@@ -141,11 +141,11 @@
 | Demo 状态 | 版本化 JSON fixtures、浏览器原生 IndexedDB | 免费公开演示、访客本地编辑和清除 | 不伪造在线数据库或把密钥放浏览器 |
 | API | Hono 4.13.5、`@hono/node-server` 2.1.1、REST/OpenAPI 3.1、SSE | 校验、授权、任务、事件流和真实后端 | 不另建 NestJS/Express/FastAPI 服务 |
 | 契约 | Zod 4.5.4、`@hono/zod-openapi` 1.6.1 | Demo adapter 与真实 API 共享契约 | 不维护互相漂移的手写类型副本 |
-| 数据 | PostgreSQL 18.6、pgvector 0.8.6、Drizzle ORM 0.45.2、postgres.js 3.4.9 | 关系、全文、向量、job、checkpoint、TTL 和审计 | 不加入独立向量数据库或 BaaS 数据真相源 |
+| 数据 | PostgreSQL 18.6、pgvector 0.8.6、Drizzle ORM 0.45.2、postgres.js 3.4.9 | 关系、全文、向量、job、checkpoint、删除宽限和审计 | 不加入独立向量数据库或 BaaS 数据真相源 |
 | 后台任务 | Node worker + PostgreSQL job table | 可恢复文档处理与异步工作 | 无证据前不加入 Redis、Kafka、RabbitMQ 或 Temporal |
 | Agent | LangGraph.js 1.4.13、PostgreSQL checkpointer 1.0.5 | 幕后多步检索、交叉核验、审计和人工中断 | 普通 CRUD、权限和确定性门禁不得 Agent 化 |
-| AI/RAG | 百炼北京 `qwen3.8-max`、`qwen-vl-ocr-2025-07-14`、`text-embedding-v4`、`qwen3-rerank` | 生成、视觉/OCR、向量与重排 | 不直接依赖厂商托管知识库；不声称已做项目实测 |
-| 文件 | PDF.js 6.3.289、Mammoth 1.12.2、docx 9.7.1、BlobStore | PDF/DOCX 读取、导出和对象抽象 | 不把原件存进 Git 或公开目录 |
+| AI/RAG | 智谱国内 API；可替换 provider adapter；`GLM-5.3-Flash`、`embedding-3` 1024 维 cosine | 生成与轻量向量检索 | 当前不启用联网搜索、rerank、视觉/OCR 或托管知识库；型号可用性待非敏感 smoke test |
+| 文件 | 浏览器 URL/文本输入；docx 9.7.1、pdfmake 0.3.11 浏览器导出 | 当前材料录入和即时导出 | v0.1 不摄取 PDF/DOCX/OCR，不持久化导出二进制 |
 | 测试 | Vitest 4.1.11、Testing Library 16.3.3、MSW 2.15.0、Playwright 1.62.1、Testcontainers 12.1.0 | 单元、组件、契约、数据库和 E2E | 不用付费真实 AI 作为默认 CI 前提 |
 | 质量 | ESLint 10.9.1、typescript-eslint 8.68.0 | 静态质量和 TypeScript 规则 | 工具支持前不升 TypeScript 7 |
 | 公开部署 | GitHub Public、GitHub Actions、GitHub Pages | 源码、CI 和零成本静态 Demo | Pages 不承担 API、数据库或秘密运行时 |
@@ -153,10 +153,10 @@
 
 ### 4.2 版本规则
 
-- 以上是 2026-08-31 的批准快照；安装前重新核对安全公告、peer range 和平台支持；
+- 库版本沿用 2026-08-31 的批准快照；2026-09-03 用户明确把模型与数据生命周期更新为本节当前结论；安装前重新核对安全公告、peer range 和平台支持；
 - 锁文件必须提交；依赖变更必须说明原因、直接/传递风险、许可证和回滚方式；
 - 不自动跳主版本；小版本升级也必须通过现有测试和迁移检查；
-- `qwen3.8-max` 是厂商服务 ID而非不可变快照，真实运行时记录返回模型、日期、提示模板和费用；
+- `GLM-5.3-Flash` 是目标服务 ID而非不可变快照，真实运行时记录请求/返回模型、日期、提示模板和去内容化用量；国内 key 是否可调用该型号尚未验证，不得静默换模型；
 - 模型或提示变化后运行固定评测；当前未做 API 横评的事实必须保留；
 - 技术替换仅在 `TECHNOLOGY-DECISION.md` 的重评条件触发后进行，并重新审批本手册。
 
@@ -268,11 +268,11 @@
 |---|---|
 | `apps/web/` | React/Vite 教师工作台、Demo adapter 和真实 API adapter |
 | `apps/api/` | Hono API、授权、限流、任务提交和 SSE |
-| `apps/worker/` | 文档处理、RAG、Agent、审计和异步重试 |
+| `apps/worker/` | URL/文本切片、RAG、Agent、审计和异步重试 |
 | `packages/domain/` | 无框架的领域状态机、证据门禁和业务策略 |
 | `packages/contracts/` | Zod/OpenAPI 契约、事件和错误码 |
-| `packages/ai/` | 生成、OCR、embedding 和 rerank provider adapters |
-| `packages/retrieval/` | 切片、检索、重排和来源/许可过滤 |
+| `packages/ai/` | GLM 生成与 embedding provider adapters；接口保持可替换 |
+| `packages/retrieval/` | 结构感知切片、精确检索和来源/许可过滤 |
 | `database/` | Schema、迁移、数据库策略和合成 seed |
 | `fixtures/` | 公开许可或合成的版本化跨层测试/Demo 数据 |
 | `tests/` | 跨模块、集成和端到端测试；模块单元测试可就近放置 |
@@ -303,7 +303,7 @@ apps/worker┘        │                    ↑
                     ├→ packages/ai ──────┤
                     └→ packages/retrieval┘
 
-基础设施适配器 → PostgreSQL / BlobStore / Qwen / LangGraph
+基础设施适配器 → PostgreSQL / GLM / LangGraph
 ```
 
 稳定规则：
@@ -352,12 +352,12 @@ apps/worker┘        │                    ↑
 
 ### 9.3 隔离、保留和删除
 
-- task ID 不是授权；匿名任务使用高熵短期 capability，并在服务端检查资源归属；
-- 临时任务、公共来源、RAG 索引和去内容化运维事件分区；
-- 教师主动清除立即进入删除流程；未清除的匿名任务及系统控制副本最迟在最后活动后 24 小时失效；
+- task ID 不是授权。当前完整模式只绑定 localhost，由单一内部 workspace 隔离；服务层仍逐资源检查 workspace、task、状态与动作。隐藏按钮不构成权限；
+- Pages Demo 的 IndexedDB 只属于当前浏览器；完整本地工程的 workspace、任务、公共来源、RAG 派生索引和去内容化运维事件分区；
+- 完整本地任务持续保存到用户明确删除。删除后立即从普通查询隐藏，24 小时内允许撤销；到期后彻底清除；
 - 删除涵盖关系记录、对象、切片、向量、job、checkpoint 和普通恢复副本；
 - 重复删除返回一致结果，不泄露对象是否属于他人；
-- 未来账号、分享或长期保存会改变权限和生命周期，必须退回章程、PRD 和设计。
+- 未来账号、分享、第二用户、远程访问或不同保留期会改变权限和生命周期，必须退回章程、PRD、安全和数据库设计；当前无 RLS 的结论不得直接沿用到在线多用户系统。
 
 ## 10. 安全、隐私、版权与费用
 
@@ -398,7 +398,7 @@ apps/worker┘        │                    ↑
 
 | 层级 | 必须证明 |
 |---|---|
-| 领域单元 | 状态回退、证据门禁、引用一致性、TTL、幂等和费用策略 |
+| 领域单元 | 状态回退、证据门禁、引用一致性、删除宽限、幂等和费用策略 |
 | React/组件 | 键盘、焦点、错误、窄屏、200% 缩放和教师批准交互 |
 | 契约/API | Zod/OpenAPI 一致性、授权、限流、错误和取消 |
 | 数据库集成 | 迁移、约束、事务、任务隔离、级联删除和 pgvector 检索 |
@@ -470,7 +470,7 @@ npm run build
 - 本地使用 Windows PowerShell、Node/npm；Docker Desktop 只在获批后承载 PostgreSQL/pgvector 和集成测试；
 - 本地 BlobStore 使用仓库外精确临时目录；删除前校验绝对路径；
 - GitHub Actions 在 PR 运行质量检查；`main` 构建 `apps/web/dist` 后才可部署 Pages；
-- API/worker 未来使用标准 OCI；PostgreSQL、对象存储和百炼优先同一中国大陆地域；
+- API/worker 未来使用标准 OCI；当前只绑定 localhost；若未来部署，PostgreSQL、对象存储和模型服务地域必须重新审查；
 - 部署前必须重新核价、审查备案/隐私/数据处理、配置预算告警、限流、备份和删除；
 - 数据库迁移先在非生产环境演练，先备份、再迁移、再验证；代码回滚不等于数据库回滚；
 - 发布必须有精确目标、冒烟、负面权限测试、监控、回滚触发和用户单独授权；
@@ -484,7 +484,7 @@ npm run build
 
 | 变化 | 最早退回点 |
 |---|---|
-| 学生端、账号、团队、分享、长期保存、个人/未成年人数据 | 项目章程与 PRD |
+| 学生端、账号、团队、分享、远程多用户、个人/未成年人数据 | 项目章程与 PRD |
 | 支付、商业化、邮件、短信、定时任务、第三方写入 | 项目章程、PRD、安全和成本规划 |
 | 新页面、核心流程或重大交互 | 前端设计，并复核数据/API 影响 |
 | 新表、关系、保留期、删除或共享语义 | 数据库设计，并复核前后端契约 |
@@ -500,8 +500,8 @@ npm run build
 
 - 5 名覆盖初高中的教师尚未招募，备课时间基线未建立；
 - 首个示范课程的史料版本、图片/全文许可和外部历史教师复核未完成；
-- Qwen 依据公开资料选择，未做史证工坊 API 横评；实际中文史料、引用和教学质量待验证；
-- 百炼数据处理与保存期限需在真实调用前再次审查；
+- GLM 依据用户明确选择和当前官方资料设为目标 provider，未做项目 API 横评；实际中文史料、引用和教学质量待验证；
+- 智谱国内 key 对 `GLM-5.3-Flash` 的可调用性、数据处理与保存政策需在真实调用前再次审查；
 - GitHub Pages 在求职目标网络和中国大陆教师网络中的可用性尚未实测；
 - 无账号恢复、量规可用性、45 分钟流程和 PostgreSQL/pgvector 真实规模均未验证；
 - 未来真实上线的备案、实例、实时价格、备份和运维能力尚未批准。
@@ -513,7 +513,8 @@ npm run build
 | 日期 | 规则 | 例外/变更 | 原因 | 批准人 | 复查条件 |
 |---|---|---|---|---|---|
 | 2026-08-31 | 最终产品含后端和数据库 | 当前公开 URL 只部署静态 Demo；真实全栈在公开仓库、本地和 CI 中证明 | 项目主要用于求职展示，避免长期服务器成本 | 用户 | 转真实运营服务时重审部署、隐私、备案和费用 |
-| 2026-08-31 | AI 选型应有证据 | 不执行多厂商 API 横评，依据当前官方公开资料选择 Qwen | AI 横评不是本项目重点 | 用户 | 教师验证失败、模型政策变化或真实上线前 |
+| 2026-08-31 | AI 选型应有证据 | 当时不执行多厂商 API 横评，依据公开资料选择 Qwen；已被 2026-09-03 决定取代 | AI 横评不是本项目重点 | 用户 | 已触发并完成重选 |
+| 2026-09-03 | 模型与本地数据边界 | 改用可替换的智谱 GLM provider；本地任务持续保存，显式删除后保留 24 小时撤销窗口 | 用户已有 GLM key，作品集需可本地完整部署和长期使用 | 用户 | 多用户/远程上线、模型不可用或数据政策变化 |
 
 ### 15.3 文档索引
 
@@ -535,8 +536,11 @@ npm run build
 - 就绪与完成定义：[DEFINITION-OF-READY-DONE.md](./docs/02-planning/DEFINITION-OF-READY-DONE.md)
 - 变更控制：[CHANGE-CONTROL.md](./docs/02-planning/CHANGE-CONTROL.md)
 - 总体规划评审：[PLANNING-REVIEW.md](./docs/02-planning/PLANNING-REVIEW.md)
+- 数据库领域与 Schema：[DOMAIN-MODEL.md](./docs/04-database-design/DOMAIN-MODEL.md)、[DATABASE-SCHEMA.md](./docs/04-database-design/DATABASE-SCHEMA.md)
+- 数据库 ERD、权限与迁移：[ERD.md](./docs/04-database-design/ERD.md)、[ACCESS-CONTROL.md](./docs/04-database-design/ACCESS-CONTROL.md)、[MIGRATION-STRATEGY.md](./docs/04-database-design/MIGRATION-STRATEGY.md)
+- 数据库评审与阶段报告：[DATABASE-REVIEW.md](./docs/04-database-design/DATABASE-REVIEW.md)、[STAGE-7-REPORT.md](./docs/04-database-design/STAGE-7-REPORT.md)
 
-阶段 4 的 Skill/插件治理修订已与本手册 0.3 一同批准归档。0.4 已把阶段 5、7、9 的第一性原理设计后审查设为统一编码就绪门；0.5 将阶段 6 已确认的协作偏好和 P01 渐进收集边界固化为后续工作的执行规则。具体页面、Schema 和 API 仍须遵循后续分层设计门禁。
+阶段 4 的 Skill/插件治理修订已与本手册 0.3 一同批准归档。0.4 已把阶段 5、7、9 的第一性原理设计后审查设为统一编码就绪门；0.5 固化阶段 6 的协作与前端边界；0.6 同步阶段 7 已确认的数据生命周期、GLM 和本地隔离结论，并于 2026-09-03 获用户批准归档。具体 API 继续遵循后续分层设计门禁。
 
 ### 15.4 变更记录
 

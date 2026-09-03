@@ -17,7 +17,7 @@
 ## 项目固定事实
 
 - 产品：史证工坊（TracePBL），面向中学历史教师的可追溯证据探究工作台。
-- 当前技术：TypeScript 模块化单体；React/Vite；Hono；PostgreSQL/pgvector；LangGraph.js；Qwen provider adapters。
+- 当前技术：TypeScript 模块化单体；React/Vite；Hono；PostgreSQL/pgvector；LangGraph.js；可替换的 GLM provider adapter。
 - 公开体验：GitHub Pages 静态 Demo，使用公开/合成 fixtures 和预生成结果；不连接秘密后端。
 - 完整工程：真实 API、数据库、worker、RAG/Agent 在公开仓库、本地和 CI 中运行与验证。
 - 当前流程事实只读 `PROJECT-STATE.md`，不得从本文件猜测阶段。

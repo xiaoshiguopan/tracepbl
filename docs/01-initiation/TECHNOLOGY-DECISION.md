@@ -1,9 +1,9 @@
 # 史证工坊技术决策
 
-> 文档版本：0.3
-> 决策日期：2026-08-31
-> 资料访问截止：2026-08-31（Asia/Shanghai）
-> 状态：已批准归档
+> 文档版本：0.4
+> 决策日期：2026-08-31；模型与数据边界修订：2026-09-03
+> 资料访问截止：2026-09-03（Asia/Shanghai）
+> 状态：0.4 已批准归档
 > 决策范围：阶段 2，只确定覆盖完整产品生命周期的唯一技术栈；不授权安装、编码、购买、部署或提交
 
 ## 1. 决策修订与边界
@@ -13,6 +13,8 @@
 1. 技术底座必须承接完整产品，而不是只满足 v0.1；未来可能加入 RAG、幕后 Agent、账号、分享或学生端，不能因此推倒重来。
 2. 当前项目首先是求职作品集；公开体验只需可信、完整的 Demo，不要求后端和数据库长期在线。
 3. 公开 Demo 使用 GitHub Pages 免费部署；真实后端和数据库仍要完整设计、实现和测试，以公开代码与可重复证据证明能力。
+
+2026-09-03 用户进一步明确并取代本文件中冲突的旧结论：使用智谱国内 API 的可替换 provider adapter，目标生成模型为 `GLM-5.3-Flash`，向量模型为 `embedding-3` 1024 维 cosine；不启用模型联网搜索、rerank 或 OCR；无 key 时仍使用预生成结果/向量运行。完整本地工程只有一个内部 workspace、只绑定 localhost，任务持续保存到用户明确删除；删除后立即隐藏、24 小时内可撤销，之后彻底清除。下文保留的 2026-08-31 多厂商评分只是历史决策证据，不再是当前模型结论。
 
 因此，本决策区分两个运行面：
 
@@ -36,11 +38,10 @@
 - 数据访问：Drizzle ORM 0.45.2 + postgres.js 3.4.9；迁移 SQL 可审查、数据可导出；
 - 后台任务：同一仓库中的 Node worker + PostgreSQL job table；首期不引入 Redis、Kafka、RabbitMQ、Temporal 或微服务；
 - Agent：LangGraph.js 1.4.13 + PostgreSQL checkpointer 1.0.5，只用于需要多步检索、交叉核验、审计和教师中断的幕后流程；
-- RAG：PostgreSQL 中文全文检索 + pgvector 混合召回，`text-embedding-v4` 向量化，`qwen3-rerank` 重排；
-- AI 主模型：阿里云百炼华北 2（北京）`qwen3.8-max`；这是 2026-08-31 的正式服务 ID，厂商未在当前资料中提供对应日期快照，运行记录必须保存实际返回的模型标识；
-- 文档/图片：主模型处理通用视觉理解；专门 OCR 需要时使用 `qwen-vl-ocr-2025-07-14`；
-- 文件：PDF.js 6.3.289、Mammoth 1.12.2、docx 9.7.1；原件通过 `BlobStore` 接口访问；
-- 本地文件：仓库外临时目录；未来正式生产：阿里云 OSS 的 S3 兼容子集；
+- RAG：结构感知切片 + PostgreSQL/pgvector 精确 cosine 检索，`embedding-3` 固定 1024 维；当前不启用 rerank；
+- AI 主模型：可替换的智谱国内 API adapter，目标 `GLM-5.3-Flash`；国内 key 是否支持该型号待后端阶段最小非敏感 smoke test，不得静默降级；
+- 材料输入：v0.1 仅 URL 与文本；不摄取 PDF/DOCX，不做视觉/OCR；
+- 导出：浏览器使用 docx 9.7.1 与 pdfmake 0.3.11 即时生成；数据库只记 revision 与导出事件，不保存二进制；
 - 测试：Vitest 4.1.11、Testing Library 16.3.3、MSW 2.15.0、Playwright 1.62.1、Testcontainers 12.1.0；
 - 静态质量：ESLint 10.9.1、typescript-eslint 8.68.0；
 - 未来正式部署路径：标准 OCI 容器部署 Hono API/worker，中国大陆 PostgreSQL 与 OSS 同地域；GitHub 继续承担仓库、CI 和前端构建。
@@ -57,7 +58,7 @@
 | 核心功能 | 问题—史料—主张—活动—量规—审计闭环 | 关系数据、确定性状态机、可回退版本 |
 | RAG/Agent | 知识库位于底层；Agent 幕后检索、溯源、交叉核验和审计 | pgvector/全文混合检索；LangGraph 仅编排开放式流程 |
 | 教师控制 | 编辑、否决、批准；未知不得通过 | human-in-the-loop checkpoint；领域门禁不可由模型绕过 |
-| 当前权限 | v0.1 无账号；匿名任务隔离；最后活动后最迟 24 小时失效 | capability token、资源归属、TTL 与级联删除 |
+| 当前权限 | v0.1 无账号、无分享；localhost 单用户、一个内部 workspace | 服务层逐资源归属检查；task ID 不授权；当前不启用 RLS |
 | 未来权限 | 账号、团队、分享、学生端需变更控制 | 领域层预留 owner/subject，不提前绑定登录供应商 |
 | 数据 | 当前只用公开或合成材料；真实数据不得进入公开仓库、日志和截图 | fixtures 仅用公开/合成数据；秘密和个人数据不进 Git |
 | 预算 | 每月不超过 ¥200；12 周不超过 ¥600 | 当前公开运行成本为 ¥0；真实模型调用只手动、限额运行 |
@@ -66,7 +67,7 @@
 | 部署维护 | 求职 Demo 优先；未来可能真实上线 | Pages 静态 Demo；完整全栈本地/CI；未来容器化上线 |
 | GitHub Public | 最终必须公开 | 源码、迁移、测试、架构和合成 fixtures 全部可审查 |
 | 公开 URL | 无开发环境即可打开 | `https://<user>.github.io/tracepbl/`；可选自定义域名 |
-| 敏感程度 | 教师上传材料和未来学生数据可能敏感 | Demo 不上传真实数据；未来服务端隔离、短保留和最小日志 |
+| 敏感程度 | 当前只允许 G0/G1/G2；真实个人/学生数据禁止 | Demo 不上传；本地服务最小传输、最小日志，疑似敏感输入拒绝 |
 | 退出迁移 | 不被单一 BaaS、模型或向量库锁死 | OpenAPI、PostgreSQL、S3 子集、provider adapters、标准 OCI |
 
 ## 4. 展示面与真实工程面
@@ -81,7 +82,7 @@ Demo 必须满足：
 - 不请求 AI Key，不直接调用付费模型；
 - 不上传用户文件到服务器；
 - fixtures 是版本化、可解释的预生成结果；
-- IndexedDB 只保存访客自己浏览器中的编辑进度，并提供一键清除；
+- IndexedDB 只保存访客自己浏览器中的编辑进度；可由现有任务菜单删除，不恢复 P11 独立页面；
 - Demo 返回值与真实 API 使用同一 Zod/OpenAPI 契约；
 - 不通过假网络延迟、伪造数据库状态或虚构在线用户来冒充真实后端。
 
@@ -91,7 +92,7 @@ Demo 必须满足：
 
 - Hono API 与 OpenAPI 文档；
 - PostgreSQL schema、迁移和合成 seed；
-- 文件解析、任务队列、TTL 和删除流程；
+- URL/文本材料处理、任务队列、删除宽限与彻底清除流程；
 - RAG 检索与来源定位；
 - AI provider adapter 和成本门禁；
 - LangGraph checkpoint、人工中断和恢复；
@@ -104,18 +105,17 @@ Demo 必须满足：
 | 模块 | 职责 | 禁止事项 |
 |---|---|---|
 | `apps/web` | 教师工作台、Demo/真实 API adapter、本地导出 | 不保存密钥；不作最终授权判断 |
-| `apps/api` | 校验、任务 capability、资源授权、限流、作业提交、SSE | 不在请求内执行不可恢复的长 Agent |
-| `apps/worker` | 文档处理、向量化、检索、Agent、审计和重试 | 不自行批准或发布教学包 |
+| `apps/api` | 校验、本机 workspace 归属、资源授权、限流、作业提交、SSE | 不把 task ID 当授权；不在请求内执行不可恢复的长 Agent |
+| `apps/worker` | URL/文本切片、向量化、检索、Agent、审计和重试 | 不自行批准或发布教学包 |
 | `packages/domain` | 状态机、证据门禁、版本、成本和删除规则 | 不依赖 React、Hono、LangGraph 或云 SDK |
 | `packages/contracts` | Zod/OpenAPI 契约、事件和错误码 | 不产生业务副作用 |
-| `packages/ai` | 生成、OCR、embedding、rerank adapters | 不向领域层泄漏厂商响应对象 |
-| `packages/retrieval` | 切片、混合检索、重排、来源/许可过滤 | 不把相似度当作史料真实性 |
-| PostgreSQL | 关系、全文、向量、job、checkpoint、TTL 和审计 | 不保存密钥；临时上传不得自动进入公共库 |
-| BlobStore | 原件与导出暂存 | 对象不可默认公开；URL 不能替代权限 |
+| `packages/ai` | GLM 生成和 embedding adapter；provider 接口可替换 | 不向领域层泄漏厂商对象；不在当前启用搜索/OCR/rerank |
+| `packages/retrieval` | 结构感知切片、精确向量检索、来源/许可过滤 | 不把相似度当作史料真实性 |
+| PostgreSQL | 关系、向量、job、checkpoint、删除宽限和审计 | 不保存密钥；私有材料不得自动进入公共库 |
 
 从首版开始固定四类数据：
 
-1. **临时任务**：匿名 capability 管辖，最后活动后 24 小时内删除。
+1. **本地任务**：单一内部 workspace 管辖，持续保存；显式删除后立即隐藏，24 小时内可撤销，之后彻底清除。
 2. **公共来源目录**：公开材料的元数据、版本、许可、链接和校验状态。
 3. **RAG 索引**：版本化切片、向量、检索字段和来源外键。
 4. **去内容化运维数据**：请求 ID、状态、耗时、Token、费用和错误分类，不记录完整材料与提示词。
@@ -126,9 +126,9 @@ Demo 必须满足：
 
 1. 先登记来源、版本、许可和可用状态；
 2. 按标题、段落、页码和可引用结构切片，不按固定字符数盲切；
-3. `text-embedding-v4` 生成向量，同时保留 PostgreSQL 中文全文字段；
-4. 关键词与向量并行召回；
-5. 先按许可、学段、教材、来源等级和有效版本过滤，再用 `qwen3-rerank` 重排；
+3. `embedding-3` 以固定 profile 生成 1024 维向量，并记录模型、维度、距离与 chunker 版本；
+4. 当前以小规模精确 cosine 检索为主；关键词只作可选候选召回，不预建无证据索引；
+5. 先按 task 可选来源、许可、来源等级和有效版本过滤；当前不启用 rerank；
 6. 每个结果携带来源 ID、版本、页码/段落与原文范围；
 7. 引用文本与来源定位不匹配时，确定性校验阻断输出。
 
@@ -187,7 +187,7 @@ LangGraph.js 只用于史料候选发现、出处补全、多源交叉核验、�
 | 标准接口与迁移 | 5% | 4.2 | 4.8 | 3.5 | 4.0 |
 | **加权总分** | **100%** | **95.6** | **85.2** | **91.5** | **88.6** |
 
-**唯一选择：阿里云百炼北京地域的 Qwen 模型族。**
+**历史结论（已于 2026-09-03 被本文件第 1 节的 GLM 决定取代）：阿里云百炼北京地域的 Qwen 模型族。**
 
 选择依据：
 
@@ -203,7 +203,7 @@ LangGraph.js 只用于史料候选发现、出处补全、多源交叉核验、�
 - **豆包**：国内运行与产品线完整，得分第二，但迁移边界和厂商平台耦合略高；
 - **GLM**：Agent/工具能力完善，但官方型号更替提示增加了长期固定版本的维护风险。
 
-Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对账号、数据和费用的单独授权后产生；未调用前可先使用人工编写并明确标记的合成结果。真实 API 评测不是进入编码阶段的门禁，模型效果在产品验证阶段由教师反馈校验。
+Demo 不实时调用任何模型。完整本地工程无 GLM key 时使用预生成结果/向量；有 key 时真实调用仍需服务端最小传输、限额和显式失败。模型效果在产品验证阶段由教师反馈校验。
 
 ## 9. 安全、成本和锁定
 
@@ -214,8 +214,8 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 - 公开 fixtures 只含公开许可或合成材料；
 - GitHub Actions 默认只使用 fake AI，不在公开 PR 中触发付费模型；
 - 真实 AI 调用只能由仓库所有者手动触发，并设置请求数、Token 与费用上限；
-- PostgreSQL 临时任务、公共语料、checkpoint 和运维数据分区；
-- 未来对象存储默认私有，使用短期签名 URL；任务删除级联清理对象、切片和 checkpoint；
+- PostgreSQL 本地任务、公共目录、RAG 派生数据、checkpoint 和运维数据分区；
+- 当前不持久化上传/导出对象；任务彻底删除清理关系、私有切片/向量、job、checkpoint 与普通恢复副本；
 - Agent tool 最小权限；分享、消息、发布和任何外部写入继续需要新授权。
 
 ### 9.2 成本
@@ -241,8 +241,8 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 - Hono 基于 Web Request/Response，领域层不依赖运行平台；
 - API/worker 可构建标准 OCI 镜像；
 - PostgreSQL 可用 `pg_dump`、SQL、CSV/JSON 导出；向量可由原文重建；
-- BlobStore 只依赖 OSS 支持的 S3 子集，并有本地实现；
-- 生成、OCR、embedding 和 rerank 都经 provider adapter；
+- 当前无 BlobStore 运行依赖；若未来批准文件摄取，再以独立设计决定对象抽象；
+- 生成和 embedding 经 provider adapter；当前不启用 OCR/rerank；
 - 模型别名、实际返回版本、提示模板和费用必须进入运行记录；
 - LangGraph 只保存可版本化的内部 state，领域真相不进入厂商 Agent 平台。
 
@@ -253,12 +253,11 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 - PowerShell + Node/npm；npm workspaces 管理 `apps/*` 与 `packages/*`；
 - 不引入 Turborepo/Nx；先使用 npm scripts；
 - Docker Desktop 仅承载 PostgreSQL/pgvector 与集成测试，安装前单独确认系统条件；
-- BlobStore 本地实现写入仓库外精确临时目录；
-- 默认使用 fake AI；真实百炼调用显式开启并记录费用。
+- 默认使用 fake/pre-generated AI；真实 GLM 调用只在后端阶段显式开启、使用非敏感最小输入并记录去内容化用量。
 
 ### 10.2 验证证据
 
-1. 领域状态机、证据门禁、引用一致性、TTL 和幂等单元测试；
+1. 领域状态机、证据门禁、引用一致性、删除宽限和幂等单元测试；
 2. React 键盘、焦点、窄屏、200% 缩放和教师批准交互；
 3. Demo adapter 与真实 API adapter 的契约一致性；
 4. Hono OpenAPI、权限、限流与错误恢复；
@@ -278,7 +277,7 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 
 ### 10.4 未来真实部署
 
-当且仅当项目转为真实服务并获得新批准：API/worker 构建 OCI 镜像；PostgreSQL、对象存储和百炼优先放在同一中国大陆地域；办理所需备案；配置备份、限流、预算告警、删除任务和隐私说明。React/Vite 前端、OpenAPI、领域代码和数据库迁移保持不变。
+当且仅当项目转为真实服务并获得新批准：API/worker 构建 OCI 镜像；重新选择 PostgreSQL 与模型服务地域；办理所需备案；配置认证、RLS、备份、限流、预算告警、删除任务和隐私说明。React/Vite 前端、OpenAPI、领域代码和数据库迁移是否可保持兼容必须以届时评审为准。
 
 ## 11. 重新评估条件
 
@@ -288,7 +287,7 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 2. 项目从作品集变为真实运营服务，引入账号、学生、团队分享或真实个人数据；
 3. PostgreSQL + pgvector 经真实规模的质量和 `EXPLAIN` 证据证明不能满足检索；
 4. LangGraph.js 无法满足已批准 Agent 的持久化、人工中断或工具控制，替代方案完整评分领先至少 15 分；
-5. Qwen 在教师验证中出现不可接受的引用、中文史料或结构化输出问题，或服务政策/版本发生实质变化；
+5. GLM 在最小 smoke test 或教师验证中不可用，或出现不可接受的引用、中文史料、结构化输出、数据政策/版本问题；
 6. 关键依赖进入 EOL、出现无法修复的安全问题或 Windows 工具链不再受支持；
 7. 中国大陆备案、数据处理或模型政策发生实质变化。
 
@@ -325,7 +324,7 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 | [百炼向量与重排序](https://help.aliyun.com/zh/model-studio/embedding-rerank-model) 与 [价格](https://help.aliyun.com/zh/model-studio/model-pricing) | embedding/rerank 能力、限制与按量价格 | 托管知识库比自有 PostgreSQL 更可迁移 |
 | [DeepSeek 模型与价格](https://api-docs.deepseek.com/quick_start/pricing/) | 1M 上下文、JSON、工具调用、价格、实验视觉型号 | 历史教学任务效果必然优于或劣于 Qwen |
 | [火山方舟](https://www.volcengine.com/docs/82379/) | 豆包、视觉、向量、Function Calling、知识库等产品面 | 厂商平台组件必须全部采用 |
-| [智谱模型文档](https://docs.bigmodel.cn/cn/guide/models/text/glm-4.5) | Agent、工具、结构化输出及型号迁移提示 | 旧型号可以永久使用 |
+| [智谱/Z.AI 模型概览](https://docs.z.ai/guides/overview/overview)、[API 说明](https://docs.z.ai/api-reference/introduction) 与 [embedding-3](https://docs.bigmodel.cn/cn/guide/models/embedding/embedding-3) | `GLM-5.3-Flash` 在官方型号列表；embedding 可选维度含 1024；API 采用 key 鉴权 | 国内 key 已实测可调用目标生成型号，或模型质量已验证 |
 | [OSS S3 兼容](https://help.aliyun.com/zh/oss/developer-reference/compatibility-with-amazon-s3) | S3 API 子集与差异 | OSS 完全等同 AWS S3 或免费 |
 | 上述五个开源案例 | 项目结构、维护状态和许可 | 可以直接复制范围、代码或产品承诺 |
 
@@ -339,9 +338,9 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 
 如果页面直接散落假数据，将来接后端时容易重写。统一契约让 Demo adapter 和 API adapter 返回相同结构；切换运行模式不改变页面和领域规则。
 
-### 为什么最终仍选择 Qwen
+### 为什么当前改为 GLM
 
-这不是实测冠军结论，而是公开资料下的工程选择。Qwen 同一产品族覆盖中文、多模态、OCR、生成、工具调用、embedding 和 rerank，最符合“史料输入—检索—核验—生成—Agent”的完整链路，也适合未来中国大陆部署。provider adapter 负责限制锁定风险。
+这是用户基于已有国内 GLM key 做出的明确选择，不是 API 横评冠军结论。provider adapter 保持可替换；数据库只固定可追溯的 provider/model/profile 字段。`embedding-3` 采用 1024 维避开 pgvector `vector` ANN 的 2000 维上限，并与当前轻量规模匹配。目标生成型号是否能被国内 key 调用仍是后端验证项。
 
 ### GitHub 免费了什么
 
@@ -355,7 +354,7 @@ Demo 不实时调用百炼。预生成 AI 内容只能在未来获得用户对�
 - [x] 当前公开体验唯一采用 GitHub Pages 静态 Demo；
 - [x] 后端和数据库完整保留在公开仓库、本地与 CI，不伪装成线上服务；
 - [x] 权重合计 100%，评估四套完整架构；
-- [x] AI 按公开资料评估四个候选并唯一选择 Qwen，同时明确未做 API 实测；
+- [x] 2026-08-31 完成四候选公开资料评估；2026-09-03 用户明确改选 GLM，且保留“未做项目 API 实测”的真实边界；
 - [x] 记录精确版本、来源、访问日期、适用性、不可照搬处、成本、安全和迁移风险；
 - [x] 未安装依赖、未生成脚手架、未创建数据库、未写业务代码、未购买或部署；
 - [x] 用户已于 2026-08-31 明确回复“批准归档”，只授权本地 Git 归档。

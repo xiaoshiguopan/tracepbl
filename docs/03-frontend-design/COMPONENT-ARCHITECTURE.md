@@ -2,8 +2,8 @@
 
 > 现役覆盖说明：2026-09-03 的任务抽屉、统一步骤壳、直接编辑模块与本地导出实现以 `FRONTEND-DEEP-OPTIMIZATION-SPEC.md` 为准。
 
-> 状态：阶段 5 已批准归档
-> 当前修订：2026-09-02 P09 组件职责已按现役实现收束
+> 状态：阶段 5 与阶段 7 数据边界同步均已批准归档
+> 当前修订：2026-09-03 本地任务菜单、workspace 和删除边界
 > 边界：定义前端内部结构和数据流，不是业务代码、数据库模型或具体后端 API
 
 ## 1. 分层
@@ -36,7 +36,7 @@ App shell / routes
 | P08 | 预生成设计检查、异常优先审阅、教师确认与上游失效恢复 | `AuditChain`、`AuditFindingList`、`AuditLedger`、`TeacherRationaleEditor`；已通过项渐进展开，不建立“先运行审计”的空操作 |
 | P09 | 最终确认与导出合并页 | `FinalReviewPage` 组合连续装订清样、交付校样、一次签发、权利替代预览与浏览器原生打印；不建立逐项批准组件或格式选择器 |
 | P10 | 无独立页面；导出能力并入 P09 | 不建立独立 route/page/store；复用 P09 的预览、格式与生成状态 |
-| P11 | 用户明确取消 | 不建立 route/page/store 或清除组件；P12 不代理清除 |
+| P11 | 用户明确取消 | 不建立 route/page/store 或回收站；全局任务菜单已有自有任务管理，不视为恢复 P11；P12 不代理删除 |
 | P12 | 统一安全结果 | 复用 `TaskUnavailable`；只接收安全导航动作，不接收或渲染任务对象 |
 | 全局 | 布局与状态 | `EvidenceTrail`、`DemoModeBadge`、`TaskStatusBanner`、`OfflineBanner` |
 
@@ -63,7 +63,7 @@ App shell / routes
 | P00 媒体能力状态 | `CinematicMedia` + app environment | `film`/`poster`/`safe-color`、media loading/ready/error、motion/data preference | 业务任务快照、URL、史料状态 |
 | P00 导演式时间线 | `NarrativeHero` 局部编排 | 当前镜头段、收束、用户主动重看 | 全局业务 store、服务端状态 |
 
-状态提升只在两个以上相邻消费者确实需要时发生。服务器/领域派生状态不由客户端回算。URL 中的 task ID 只定位，capability 不进入查询参数、日志或持久可复制状态。
+状态提升只在两个以上相邻消费者确实需要时发生。服务器/领域派生状态不由客户端回算。URL 中的 task ID 只定位，访问凭据和内部 workspace 标识不进入查询参数、日志或持久可复制状态。
 
 ## 5. 数据流与写入
 
@@ -81,7 +81,7 @@ form draft → client experience validation → command intent
 ## 6. 权限与边界
 
 - `CanView`/`CanEdit` 等前端提示只用于禁用或解释入口，不能作为安全授权。
-- 完整模式每次读取、保存、核验、批准、导出、取消和清除都必须由后续服务端校验当前 capability 与资源归属。
+- 完整模式每次读取、保存、核验、批准、导出、取消、删除和撤销删除都必须由后续服务端校验当前本机 workspace、资源归属、状态与动作；task ID 不授权。
 - 无权限与不存在共享安全展示，前端不显示资源标题、来源或所有者信息。
 - Demo adapter 只操作本机的合成非史料数据与官方史料元数据夹具；它不证明完整模式授权安全，也不把官方公开等同于可复制许可。
 - `NarrativeHero` 只消费艺术资产和环境偏好，不能向史料组件提供事实；艺术图或预渲染媒体损坏时，真实页面内容保持完整。
