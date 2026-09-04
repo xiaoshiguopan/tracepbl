@@ -13,7 +13,14 @@ const expectedTables = [
 
 describe("approved database contract", () => {
   it("keeps migrations ordered and immutable by checksum at runtime", async () => {
-    expect(await migrationFiles()).toEqual(["0001_initial_schema.sql", "0002_seed_defaults.sql"]);
+    expect(await migrationFiles()).toEqual(["0001_initial_schema.sql", "0002_seed_defaults.sql", "0003_backend_runtime_support.sql"]);
+  });
+
+  it("adds fenced leases, replay events, budgets, and model provenance forward-only", async () => {
+    const sql = await readFile(join(migrationsDirectory, "0003_backend_runtime_support.sql"), "utf8");
+    for (const field of ["lease_token", "lease_expires_at", "cancel_requested_at", "wait_state", "output_task_revision_id", "actual_model", "price_profile_version"]) expect(sql).toContain(field);
+    for (const table of ["ops.job_events", "ops.usage_ledger", "ops.runtime_components"]) expect(sql).toMatch(new RegExp(`CREATE TABLE ${table.replace(".", "\\.")} \\(`));
+    expect(sql).not.toMatch(/ALTER TABLE\s+(core|rag|ops)\.[^\s]+\s+DROP|DROP TABLE/i);
   });
 
   it("creates every approved relation and the four schema boundaries", async () => {

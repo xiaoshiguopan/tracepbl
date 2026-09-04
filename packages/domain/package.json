@@ -1,0 +1,9 @@
+{
+  "name": "@tracepbl/domain",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": { "lint": "eslint .", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit --pretty false" },
+  "devDependencies": { "vitest": "4.1.11" }
+}

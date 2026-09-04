@@ -4,15 +4,15 @@
 - 英文代号：TracePBL
 - 副标题：面向历史教师的可追溯证据探究工作台
 - 项目路径：`C:\Users\10342\Documents\Codex\Projects\tracepbl`
-- 当前阶段：阶段 9 后端设计已获用户批准归档；阶段 10 后端编码尚未开始
-- 当前子阶段：阶段 9 本地归档提交；下一步须由用户另行明确授权开始阶段 10
+- 当前阶段：阶段 10 后端编码实现、验证与知识收口已获用户批准归档；前后端集成与总审查尚未开始
+- 当前子阶段：阶段 10 本地归档提交；下一步须由用户另行明确授权开始前后端集成与总审查
 - 状态：P00—P09 与 P12 已完成深度优化；P04 自动核验并入 P03，P10 真实 Word/PDF 导出并入 P09，P11 保持取消
-- 当前唯一任务：完成 `docs/05-backend-design/STAGE-9-REPORT.md` 所列 15 个文档的一次本地归档提交；不授权阶段 10、migration 实现、依赖、真实 GLM、push、tag 或部署
+- 当前唯一任务：完成 `docs/06-development/STAGE-10-REPORT.md` 所列 77 个路径的一次本地归档提交；不授权真实 GLM、读取本机密钥、前端 API 接入、下一阶段、push、tag 或部署
 - 最近归档：阶段 6 状态收口已由本地提交 `3c708b8 docs: close frontend development stage` 归档；前端主归档提交为 `0d8d898 feat(web): unify the complete teaching workflow`
-- 明确禁止的动作：实现 P11 或恢复独立 P10；以本机任务、隐藏按钮或 task ID 冒充授权；后端 API/Worker/RAG/Agent 代码、OpenAPI 文件、migration 实现或 seed 变更；真实联网 RAG/搜索/AI 调用；读取或暴露密钥；真实学生/用户数据；史料合成或未授权史料；新增依赖；未经“批准归档”执行 `git add`/commit；未经单独授权执行 tag、push、远程仓库操作、部署、域名购买、备案或外发消息
+- 明确禁止的动作：实现 P11 或恢复独立 P10；以本机任务、隐藏按钮或 task ID 冒充授权；修改 `0001`/`0002` 或让静态 Demo 接秘密后端；真实联网搜索或未经专门联调授权调用真实 GLM；读取或暴露本机密钥；真实学生/用户数据；史料合成或未授权史料；引入获批技术栈之外的生产依赖；未经“批准归档”执行 `git add`/commit；未经单独授权执行 tag、push、远程仓库操作、部署、域名购买、备案或外发消息
 - 输入文档及版本：阶段 1 PRD、阶段 2 技术决策和阶段 3 项目手册已因阶段 7 明确产品决定形成现役修订草案；阶段 4 总体规划、阶段 5 前端设计及阶段 6 代码/验证为数据库设计输入；阶段 7 的完整路径见 `docs/04-database-design/STAGE-7-REPORT.md`
-- 当前唯一技术结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署并只用 IndexedDB/预生成结果；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 保留在公开仓库、本地和 CI；AI 采用可替换的智谱 GLM provider adapter，目标生成模型 `GLM-5.3-Flash`，embedding 为 `embedding-3` 1024 维 cosine；不启用联网搜索，型号可用性待后端阶段用非敏感最小调用验证
-- 本阶段验收标准：模块/API/OpenAPI、workspace/task 授权、repository/事务、乐观锁/幂等、URL 安全、RAG/引用、GLM/预算、Worker/租约、LangGraph/checkpoint、SSE、删除/恢复、本地 Compose、日志审计、测试、实施顺序和回滚均有明确落点；官方资料与成熟 GitHub 案例研究完成；设计后评审 P0/P1 清零；只有文档，没有后端或 migration 实现
+- 当前唯一技术结论：TypeScript 模块化单体；React/Vite 静态 Demo 由 GitHub Pages 免费部署并只用 IndexedDB/预生成结果；真实 Hono API、worker、PostgreSQL 18 + pgvector、RAG 与 LangGraph.js Agent 保留在公开仓库、本地和 CI；AI 采用可替换的智谱 GLM provider adapter，目标生成模型 `GLM-5.3-Flash`，embedding 为 `embedding-3` 1024 维 cosine；不启用联网搜索，型号可用性只可在以后专门授权的后端联调中用非敏感最小调用验证
+- 本阶段验收标准：模块/API/OpenAPI、workspace/task 授权、repository/事务、乐观锁/幂等、URL 安全、RAG/引用、GLM/预算、Worker/租约、LangGraph/checkpoint、SSE、删除/恢复、日志审计及新增向前 migration 均已实现并通过单元、契约、真实数据库、最小权限、Agent replay 和后端 E2E 验证；Compose 结构通过解析，镜像内容构建与完整启动因 Docker Hub 外部超时保持 pending；现役入口、数据库说明和归档清单必须与此结论一致
 - 阶段 7 方案确认：用户确认全部采用推荐方案并选择 1A（智谱国内 API），随后于 2026-09-03 明确回复“确认方案，写入文档”。授权仅含阶段 7 文档及必要现役契约同步，不含读取 `C:\Users\10342\Desktop\glm.txt`、数据库编码、后端、依赖、归档、push 或部署
 - 阶段 7 归档批准：用户于 2026-09-03 明确回复“批准归档”，仅授权 `docs/04-database-design/STAGE-7-REPORT.md` 所列 24 个文档做一次本地提交；不含 `output/`、push、tag、部署、阶段 8、后端或真实 GLM 调用
 - 阶段 8 开始授权：用户于 2026-09-03 在数据库设计归档后明确表示“没有的话就直接开工编码，期间不要我介入”；现有获批设计无阻断决定，因此授权数据库 schema、migration、最小 seed、数据库脚本/测试与阶段记录，不含后端/API、真实 GLM、生产/真实数据、归档、push 或部署
@@ -23,11 +23,16 @@
 - 阶段 9 写入授权：用户在阅读完整对话方案后于 2026-09-03 明确回复“确认方案，写入文档”；授权生成阶段 9 规划、设计、评审、学习卡、报告和状态同步，不含代码、OpenAPI/SQL、依赖、真实 GLM、归档、push 或部署
 - 阶段 9 设计摘要：采用 API/Worker 两进程的 TypeScript 模块化单体；`/api/v1` Zod/OpenAPI、If-Match/幂等、不可区分 404；PostgreSQL lease/fencing 与 job_events；task-scoped exact RAG/引用门禁；generated revision 后教师采用；固定 GLM 且无价格档案 fail closed；PostgresSaver 短线程/整线程删除；24 小时 checkpoint-first purge。阶段 10 只通过新增 0003 migration 补租约、取消、SSE、usage ledger 和运行证据，不改 0001/0002
 - 阶段 9 归档批准：用户于 2026-09-03 明确回复“批准归档”，仅授权 `docs/05-backend-design/STAGE-9-REPORT.md` 第 4 节所列 15 个路径做一次本地提交；不含 `output/`、阶段 10、真实 GLM、tag、push 或部署
+- 阶段 10 开始授权：用户于 2026-09-03 在阶段 9 归档后明确回复“继续推进”；据固定顺序进入后端编码，允许实现获批模块、API、Worker、测试和新增向前 migration，并安装方案冻结的精确依赖；仍禁止真实 GLM、读取本机密钥、修改 `0001`/`0002`、静态 Demo 接后端、真实数据、部署、push、tag 或未经“批准归档”的提交。
+- 阶段 10 实现摘要：已实现 Hono REST/OpenAPI、workspace-scoped repository/事务、PostgreSQL job lease/SSE/预算、确定性 RAG/引用门禁、固定 GLM adapter、LangGraph PostgresSaver interrupt/resume、审计/导出/purge 和 localhost Compose；只新增 `0003_backend_runtime_support.sql`，未修改 `0001`/`0002`。
+- 阶段 10 验证摘要：全仓 typecheck、lint、65 项非数据库测试、build、audit 与 diff check 通过；PostgreSQL 18.6 + pgvector 0.8.6 数据库集成 18/18、最小权限 API 6/6、真实 checkpointer replay 1/1、后端 E2E 1/1。目标容器与 CI 已对齐 Node.js 24.20.0/npm 11.19.0；Compose 配置解析通过，后端镜像构建累计三次均因 Docker Hub token endpoint 超时未进入 Dockerfile 步骤。GitHub Actions 只完成本地静态校验，未经 push 不声称远端运行。未调用真实 GLM 或真实网页。
+- 阶段 10 知识收口：根 `README.md` 已转换为 TracePBL 项目入口，`docs/README.md` 已指向阶段 10，数据库与 migration 说明已登记 `0003`、运行角色和 LangGraph checkpointer；阶段报告归档清单同步覆盖这些现役事实面。
+- 阶段 10 归档批准：用户于 2026-09-04 明确回复“批准归档”，仅授权 `docs/06-development/STAGE-10-REPORT.md` 第 4 节所列 77 个路径进行一次本地提交；不含 `output/`、前后端集成、真实 GLM、tag、push 或部署。
 - 本次授权：用户于 2026-08-31 在新 Codex 对话中明确要求执行“阶段5：前端设计”，并列出全部设计产物、页面状态和边界；本次授权不含编码、依赖安装、数据库/后端设计、归档、推送或部署
 - 本次修订授权：阶段5期间允许按已批准治理规则复用现有 Skill、只读研究官方资料和成熟 GitHub 案例；用户补充授权全网检索官方公开权威材料并自行合成非史料数据，但史料不得合成；用户于 2026-08-31 要求先把第一性原理设计后审查写入规范，统一适用于后续数据库和后端设计；随后明确批准 P00 采用“预渲染人物/主镜头 + 实时空间增强”的混合 3D 推荐方案，并允许确认后写入文件；现有能力足够，不安装新 Skill，不连接插件账号
 - 最近批准：用户于 2026-08-31 明确回复“批准归档”，授权阶段 5 前端设计、混合 3D 修订与跨层设计审查规范按报告所列路径本地归档；不含 push、部署或依赖安装
 - 本次批准：用户于 2026-09-01 明确回复“批准归档”，授权阶段 6.1 报告所列精确路径进行一次本地提交；不含 push、部署、3D 依赖安装或下一子阶段实现
-- 未解决问题：5 名教师尚未招募；P00/P01 的完整辅助技术和多浏览器矩阵仍需发布前复验；AI 画面只可作为艺术化气氛；GLM 的实际中文史料、引用和教学质量尚未验证，国内 key 对目标生成型号的可调用性待后端阶段最小 smoke test；第三方数据处理/保存政策需在真实调用前复核；GitHub Pages 在求职目标网络中的可用性尚未实测；未来多用户/远程服务所需认证、RLS、备案、价格和运维必须另行设计批准
+- 未解决问题：5 名教师尚未招募；P00/P01 的完整辅助技术和多浏览器矩阵仍需发布前复验；AI 画面只可作为艺术化气氛；GLM 的实际中文史料、引用和教学质量尚未验证，国内 key 对目标生成型号的可调用性只可在专门授权的后端联调中做最小 smoke test；第三方数据处理/保存政策需在真实调用前复核；GitHub Pages 在求职目标网络中的可用性尚未实测；未来多用户/远程服务所需认证、RLS、备案、价格和运维必须另行设计批准
 - 本子阶段验收标准：P00 使用真实 5—7 秒预渲染动画电影成片而非 CSS/实时纸片冒充，常驻显示演示边界并一次点击进入 P01；无声音、无二次确认、无飞纸/白洗/门户式廉价转场；P01 只收集当前决策所需课程边界，以即时条件摘要替代“生成简报”，一次确认完成本步；史料条件后置 P03，匿名学情后置 P06，隐藏字段不得阻塞；正常、加载、空白、校验失败、系统失败、不可用、离线、超时、成功、320px 和焦点状态有落点；合成 fixture 不冒充史料或真实学情；本机保存失败不伪装成功；步骤/不可用展示不冒充安全授权；lint、typecheck、测试、production build、审计与真实浏览器有当前证据
 - 本子阶段依赖边界：UI 只复用 React/Vite 与浏览器原生 History API、IndexedDB、HTML 表单和 CSS；正式页面不加载已被否决的 Three.js 场景，也不使用独立 View Transition。不得新增状态、表单、路由、UI 或存储依赖。影片制作能力需用户明确授权；依赖清单清理因允许路径不含 manifest/lockfile 而暂缓
 - 阶段 6.1 验证摘要：ESLint、TypeScript、Vitest（1 文件、2 测试）和 Vite production build 通过；应用内 Chromium 桌面与 320×800 走查通过，横向溢出 0px、触控目标至少 44px、主动作/声音状态可操作、控制台无 warning/error。Playwright CLI 因其 Linux 环境缺 Chrome 未运行，未擅自下载浏览器；完整键盘顺序、高对比、缩放与真实辅助技术仍是后续浏览器矩阵项

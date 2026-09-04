@@ -1,0 +1,67 @@
+name: tracepbl-local
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: Dockerfile.backend
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    environment:
+      POSTGRES_DB: tracepbl
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${TRACEPBL_POSTGRES_PASSWORD:?copy .env.example to .env and replace every placeholder}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tracepbl"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - tracepbl_postgres:/var/lib/postgresql
+
+  runtime-init:
+    <<: *backend
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TRACEPBL_MIGRATOR_DATABASE_URL: postgres://postgres:${TRACEPBL_POSTGRES_PASSWORD}@postgres:5432/tracepbl
+      TRACEPBL_APP_DB_PASSWORD: ${TRACEPBL_APP_DB_PASSWORD:?set a distinct 32-character app password}
+      TRACEPBL_WORKER_DB_PASSWORD: ${TRACEPBL_WORKER_DB_PASSWORD:?set a distinct 32-character worker password}
+    command: ["sh", "-c", "npm run db:migrate && npm run provision:runtime --workspace @tracepbl/database && npm run checkpointer:init --workspace @tracepbl/worker"]
+
+  api:
+    <<: *backend
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+    environment:
+      TRACEPBL_API_HOST: 0.0.0.0
+      TRACEPBL_API_PORT: 8787
+      TRACEPBL_ALLOWED_ORIGIN: http://127.0.0.1:5173
+      TRACEPBL_APP_DATABASE_URL: postgres://tracepbl_app:${TRACEPBL_APP_DB_PASSWORD}@postgres:5432/tracepbl
+      TRACEPBL_SESSION_SECRET: ${TRACEPBL_SESSION_SECRET:?set at least 43 random URL-safe characters}
+      TRACEPBL_MODE: local
+      TRACEPBL_AI_ENABLED: "false"
+      TRACEPBL_URL_FETCH_ENABLED: "false"
+    command: ["npm", "run", "dev", "--workspace", "@tracepbl/api"]
+    ports:
+      - "127.0.0.1:8787:8787"
+
+  worker:
+    <<: *backend
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+    environment:
+      TRACEPBL_WORKER_DATABASE_URL: postgres://tracepbl_worker:${TRACEPBL_WORKER_DB_PASSWORD}@postgres:5432/tracepbl
+      TRACEPBL_PROVIDER_MODE: ${TRACEPBL_PROVIDER_MODE:-disabled}
+      TRACEPBL_AI_ENABLED: ${TRACEPBL_AI_ENABLED:-false}
+      TRACEPBL_URL_FETCH_ENABLED: ${TRACEPBL_URL_FETCH_ENABLED:-false}
+    command: ["npm", "run", "dev", "--workspace", "@tracepbl/worker"]
+
+volumes:
+  tracepbl_postgres:

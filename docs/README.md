@@ -20,4 +20,4 @@ docs/
 
 当前 P03“查找史料”以及原 P04 能力的现役产品边界见 [`03-frontend-design/P03-SOURCE-DISCOVERY-DESIGN.md`](./03-frontend-design/P03-SOURCE-DISCOVERY-DESIGN.md)：教师直接阅读和选择已完成基础自动核验的史料，P04 不再是独立教师页面。旧阶段报告和原型图只保留历史证据，不覆盖该现役说明。
 
-阶段 9 后端设计入口为 [`05-backend-design/STAGE-9-PLAN.md`](./05-backend-design/STAGE-9-PLAN.md)，最终结论与归档范围见 [`05-backend-design/STAGE-9-REPORT.md`](./05-backend-design/STAGE-9-REPORT.md)，编码就绪证据见 [`05-backend-design/BACKEND-REVIEW.md`](./05-backend-design/BACKEND-REVIEW.md)。设计获批归档前不得进入阶段 10。
+阶段 9 后端设计入口为 [`05-backend-design/STAGE-9-PLAN.md`](./05-backend-design/STAGE-9-PLAN.md)，最终设计与编码就绪证据见 [`05-backend-design/STAGE-9-REPORT.md`](./05-backend-design/STAGE-9-REPORT.md) 和 [`05-backend-design/BACKEND-REVIEW.md`](./05-backend-design/BACKEND-REVIEW.md)。阶段 10 的实现结论、学习卡与当前验证证据分别见 [`06-development/STAGE-10-REPORT.md`](./06-development/STAGE-10-REPORT.md)、[`06-development/LEARNING-CARD-10.md`](./06-development/LEARNING-CARD-10.md) 和 [`06-development/BACKEND-IMPLEMENTATION-VALIDATION.md`](./06-development/BACKEND-IMPLEMENTATION-VALIDATION.md)。阶段 10 获批归档前不得进入前后端集成与总审查。

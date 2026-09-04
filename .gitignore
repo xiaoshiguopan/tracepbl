@@ -4,6 +4,7 @@
 !.env.example
 *.pem
 *.key
+.tracepbl/
 
 # Logs, test output and coverage
 *.log

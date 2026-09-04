@@ -2,6 +2,7 @@ import {
   bigint,
   boolean,
   customType,
+  date,
   doublePrecision,
   integer,
   jsonb,
@@ -161,7 +162,8 @@ export const modelRuns = rag.table("model_runs", {
   id: uuidV7PrimaryKey(), workspaceId: uuid("workspace_id").notNull(), taskId: uuid("task_id").notNull(), taskRevisionId: uuid("task_revision_id"), purpose: text().notNull(),
   provider: text().notNull(), model: text().notNull(), promptTemplateVersion: text("prompt_template_version").notNull(), inputFingerprint: text("input_fingerprint").notNull(), status: text().notNull(),
   resultSummary: jsonb("result_summary"), inputTokens: integer("input_tokens"), outputTokens: integer("output_tokens"), totalTokens: integer("total_tokens"), estimatedCost: numeric("estimated_cost", { precision: 12, scale: 6 }),
-  errorCode: text("error_code"), externalThreadId: text("external_thread_id"), startedAt: timestamp("started_at", { withTimezone: true }), completedAt: timestamp("completed_at", { withTimezone: true }), createdAt: createdAt(),
+  errorCode: text("error_code"), externalThreadId: text("external_thread_id"), outputTaskRevisionId: uuid("output_task_revision_id"), actualModel: text("actual_model"),
+  priceProfileVersion: text("price_profile_version"), currency: text(), startedAt: timestamp("started_at", { withTimezone: true }), completedAt: timestamp("completed_at", { withTimezone: true }), createdAt: createdAt(),
 }, (table) => [unique().on(table.workspaceId, table.taskId, table.id)]);
 
 export const retrievalHits = rag.table("retrieval_hits", {
@@ -173,8 +175,25 @@ export const retrievalHits = rag.table("retrieval_hits", {
 export const jobs = ops.table("jobs", {
   id: uuidV7PrimaryKey(), workspaceId: uuid("workspace_id").notNull(), taskId: uuid("task_id"), modelRunId: uuid("model_run_id"), jobKind: text("job_kind").notNull(), status: text().notNull().default("queued"),
   priority: integer().notNull().default(0), attempts: integer().notNull().default(0), maxAttempts: integer("max_attempts").notNull().default(3), availableAt: timestamp("available_at", { withTimezone: true }).notNull().defaultNow(),
-  lockedAt: timestamp("locked_at", { withTimezone: true }), lockedBy: text("locked_by"), idempotencyKey: text("idempotency_key").notNull(), payload: jsonb().notNull().default({}), errorCode: text("error_code"), errorSummary: text("error_summary"), createdAt: createdAt(), updatedAt: updatedAt(),
+  lockedAt: timestamp("locked_at", { withTimezone: true }), lockedBy: text("locked_by"), leaseToken: uuid("lease_token"), leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+  cancelRequestedAt: timestamp("cancel_requested_at", { withTimezone: true }), waitState: text("wait_state"), progressCurrent: integer("progress_current").notNull().default(0), progressTotal: integer("progress_total"),
+  idempotencyKey: text("idempotency_key").notNull(), payload: jsonb().notNull().default({}), errorCode: text("error_code"), errorSummary: text("error_summary"), createdAt: createdAt(), updatedAt: updatedAt(),
 }, (table) => [unique().on(table.workspaceId, table.idempotencyKey), unique().on(table.workspaceId, table.taskId, table.id)]);
+
+export const jobEvents = ops.table("job_events", {
+  id: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity(), workspaceId: uuid("workspace_id").notNull(), taskId: uuid("task_id").notNull(), jobId: uuid("job_id"),
+  schemaVersion: integer("schema_version").notNull().default(1), eventType: text("event_type").notNull(), payload: jsonb().notNull().default({}), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const usageLedger = ops.table("usage_ledger", {
+  id: uuidV7PrimaryKey(), workspaceId: uuid("workspace_id").notNull(), taskId: uuid("task_id").notNull(), jobId: uuid("job_id").notNull(), usageDay: date("usage_day").notNull(), usageKind: text("usage_kind").notNull(), status: text().notNull(),
+  reservedCalls: integer("reserved_calls").notNull().default(0), reservedTokens: integer("reserved_tokens").notNull().default(0), reservedCnyMicros: bigint("reserved_cny_micros", { mode: "number" }).notNull().default(0),
+  actualCalls: integer("actual_calls"), actualTokens: integer("actual_tokens"), actualCnyMicros: bigint("actual_cny_micros", { mode: "number" }), createdAt: createdAt(), updatedAt: updatedAt(),
+}, (table) => [unique().on(table.workspaceId, table.jobId, table.usageKind)]);
+
+export const runtimeComponents = ops.table("runtime_components", {
+  component: text().primaryKey(), version: text().notNull(), initializedAt: timestamp("initialized_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const commandReceipts = ops.table("command_receipts", {
   id: uuidV7PrimaryKey(), workspaceId: uuid("workspace_id").notNull(), taskId: uuid("task_id"), idempotencyKey: text("idempotency_key").notNull(), operation: text().notNull(), requestHash: text("request_hash").notNull(),

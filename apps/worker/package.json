@@ -1,0 +1,26 @@
+{
+  "name": "@tracepbl/worker",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --experimental-strip-types src/main.ts",
+    "checkpointer:init": "node --experimental-strip-types src/checkpointer-init.ts",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/checkpointer.integration.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit --pretty false"
+  },
+  "dependencies": {
+    "@langchain/langgraph": "1.4.13",
+    "@langchain/langgraph-checkpoint-postgres": "1.0.5",
+    "@tracepbl/ai": "0.0.0",
+    "@tracepbl/contracts": "0.0.0",
+    "@tracepbl/repositories": "0.0.0",
+    "@tracepbl/retrieval": "0.0.0",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  }
+}

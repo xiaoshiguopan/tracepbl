@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg18-bookworm
+        env:
+          POSTGRES_DB: tracepbl
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tracepbl"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      TRACEPBL_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/tracepbl
+      TRACEPBL_MIGRATOR_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/tracepbl
+      TRACEPBL_APP_DB_PASSWORD: synthetic-ci-app-password-00000000000001
+      TRACEPBL_WORKER_DB_PASSWORD: synthetic-ci-worker-password-0000000001
+      TRACEPBL_TEST_APP_DATABASE_URL: postgres://tracepbl_app:synthetic-ci-app-password-00000000000001@127.0.0.1:5432/tracepbl
+      TRACEPBL_TEST_WORKER_DATABASE_URL: postgres://tracepbl_worker:synthetic-ci-worker-password-0000000001@127.0.0.1:5432/tracepbl
+      TRACEPBL_PROVIDER_MODE: fake
+      TRACEPBL_URL_FETCH_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+          cache: npm
+      - run: npm install --global npm@11.19.0
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev
+      - run: npm run format:check
+      - run: npm run test:integration
+      - run: npm run test:e2e

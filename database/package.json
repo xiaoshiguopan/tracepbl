@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint .",
     "migrate": "node --experimental-strip-types scripts/migrate.ts",
+    "provision:runtime": "node --experimental-strip-types scripts/provision-runtime.ts",
     "seed": "node --experimental-strip-types scripts/seed.ts",
     "test": "vitest run tests/schema-contract.test.ts",
     "test:integration": "vitest run tests/database.integration.test.ts",
@@ -16,6 +17,7 @@
     "postgres": "3.4.9"
   },
   "devDependencies": {
+    "@tracepbl/repositories": "0.0.0",
     "testcontainers": "12.1.0",
     "vitest": "4.1.11"
   }
