@@ -10,10 +10,7 @@ function canPlayFilm() {
     window.matchMedia(filmMediaQuery).matches;
 }
 
-/**
- * Static fallback for the approved pre-rendered-film direction.
- * Camera motion belongs in the final film, not in a CSS imitation of one.
- */
+/** Camera motion belongs in the approved film, not in a CSS imitation of one. */
 export function P00Experience() {
   const [filmEnabled, setFilmEnabled] = useState(canPlayFilm);
   const [playback, setPlayback] = useState<"playing" | "ended">("playing");
@@ -74,6 +71,7 @@ export function P00Experience() {
           muted
           playsInline
           preload="auto"
+          onError={() => setFilmEnabled(false)}
           onEnded={() => {
             setPlayback("ended");
             holdLastFrame();
@@ -83,21 +81,11 @@ export function P00Experience() {
         </video>
       ) : null}
       <picture aria-hidden="true" className={filmEnabled ? "film-static-fallback" : undefined}>
-        <source
-          media="(max-width: 47.99rem)"
-          srcSet={`${mediaBase}p00-dunhuang-mobile.webp`}
-          type="image/webp"
-        />
-        <source
-          media="(max-width: 47.99rem)"
-          srcSet={`${mediaBase}p00-dunhuang-mobile.jpg`}
-          type="image/jpeg"
-        />
         <img
-          src={`${mediaBase}p00-film-keyframe-reveal-v1.webp`}
+          src={`${mediaBase}p00-cinematic-h3-v2-poster.webp`}
           alt=""
-          width="1672"
-          height="941"
+          width="1344"
+          height="768"
           fetchPriority="high"
         />
       </picture>

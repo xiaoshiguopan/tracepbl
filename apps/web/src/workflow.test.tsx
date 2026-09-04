@@ -28,14 +28,16 @@ const auditInput: AuditInput = { question, selectedSourceIds: sourceIds, evidenc
 const noop = () => undefined;
 
 describe("首页、导航与安全边界", () => {
-  it("呈现游客入口、无声影片后备和本机数据边界", () => {
+  it("呈现游客入口、新版无声影片后备和本机数据边界", () => {
     const html = renderToStaticMarkup(<App />);
     expect(html).toContain("让沉睡千年的证据");
     expect(html).toContain("重新开口");
     expect(html).toContain("新建备课");
     expect(html).toContain("我的备课");
     expect(html).toContain("公开演示");
-    expect(html).toContain("p00-film-keyframe-reveal-v1.webp");
+    expect(html).toContain("p00-cinematic-h3-v2-poster.webp");
+    expect(html).not.toContain("p00-dunhuang-mobile");
+    expect(html).not.toContain("p00-film-keyframe");
     expect(html).not.toContain("<audio");
     expect(boundaryCopy).toContain("数据只保存在当前浏览器");
   });
