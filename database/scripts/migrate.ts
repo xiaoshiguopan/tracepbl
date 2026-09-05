@@ -1,6 +1,6 @@
 import { applyMigrations, connect } from "./database.ts";
 
-const sql = connect();
+const sql = connect(process.env.TRACEPBL_MIGRATOR_DATABASE_URL ?? process.env.TRACEPBL_DATABASE_URL);
 try {
   await applyMigrations(sql);
   const head = await sql<{ name: string }[]>`select name from tracepbl_meta.schema_migrations order by name desc limit 1`;

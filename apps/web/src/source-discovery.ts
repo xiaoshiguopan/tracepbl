@@ -15,6 +15,8 @@ export type SourceRecord = {
   rights: string;
   questionIds: number[];
   recommended: boolean;
+  usable?: boolean;
+  statusNote?: string;
 };
 
 export type OwnMaterial = { id: string; kind: "url" | "text"; name: string; content: string };

@@ -5,6 +5,13 @@ export const gradeOptions = {
 
 export const lessonTypeOptions = ["新授", "复习", "公开课 / 比赛", "微型 PBL"] as const;
 
+export const inquiryDirectionOptions = ["解释历史变化的原因", "比较不同阶段的变化", "用史料支持或质疑观点", "比较不同史料的记载"] as const;
+export const priorKnowledgeOptions = [
+  "已接触本课相关基础知识，仍需梳理人物、事件与时序",
+  "知道主要人物与事件，但史料阅读和因果解释仍需支架",
+  "基础史实较稳，可以直接进入多材料比较与历史解释",
+] as const;
+
 export type Stage = keyof typeof gradeOptions;
 
 export type TeachingContextDraft = {
@@ -30,7 +37,7 @@ export const syntheticFixture: TeachingContextDraft = {
   lessonTypes: ["新授", "微型 PBL"],
   minutes: "45",
   inquiryQuestion: "唐朝由盛转衰的原因",
-  priorKnowledge: "初中已接触隋唐基本史实、贞观之治和开元盛世",
+  priorKnowledge: priorKnowledgeOptions[0],
   learningNeeds: ["区分史料内容与历史解释", "区分长期原因、转折因素与直接原因"],
   profileNote: "",
 };

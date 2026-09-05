@@ -8,8 +8,8 @@ const config = { host: "127.0.0.1", port: 8787, allowedOrigin: "http://127.0.0.1
 
 describe("HTTP contract", () => {
   it("publishes OpenAPI 3.1 with unique operation ids", async () => {
-    const response = await createApp(unusedDatabase, config).request("http://127.0.0.1:8787/openapi.json"); const document = await response.json() as { openapi: string; paths: Record<string, Record<string, { operationId?: string }>> };
-    expect(document.openapi).toBe("3.1.0"); const ids = Object.values(document.paths).flatMap((path) => Object.values(path).map((operation) => operation.operationId).filter(Boolean));
+    const response = await createApp(unusedDatabase, { ...config, host: "0.0.0.0" }).request("http://127.0.0.1:8787/openapi.json"); const document = await response.json() as { openapi: string; servers: {url:string}[]; paths: Record<string, Record<string, { operationId?: string }>> };
+    expect(document.openapi).toBe("3.1.0"); expect(document.servers).toEqual([{url:"http://127.0.0.1:8787"}]); const ids = Object.values(document.paths).flatMap((path) => Object.values(path).map((operation) => operation.operationId).filter(Boolean));
     expect(new Set(ids).size).toBe(ids.length);
     for(const path of ["/api/v1/runtime","/api/v1/tasks","/api/v1/tasks/{taskId}","/api/v1/tasks/{taskId}/copies","/api/v1/tasks/{taskId}/context","/api/v1/tasks/{taskId}/question-set","/api/v1/tasks/{taskId}/sources","/api/v1/tasks/{taskId}/materials","/api/v1/tasks/{taskId}/source-selection","/api/v1/tasks/{taskId}/evidence-map","/api/v1/tasks/{taskId}/lesson-design","/api/v1/tasks/{taskId}/rubric","/api/v1/tasks/{taskId}/proposals","/api/v1/tasks/{taskId}/proposals/{revisionId}","/api/v1/tasks/{taskId}/proposals/{revisionId}/adoption","/api/v1/tasks/{taskId}/audits","/api/v1/tasks/{taskId}/audits/{runId}","/api/v1/tasks/{taskId}/decisions","/api/v1/tasks/{taskId}/exports","/api/v1/tasks/{taskId}/exports/{exportId}/manifest","/api/v1/tasks/{taskId}/restorations","/api/v1/tasks/{taskId}/operations/{operationId}","/api/v1/tasks/{taskId}/events"])expect(document.paths[path],path).toBeDefined();
   });

@@ -1,3 +1,4 @@
+import { lockCommand } from "./command-lock.ts";
 import { createHash } from "node:crypto";
 import postgres, { type Sql } from "postgres";
 import { NotFoundError, VersionConflictError, type JobStatus, type WorkspaceScope } from "@tracepbl/domain";
@@ -26,6 +27,22 @@ function publicJobKind(kind:string){return kind==="source_check"?"sourceCheck":k
 
 export class TaskRepository {
   constructor(private readonly sql: Database) {}
+  async detail(scope: WorkspaceScope, taskId: string) {
+    const rows = await this.sql<Record<string, unknown>[]>`select t.*,
+      (select id from core.task_revisions where workspace_id=t.workspace_id and task_id=t.id and reason='teacher_confirmed' order by revision_no desc limit 1) as teacher_revision,
+      (select id from core.task_revisions where workspace_id=t.workspace_id and task_id=t.id and reason='final_approved' order by revision_no desc limit 1) as approved_revision,
+      (select id from core.verification_runs where workspace_id=t.workspace_id and task_id=t.id and run_kind='design_audit' order by created_at desc,id desc limit 1) as audit_id,
+      jsonb_build_object(
+        'questionSet',case when exists(select 1 from core.inquiry_questions where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') then 'needs_review' else 'ready' end,
+        'sourceSelection',case when exists(select 1 from core.task_sources where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') then 'needs_review' else 'ready' end,
+        'evidenceMap',case when exists(select 1 from core.evidence_claims where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') or exists(select 1 from core.evidence_relations where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') then 'needs_review' else 'ready' end,
+        'lessonDesign',case when exists(select 1 from core.learning_activities where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') then 'needs_review' else 'ready' end,
+        'rubric',case when exists(select 1 from core.rubric_items where workspace_id=t.workspace_id and task_id=t.id and review_state='needs_review') then 'needs_review' else 'ready' end
+      ) as review_states
+      from core.tasks t where t.workspace_id=${scope.workspaceId} and t.id=${taskId} and t.deleted_at is null`;
+    const row = rows[0]; if (!row) throw new NotFoundError();
+    return { ...taskFrom(row), latestTeacherRevisionId: row.teacher_revision ?? null, latestApprovedRevisionId: row.approved_revision ?? null, latestAuditId: row.audit_id ?? null, reviewStates: row.review_states };
+  }
   async localWorkspaceId() {
     const rows = await this.sql<{ id: string }[]>`select id from core.workspaces where mode = 'local_single_user' order by created_at limit 1`;
     if (!rows[0]) throw new Error("local workspace is not initialized"); return rows[0].id;
@@ -45,7 +62,7 @@ export class TaskRepository {
   async create(scope: WorkspaceScope, title: string, idempotencyKey: string) {
     const requestHash = canonicalHash({ operation: "createTask", title });
     return this.sql.begin(async (tx) => {
-      const old = await tx<Record<string, unknown>[]>`select request_hash,status,resource_id from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
+      await lockCommand(tx, scope, idempotencyKey); const old = await tx<Record<string, unknown>[]>`select request_hash,status,resource_id from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
       if (old[0]) {
         if (old[0].request_hash !== requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
         if (!old[0].resource_id) throw new Error("INVALID_STATE");
@@ -76,7 +93,7 @@ export class TaskRepository {
   }
   async putContext(scope: WorkspaceScope, taskId: string, expectedVersion: number, input: ContextInput) {
     return this.sql.begin(async (tx) => {
-      const changed = await tx<Record<string, unknown>[]>`update core.tasks set lock_version=lock_version+1,revision_seq=revision_seq+1,workflow_state='designing',last_activity_at=now(),updated_at=now() where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null and lock_version=${expectedVersion} returning id,title,workflow_state,lock_version,deleted_at,created_at,updated_at,revision_seq`;
+      const changed = await tx<Record<string, unknown>[]>`update core.tasks set title=${input.lesson},lock_version=lock_version+1,revision_seq=revision_seq+1,workflow_state='designing',last_activity_at=now(),updated_at=now() where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null and lock_version=${expectedVersion} returning id,title,workflow_state,lock_version,deleted_at,created_at,updated_at,revision_seq`;
       if (!changed[0]) {
         const exists = await tx`select 1 from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null`;
         if (!exists[0]) throw new NotFoundError(); throw new VersionConflictError();
@@ -85,6 +102,7 @@ export class TaskRepository {
       await tx`insert into core.task_contexts(task_id,workspace_id,stage,grade,textbook,lesson,lesson_types,minutes,inquiry_direction,prior_knowledge,learning_needs,profile_note)
         values (${taskId},${scope.workspaceId},${storedStage},${input.grade},${input.textbook},${input.lesson},${input.lessonTypes},${input.minutes},${input.inquiryDirection},${input.priorKnowledge},${input.learningNeeds},${input.profileNote})
         on conflict(task_id) do update set stage=excluded.stage,grade=excluded.grade,textbook=excluded.textbook,lesson=excluded.lesson,lesson_types=excluded.lesson_types,minutes=excluded.minutes,inquiry_direction=excluded.inquiry_direction,prior_knowledge=excluded.prior_knowledge,learning_needs=excluded.learning_needs,profile_note=excluded.profile_note,updated_at=now()`;
+      await tx`update core.task_sources set review_state='needs_review' where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       await tx`update core.inquiry_questions set review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       await tx`update core.evidence_claims set review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       await tx`update core.evidence_relations set review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
@@ -99,7 +117,7 @@ export class TaskRepository {
   async softDelete(scope: WorkspaceScope, taskId: string, expectedVersion: number, idempotencyKey: string) {
     const requestHash = canonicalHash({ operation: "deleteTask", taskId, expectedVersion });
     return this.sql.begin(async (tx) => {
-      const old = await tx<Record<string, unknown>[]>`select request_hash,response_summary from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
+      await lockCommand(tx, scope, idempotencyKey); const old = await tx<Record<string, unknown>[]>`select request_hash,response_summary from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
       if (old[0]) { if (old[0].request_hash !== requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED"); return old[0].response_summary as { deletedAt: string; purgeAfter: string; lockVersion: number }; }
       const rows = await tx<{ deleted_at: Date; purge_after: Date; lock_version: number }[]>`update core.tasks set deleted_at=now(),purge_after=now()+interval '24 hours',lock_version=lock_version+1,updated_at=now() where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null and lock_version=${expectedVersion} returning deleted_at,purge_after,lock_version`;
       if (!rows[0]) { const exists = await tx`select 1 from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null`; if (!exists[0]) throw new NotFoundError(); throw new VersionConflictError(); }
@@ -112,7 +130,7 @@ export class TaskRepository {
   }
   async restore(scope: WorkspaceScope, taskId: string, expectedVersion: number, idempotencyKey: string) {
     const requestHash=canonicalHash({operation:"restoreTask",taskId,expectedVersion});
-    return this.sql.begin(async(tx)=>{ const old=await tx<Record<string,unknown>[]>`select request_hash from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`; if(old[0]&&old[0].request_hash!==requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
+    return this.sql.begin(async(tx)=>{ await lockCommand(tx, scope, idempotencyKey); const old=await tx<Record<string,unknown>[]>`select request_hash from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`; if(old[0]&&old[0].request_hash!==requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
       if(!old[0]) await tx`insert into ops.command_receipts(workspace_id,task_id,idempotency_key,operation,request_hash,status,resource_kind,resource_id) values (${scope.workspaceId},${taskId},${idempotencyKey},'restore_task',${requestHash},'processing','task',${taskId})`;
       const rows=await tx<Record<string,unknown>[]>`select * from ops.restore_task(${scope.workspaceId},${taskId},${expectedVersion})`; if(!rows[0]?.id){ if(old[0]) { const replay=await tx<Record<string,unknown>[]>`select id,title,workflow_state,lock_version,deleted_at,created_at,updated_at from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null`; if(replay[0]) return taskFrom(replay[0]); } throw new NotFoundError(); }
       await tx`update ops.command_receipts set status='succeeded',response_summary=${tx.json({id:taskId})},updated_at=now() where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey}`; return taskFrom(rows[0]); });
@@ -121,13 +139,23 @@ export class TaskRepository {
 
 export class JobRepository {
   constructor(private readonly sql: Database) {}
+  async list(scope: WorkspaceScope, taskId: string, limit: number, before?: string) {
+    await new TaskRepository(this.sql).get(scope, taskId);
+    const rows = await this.sql<Record<string, unknown>[]>`select j.* from ops.jobs j where j.workspace_id=${scope.workspaceId} and j.task_id=${taskId} and j.job_kind<>'purge' and (${before ?? null}::uuid is null or j.id<${before ?? null}::uuid) and exists(select 1 from core.tasks where workspace_id=j.workspace_id and id=j.task_id and deleted_at is null) order by j.id desc limit ${limit + 1}`;
+    return rows.map(jobFrom);
+  }
   async get(scope: WorkspaceScope, taskId: string, jobId: string) {
-    const rows = await this.sql<Record<string, unknown>[]>`select * from ops.jobs where workspace_id=${scope.workspaceId} and task_id=${taskId} and id=${jobId}`;
+    const rows = await this.sql<Record<string, unknown>[]>`select * from ops.jobs where workspace_id=${scope.workspaceId} and task_id=${taskId} and id=${jobId} and job_kind<>'purge' and exists(select 1 from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null)`;
     if (!rows[0]) throw new NotFoundError(); return jobFrom(rows[0]);
   }
   async cancel(scope: WorkspaceScope, taskId: string, jobId: string, idempotencyKey: string) {
     const requestHash = canonicalHash({ operation: "cancelJob", taskId, jobId });
     return this.sql.begin(async (tx) => {
+      await lockCommand(tx, scope, idempotencyKey);
+      const visible = await tx`select 1 from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null for update`;
+      if (!visible[0]) throw new NotFoundError();
+      const target = await tx`select 1 from ops.jobs where workspace_id=${scope.workspaceId} and task_id=${taskId} and id=${jobId} and job_kind<>'purge'`;
+      if (!target[0]) throw new NotFoundError();
       const old = await tx<Record<string, unknown>[]>`select request_hash from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
       if (old[0] && old[0].request_hash !== requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
       if (!old[0]) await tx`insert into ops.command_receipts(workspace_id,task_id,idempotency_key,operation,request_hash,status,resource_kind,resource_id) values (${scope.workspaceId},${taskId},${idempotencyKey},'cancel_job',${requestHash},'processing','job',${jobId})`;

@@ -96,3 +96,7 @@ DROP、不可逆内容转换、hard purge、向量重建和第三方 checkpointe
 - dump/restore 经过至少一次全新库演练。
 - `git diff --check`、秘密扫描和 migration 审查通过。
 - 阶段 7 已获批准归档，但阶段 8 仍须用户另行明确授权后才能开始以上实施。
+
+## 2026-09-05 CP-11-01 现役修订（已批准）
+
+新增 0004_stage11_contract_alignment.sql，扩展问题 ordinal CHECK 至 4、增强 current_task_snapshot 并更新 schema head。空库及 0003 升级均须验证，历史 revision 保持原值。已有第 4 子问题后禁止回滚旧服务删改数据，采用停入口后前滚。缺少 exportContentVersion 的历史快照不能用当前正文补全，重新复核签发后才生成完整文件。

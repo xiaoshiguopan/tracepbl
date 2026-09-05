@@ -13,7 +13,7 @@ const expectedTables = [
 
 describe("approved database contract", () => {
   it("keeps migrations ordered and immutable by checksum at runtime", async () => {
-    expect(await migrationFiles()).toEqual(["0001_initial_schema.sql", "0002_seed_defaults.sql", "0003_backend_runtime_support.sql"]);
+    expect(await migrationFiles()).toEqual(["0001_initial_schema.sql", "0002_seed_defaults.sql", "0003_backend_runtime_support.sql", "0004_stage11_contract_alignment.sql"]);
   });
 
   it("adds fenced leases, replay events, budgets, and model provenance forward-only", async () => {

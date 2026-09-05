@@ -9,6 +9,7 @@ x-backend: &backend
 services:
   postgres:
     image: pgvector/pgvector:0.8.6-pg18-bookworm
+    restart: unless-stopped
     environment:
       POSTGRES_DB: tracepbl
       POSTGRES_USER: postgres
@@ -45,6 +46,7 @@ services:
       TRACEPBL_APP_DATABASE_URL: postgres://tracepbl_app:${TRACEPBL_APP_DB_PASSWORD}@postgres:5432/tracepbl
       TRACEPBL_SESSION_SECRET: ${TRACEPBL_SESSION_SECRET:?set at least 43 random URL-safe characters}
       TRACEPBL_MODE: local
+      TRACEPBL_PROVIDER_MODE: ${TRACEPBL_PROVIDER_MODE:-disabled}
       TRACEPBL_AI_ENABLED: "false"
       TRACEPBL_URL_FETCH_ENABLED: "false"
     command: ["npm", "run", "dev", "--workspace", "@tracepbl/api"]
@@ -62,6 +64,17 @@ services:
       TRACEPBL_AI_ENABLED: ${TRACEPBL_AI_ENABLED:-false}
       TRACEPBL_URL_FETCH_ENABLED: ${TRACEPBL_URL_FETCH_ENABLED:-false}
     command: ["npm", "run", "dev", "--workspace", "@tracepbl/worker"]
+
+  web:
+    <<: *backend
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      TRACEPBL_API_PROXY_TARGET: http://api:8787
+    command: ["npm", "run", "dev:local", "--", "--host", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:5173:5173"
 
 volumes:
   tracepbl_postgres:

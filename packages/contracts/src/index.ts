@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ContractVersion = "1.0.0";
+export const ContractVersion = "1.1.0";
 export const UuidSchema = z.uuid();
 export const TimestampSchema = z.iso.datetime({ offset: true });
 
@@ -69,6 +69,9 @@ export const TaskSummarySchema = z.object({
   updatedAt: TimestampSchema,
 }).strict();
 export const TaskSchema = TaskSummarySchema.extend({ deletedAt: TimestampSchema.nullable() }).strict();
+export const ReviewStatesSchema = z.object({ questionSet: z.enum(["ready", "needs_review"]), sourceSelection: z.enum(["ready", "needs_review"]), evidenceMap: z.enum(["ready", "needs_review"]), lessonDesign: z.enum(["ready", "needs_review"]), rubric: z.enum(["ready", "needs_review"]) }).strict();
+export const TaskDetailSchema = TaskSchema.extend({ latestTeacherRevisionId: UuidSchema.nullable(), latestApprovedRevisionId: UuidSchema.nullable(), latestAuditId: UuidSchema.nullable(), reviewStates: ReviewStatesSchema }).strict();
+export const OperationListSchema = z.object({ items: z.array(OperationStatusSchema), nextCursor: z.string().max(500).nullable() }).strict();
 export const DeletionWindowSchema = z.object({ deletedAt: TimestampSchema, purgeAfter: TimestampSchema, lockVersion: z.int().nonnegative() }).strict();
 export const TaskListSchema = z.object({ items: z.array(TaskSummarySchema), nextCursor: z.string().max(500).nullable() }).strict();
 
@@ -79,7 +82,7 @@ export const TeachingContextSchema = z.object({
   grade: z.enum(["七年级", "八年级", "九年级", "高一", "高二", "高三"]),
   textbook: z.string().trim().min(1).max(160),
   lesson: z.string().trim().min(1).max(120),
-  lessonTypes: z.array(z.enum(["新授", "复习", "公开课 / 比赛", "微型 PBL"])).min(1).max(4),
+  lessonTypes: z.array(z.enum(["新授", "复习", "公开课 / 比赛", "微型 PBL"])).max(4),
   minutes: z.int().min(1).max(180),
   inquiryDirection: z.string().trim().max(160).nullable(),
   priorKnowledge: z.string().trim().max(1000).nullable(),
@@ -92,12 +95,16 @@ export const TeachingContextSchema = z.object({
 
 export const QuestionSetSchema = z.object({
   centralQuestion: z.string().trim().min(1).max(300),
-  subQuestions: z.array(z.string().trim().min(1).max(300)).min(1).max(3),
+  subQuestions: z.array(z.string().trim().min(1).max(300)).max(4),
+  focus: z.enum(["single", "whole-lesson"]).optional(),
   inputType: z.enum(["因果解释", "变化解释", "证据支持", "史料比较"]).nullable().optional(),
   evidenceOutcome: z.string().trim().min(1).max(1000).optional(),
   scopeBoundary: z.string().trim().min(1).max(1000).optional(),
   confirmed: z.boolean(),
-}).strict();
+}).strict().superRefine((value, context) => {
+  if (value.focus === "single" && value.subQuestions.length !== 0) context.addIssue({ code: "custom", path: ["subQuestions"], message: "单问题不拆分子问题" });
+  if (value.focus === "whole-lesson" && value.subQuestions.length < 2) context.addIssue({ code: "custom", path: ["subQuestions"], message: "整课线索需要 2—4 个子问题" });
+});
 
 export const MaterialInputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("url"), name: z.string().trim().min(1).max(160), url: z.url().max(2048), rightsAttestation: z.enum(["authorizedForCurrentTask", "unknown"]), sensitiveInformationConfirmedAbsent: z.literal(true) }).strict(),
@@ -106,20 +113,20 @@ export const MaterialInputSchema = z.discriminatedUnion("kind", [
 
 export const ProposalPurposeSchema = z.enum(["questionGuidance", "sourceAnalysis", "evidenceAnalysis", "lesson", "rubric", "audit"]);
 export const ProposalRequestSchema = z.object({ purpose: ProposalPurposeSchema, baseLockVersion: z.int().nonnegative(), disclosureVersion: z.literal("ai-disclosure.v1"), objectIds: z.array(UuidSchema).max(50).optional() }).strict();
-export const AdoptionRequestSchema = z.object({ generatedRevisionId: UuidSchema, sections: z.array(z.enum(["questionSet", "evidenceMap", "lessonDesign", "rubric"])).min(1).max(4), baseLockVersion: z.int().nonnegative() }).strict();
+export const AdoptionRequestSchema = z.object({ generatedRevisionId: UuidSchema, sections: z.array(z.enum(["questionSet", "evidenceMap", "lessonDesign", "rubric"])).min(1).max(4), baseLockVersion: z.int().nonnegative(), reviewedContent: z.record(z.string(), z.unknown()).optional() }).strict();
 export const DecisionRequestSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.enum(["acceptRisk", "requestChanges"]), findingId: UuidSchema, reason: z.string().trim().min(1).max(1000) }).strict(),
   z.object({ kind: z.enum(["approve", "revoke"]), taskRevisionId: UuidSchema, reason: z.string().trim().max(1000).optional() }).strict(),
 ]);
 export const ExportRequestSchema = z.object({ format: z.enum(["docx", "pdf"]), fileName: z.string().trim().min(1).max(120) }).strict();
 export const AuditRequestSchema=z.object({baseLockVersion:z.int().nonnegative()}).strict();
-export const VerificationFindingSchema=z.object({id:UuidSchema,severity:z.enum(["blocking","teacher_confirmation","suggestion","pass","unknown"]),category:z.string(),title:z.string(),basis:z.string(),impact:z.string(),recommendation:z.string().nullable(),resolutionState:z.enum(["pending","accepted","resolved","superseded"])}).strict();
+export const VerificationFindingSchema=z.object({subjectKind:z.string(),subjectId:UuidSchema.nullable(),id:UuidSchema,severity:z.enum(["blocking","teacher_confirmation","suggestion","pass","unknown"]),category:z.string(),title:z.string(),basis:z.string(),impact:z.string(),recommendation:z.string().nullable(),teacherReason:z.string().nullable(),resolutionState:z.enum(["pending","accepted","resolved","superseded"])}).strict();
 export const AuditViewSchema=z.object({id:UuidSchema,inputLockVersion:z.int().nonnegative(),status:z.enum(["queued","running","succeeded","failed","cancelled","stale"]),summary:z.record(z.string(),z.unknown()).nullable(),createdAt:TimestampSchema,completedAt:TimestampSchema.nullable(),findings:z.array(VerificationFindingSchema)}).strict();
 export const AuditOperationSchema=z.object({runId:UuidSchema,reused:z.boolean(),operation:OperationStatusSchema}).strict();
 export const DecisionResultSchema=z.object({decisionId:UuidSchema,kind:z.enum(["acceptRisk","requestChanges","approve","revoke"]),revisionId:UuidSchema.nullable(),lockVersion:z.int().nonnegative()}).strict();
 export const ExportOperationSchema=z.object({exportId:UuidSchema,operation:OperationStatusSchema}).strict();
 
-export const SourceViewSchema = z.object({ id: UuidSchema, versionId: UuidSchema, title: z.string(), kind: z.enum(["catalog", "url", "text"]), url: z.url().nullable(), creatorOrInstitution: z.string(), sourceType: z.string(), locator: z.string(), contentText: z.string().nullable(), rightsState: z.enum(["verified_reusable", "restricted_metadata_only", "unknown", "not_allowed"]), verificationState: z.enum(["candidate", "pending", "verified", "conditional", "excluded"]), selected: z.boolean(), selectionOrder: z.int().nonnegative().nullable() }).strict();
+export const SourceViewSchema = z.object({ periodLabel: z.string().nullable(), contextNote: z.string().nullable(), meaningNote: z.string().nullable(), interpretationNote: z.string().nullable(), limitationNote: z.string().nullable(), rightsBasis: z.string(), id: UuidSchema, versionId: UuidSchema, title: z.string(), kind: z.enum(["catalog", "url", "text"]), url: z.url().nullable(), creatorOrInstitution: z.string(), sourceType: z.string(), locator: z.string(), contentText: z.string().nullable(), rightsState: z.enum(["verified_reusable", "restricted_metadata_only", "unknown", "not_allowed"]), verificationState: z.enum(["candidate", "pending", "verified", "conditional", "excluded"]), selected: z.boolean(), selectionOrder: z.int().nonnegative().nullable() }).strict();
 export const SourceListSchema = z.object({ items: z.array(SourceViewSchema) }).strict();
 export const SourceSelectionSchema = z.object({ sourceVersionIds: z.array(UuidSchema).max(100) }).strict();
 export const MaterialResultSchema = z.object({ sourceId: UuidSchema, versionId: UuidSchema, operation: OperationStatusSchema.nullable() }).strict();
@@ -139,11 +146,12 @@ export const RubricSchema = z.object({ items: z.array(RubricItemInputSchema).max
 
 export const AsyncOperationSchema = z.object({ operation: OperationStatusSchema }).strict();
 export const GeneratedProposalSchema = z.object({ revisionId: UuidSchema, purpose: ProposalPurposeSchema, baseLockVersion: z.int().nonnegative(), status: z.literal("validated"), snapshot: z.record(z.string(), z.unknown()) }).strict();
-export const ExportManifestSchema = z.object({ exportId: UuidSchema, format: z.enum(["docx", "pdf"]), fileName: z.string(), revisionId: UuidSchema, generatedAt: TimestampSchema, sections: z.array(z.string()), citations: z.array(z.object({ title: z.string(), locator: z.string(), url: z.url().nullable() }).strict()) }).strict();
+export const ExportContentSchema = z.object({ context: TeachingContextSchema, questionSet: QuestionSetSchema, evidenceMap: EvidenceMapSchema, lessonDesign: LessonDesignSchema, rubric: RubricSchema, sources: z.array(SourceViewSchema) }).strict();
+export const ExportManifestSchema = z.object({ content: ExportContentSchema, exportId: UuidSchema, format: z.enum(["docx", "pdf"]), fileName: z.string(), revisionId: UuidSchema, generatedAt: TimestampSchema, sections: z.array(z.string()), citations: z.array(z.object({ title: z.string(), locator: z.string(), url: z.url().nullable() }).strict()) }).strict();
 
 export const RuntimeSchema = z.object({
   mode: z.enum(["local", "ci"]), contractVersion: z.literal(ContractVersion), fixtureVersion: z.string().min(1),
-  ai: z.object({ available: z.boolean(), provider: z.literal("zhipu"), generationModel: z.literal("GLM-5.3-Flash"), embeddingModel: z.literal("embedding-3"), reason: z.string().max(120).nullable() }).strict(),
+  ai: z.object({ execution: z.enum(["disabled", "fake", "real"]), available: z.boolean(), provider: z.literal("zhipu"), generationModel: z.literal("GLM-5.3-Flash"), embeddingModel: z.literal("embedding-3"), reason: z.string().max(120).nullable() }).strict(),
   limits: z.object({ generationInputTokens: z.literal(24_000), generationOutputTokens: z.literal(4_000), callsPerAction: z.literal(2), dailyGenerationCalls: z.literal(20), dailyGenerationTokens: z.literal(200_000), dailyEmbeddingTokens: z.literal(200_000), dailyCny: z.literal(2), deleteGraceHours: z.literal(24) }).strict(),
 }).strict();
 

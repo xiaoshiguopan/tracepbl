@@ -1,6 +1,6 @@
 import type { LessonActivity } from "./lesson-design";
 
-export type RubricLevel = { key: "support" | "expected" | "strong"; label: "需要支持" | "达到要求" | "表现充分"; description: string };
+export type RubricLevel = { key: "support" | "expected" | "strong"; label: string; description: string };
 export type RubricDimension = { id: string; title: string; activityIds: string[]; levels: RubricLevel[]; teacherEdited: boolean; status: "ready" | "needs-review" };
 type ActivitySnapshot = { id: string; fingerprint: string };
 export type RubricDraft = { fixtureVersion: 3; dimensions: RubricDimension[]; confirmed: boolean; activitySnapshot: ActivitySnapshot[] };

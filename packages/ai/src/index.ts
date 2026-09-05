@@ -32,11 +32,11 @@ export class FakeAiProvider implements AiProvider {
   }
   async embed(input: readonly string[], signal?: AbortSignal): Promise<{ vectors: number[][]; actualModel: typeof EMBEDDING_MODEL; inputTokens: number }> {
     if (signal?.aborted) throw signal.reason;
-    return { vectors: input.map((value) => { const vector = Array<number>(EMBEDDING_DIMENSIONS).fill(0); vector[Math.abs(hash(value)) % EMBEDDING_DIMENSIONS] = 1; return vector; }), actualModel: EMBEDDING_MODEL, inputTokens: input.reduce((sum, value) => sum + Array.from(value).length, 0) };
+    return { vectors: input.map(() => { const vector = Array<number>(EMBEDDING_DIMENSIONS).fill(0); vector[0] = 1; return vector; }), actualModel: EMBEDDING_MODEL, inputTokens: input.reduce((sum, value) => sum + Array.from(value).length, 0) };
   }
 }
 
-function hash(value: string) { let result = 0; for (const point of value) result = ((result << 5) - result + (point.codePointAt(0) ?? 0)) | 0; return result; }
+
 
 export class DisabledAiProvider implements AiProvider {
   capabilities() { return { generation: false, embedding: false, reason: "AI_NOT_CONFIGURED" }; }

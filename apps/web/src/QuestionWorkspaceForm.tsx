@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { inputTypes, type InputType, type QuestionErrors, type QuestionProposal, type QuestionWorkspaceDraft } from "./question-workspace";
@@ -23,8 +23,9 @@ function SortableSubQuestion({ id, index, question, onChange, onRemove }: { id: 
   return <li ref={setNodeRef} className={isDragging ? "is-dragging" : ""} style={style}><DragHandle label={`拖动子问题${index + 1}排序`} {...attributes} {...listeners} /><span>{index + 1}</span>{editing ? <input autoFocus value={question} onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") setEditing(false); }} /> : <p>{question}</p>}<div className="icon-actions"><IconButton icon={editing ? "check" : "edit"} label={editing ? `完成修改子问题${index + 1}` : `修改子问题${index + 1}`} onClick={() => setEditing((value) => !value)} /><IconButton icon="delete" tone="danger" label={`删除子问题${index + 1}`} onClick={onRemove} /></div></li>;
 }
 
-export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm, onNext }: {
+export function PreferredPlan({ draft, errors, disabled, aiControl, onChange, onConfirm, onNext }: {
   draft: QuestionWorkspaceDraft; errors: QuestionErrors; disabled: boolean;
+  aiControl?: (target: string, label: string) => ReactNode;
   onChange: (field: "centralQuestion" | "evidenceOutcome" | "subQuestions", value: string | string[]) => void;
   onConfirm: () => void; onNext: () => void;
 }) {
@@ -45,10 +46,15 @@ export function PreferredPlan({ draft, errors, disabled, onChange, onConfirm, on
   return (
     <section className="question-editor">
       <div className="inline-title"><div><span>中心问题</span>{editingQuestion ? <textarea name="centralQuestion" rows={2} value={draft.centralQuestion} onChange={(event) => onChange("centralQuestion", event.target.value)} /> : <h2>{draft.centralQuestion}</h2>}</div><IconButton icon={editingQuestion ? "check" : "edit"} label={editingQuestion ? "完成修改中心问题" : "修改中心问题"} onClick={() => setEditingQuestion((value) => !value)} /></div>
-      <ErrorText field="centralQuestion" errors={errors} />
-      {draft.focus === "whole-lesson" ? <section className="subquestion-editor"><header><div><span>递进子问题</span><small>拖动左侧把手即可调整课堂推进顺序</small></div><IconButton icon="add" label="添加子问题" onClick={() => onChange("subQuestions", [...draft.subQuestions, "新的子问题？"])} /></header><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}><SortableContext items={itemIds} strategy={verticalListSortingStrategy}><ol>{draft.subQuestions.map((question, index) => <SortableSubQuestion key={itemIds[index]} id={itemIds[index]} index={index} question={question} onChange={(value) => updateSub(index, value)} onRemove={() => onChange("subQuestions", draft.subQuestions.filter((_, itemIndex) => itemIndex !== index))} />)}</ol></SortableContext></DndContext></section> : null}
-      <label className="field outcome-field"><span>学生最终交付什么</span><textarea name="evidenceOutcome" rows={2} value={draft.evidenceOutcome} onChange={(event) => onChange("evidenceOutcome", event.target.value)} /><ErrorText field="evidenceOutcome" errors={errors} /></label>
-      <PageActionBar status={draft.focus === "whole-lesson" ? `${draft.subQuestions.length} 个子问题已形成` : "按单个问题查找史料"} detail="后续仍可返回查看和修改"><button className="ui-button primary" type="button" disabled={disabled || editingQuestion} onClick={draft.confirmed ? onNext : onConfirm}>查找相关史料</button></PageActionBar>
+      {aiControl?.("centralQuestion", "生成中心问题")}<ErrorText field="centralQuestion" errors={errors} />
+      {draft.focus === "whole-lesson" ? <section className="subquestion-editor"><header><div><span>递进子问题</span><small>拖动左侧把手即可调整课堂推进顺序</small></div><IconButton icon="add" label="添加子问题" onClick={() => onChange("subQuestions", [...draft.subQuestions, "新的子问题？"])} /></header>{aiControl?.("subQuestions", "生成子问题")}<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}><SortableContext items={itemIds} strategy={verticalListSortingStrategy}><ol>{draft.subQuestions.map((question, index) => <SortableSubQuestion key={itemIds[index]} id={itemIds[index]} index={index} question={question} onChange={(value) => updateSub(index, value)} onRemove={() => onChange("subQuestions", draft.subQuestions.filter((_, itemIndex) => itemIndex !== index))} />)}</ol></SortableContext></DndContext></section> : null}
+      <section className="outcome-options" aria-labelledby="outcome-heading"><h3 id="outcome-heading">学生最终交付什么</h3>{aiControl?.("evidenceOutcome", "生成交付要求")}<p className="choice-hint">选一个大致形式，再按课堂需要修改下面的内容。</p><div className="preset-choices" role="group" aria-label="选择最终交付形式">{[
+        ["因果链", "小组形成一张因果关系图，标注史料编号，区分背景条件、直接原因与后续影响。"],
+        ["比较表", "小组完成一张比较表，引用史料说明异同，并写出一条有证据支持的结论。"],
+        ["证据短文", "个人完成一段120—150字的历史解释，引用至少两条史料，并说明结论的限制。"],
+        ["时间线", "小组制作一条带史料编号的时间线，标注关键变化与转折，并解释其联系。"],
+      ].map(([label, value]) => <button key={label} type="button" aria-pressed={draft.evidenceOutcome === value} onClick={() => onChange("evidenceOutcome", value)}>{label}</button>)}</div><label className="field outcome-field"><span>交付要求（可自由修改）</span><textarea name="evidenceOutcome" rows={3} value={draft.evidenceOutcome} onChange={(event) => onChange("evidenceOutcome", event.target.value)} /><ErrorText field="evidenceOutcome" errors={errors} /></label></section>
+      <PageActionBar status={draft.focus === "whole-lesson" ? `${draft.subQuestions.length} 个子问题已形成` : "按单个问题查找史料"} detail="后续仍可返回查看和修改"><button className="ui-button primary" type="button" disabled={disabled || editingQuestion} onClick={draft.confirmed ? onNext : onConfirm}>{aiControl ? "确认问题并查找史料" : "查找相关史料"}</button></PageActionBar>
     </section>
   );
 }

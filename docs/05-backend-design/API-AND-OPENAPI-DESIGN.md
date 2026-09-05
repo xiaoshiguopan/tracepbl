@@ -102,3 +102,19 @@ Problem 禁止包含 SQL、堆栈、内部路径、第三方原始正文、秘�
 - spec 提供合成示例；不使用仓库史料以外的许可不明内容。
 - 合同测试验证：所有路由都在 spec、所有已知错误已声明、operationId 唯一、无数据库内部字段、实现响应均通过 Zod。
 - OpenAPI 的破坏性变化进入 `/api/v2` 或按变更控制处理；阶段 10 不生成 SDK，前端直接消费共享 TypeScript/Zod 契约。
+
+## 2026-09-05 CP-11-01 现役修订（已批准，优先于上文冲突处）
+
+契约版本升为 1.1.0。课型允许空数组。question-set 新增可选 focus=single|whole-lesson：显式 single 必须 0 子问题，whole-lesson 必须 2—4；旧请求未携带 focus 时兼容 0—4 数量，读取按数量派生。数据库不新增 focus 列。
+
+GET task 增加 latestTeacherRevisionId、latestApprovedRevisionId、latestAuditId、reviewStates（questionSet/sourceSelection/evidenceMap/lessonDesign/rubric，ready|needs_review）；同一事务读取权威事实。GET /tasks/{taskId}/operations 使用不透明游标分页、同 task 授权并排除 purge；审计发现增加 subjectKind/subjectId。source DTO 补充 periodLabel/contextNote/meaningNote/interpretationNote/limitationNote/rightsBasis，未知为 null，返回最新候选和已选择的历史版本。
+
+manifest 增加 content（context/questionSet/evidenceMap/lessonDesign/rubric/sources）；所有正文和引用目录只从 export revision 的完整冻结快照确定性投影，不访问可变 evidence/source 标题。旧快照缺完整冻结字段返回 INVALID_STATE，提示重新复核签发。runtime.ai.execution 明确 disabled|fake|real，本阶段 fake 不需要或读取真实模型密钥。
+
+CP-11-02 已于 2026-09-05 获用户批准：审计 finding 增加必返可空 `teacherReason: string | null`，投影同 workspace/task/finding 最新教师决定理由；未决定为 null。修改理由追加不可变历史；旧审计理由不能用于当前签发。前端刷新还原原文，不用占位说明代替。无数据库列或迁移变化。
+
+## CP-11-03 已批准补齐
+
+采用请求新增可选 `reviewedContent`，只表示该 purpose 对应分项的完整教师确认内容；按现有严格 Schema 校验，不允许任意 JSON patch。省略字段兼容原样采用。复用现有采用事务；任务锁、来源版本、等待教师/取消检查、不可变 generated 历史均保留。幂等摘要包含确认内容，同键不同内容返回冲突。
+
+Worker 对再次生成使用入队冻结修订边界内的完整保存快照，生成记录带自身 modelRunId 以区分独立运行的相同输出；不改变 0001—0003、数据库权限、预算或模型配置。见 [CP-11-03](../06-development/STAGE-11-INLINE-AI-PROPOSAL.md)。

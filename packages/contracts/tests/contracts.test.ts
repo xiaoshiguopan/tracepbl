@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { MaterialInputSchema, ProblemSchema, TeachingContextSchema, parseTaskEtag, taskEtag } from "../src/index.js";
+import { MaterialInputSchema, ProblemSchema, QuestionSetSchema, TeachingContextSchema, parseTaskEtag, taskEtag } from "../src/index.js";
 
 describe("public contracts", () => {
+  it("accepts the approved single and whole-lesson question sizes", () => {
+    for (const count of [0, 2, 3, 4]) {
+      expect(QuestionSetSchema.safeParse({ centralQuestion: "合成开放问题？", focus: count === 0 ? "single" : "whole-lesson", subQuestions: Array.from({ length: count }, (_, i) => `子问题${i}？`), confirmed: true }).success).toBe(true);
+    }
+    expect(QuestionSetSchema.safeParse({ centralQuestion: "合成开放问题？", focus: "single", subQuestions: ["不应出现？"], confirmed: true }).success).toBe(false);
+    expect(QuestionSetSchema.safeParse({ centralQuestion: "合成开放问题？", focus: "whole-lesson", subQuestions: [], confirmed: true }).success).toBe(false);
+  });
+  it("keeps lesson types optional", () => {
+    expect(TeachingContextSchema.safeParse({ stage: "初中", grade: "七年级", textbook: "合成教材", lesson: "合成课次", lessonTypes: [], minutes: 45, inquiryDirection: null, priorKnowledge: null, learningNeeds: [], profileNote: null }).success).toBe(true);
+  });
   it("round-trips task ETags and rejects malformed forms", () => {
     expect(taskEtag(3)).toBe('"task-lv-3"');
     expect(parseTaskEtag('"task-lv-3"')).toBe(3);

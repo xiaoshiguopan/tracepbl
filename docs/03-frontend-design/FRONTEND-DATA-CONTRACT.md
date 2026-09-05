@@ -135,3 +135,19 @@
 阶段 7 已从领域关系而非页面结构完成数据设计，见 `../04-database-design/`；它不改变本文件的前端可观察契约。阶段 9 仍须决定 HTTP 路径/方法、请求限制、鉴权、错误码、SSE/轮询和幂等实现；若改变前端可观察行为，退回阶段 5。游标格式和在线事件协议仍未决定；文件摄取不在 v0.1，导出格式库已由阶段 6 实现确定。
 
 字段命名、adapter 能力、fixture 根包、场景注入和具体 JSON 形状由 `VIEW-MODEL-FIXTURE-SPEC.md` 冻结；逐页字段与文案以 `PAGE-SPECIFICATIONS.md` 为准。三者冲突时先修订设计，不在编码中任选一份。
+
+## 2026-09-05 CP-11-01 集成补齐（已批准）
+
+保持现役页面、单问题/整课 2—4 子问题和选填课型。完整模式消费契约 1.1.0，使用服务器 revision ID、reviewStates、审计对象定位及分页 operations 恢复；来源按 versionId 映射，已选旧版不被新版替换。导出只使用冻结 manifest.content；缺字段或版本不匹配显示错误，不退回浏览器草稿。草稿不承担权限、批准或过期状态真相。Demo 继续独立 IndexedDB，不探测本地 API。
+
+CP-11-02 已于 2026-09-05 获用户批准：审计 finding 增加必返可空 `teacherReason: string | null`，投影同 workspace/task/finding 最新教师决定理由；未决定为 null。修改理由追加不可变历史；旧审计理由不能用于当前签发。前端刷新还原原文，不用占位说明代替。无数据库列或迁移变化。
+
+## CP-11-03 本地栏目草稿与采用
+
+`reviewedContent?: Record<string, unknown>` 是 adoption 可选字段，按 purpose 对应既有完整分项 Schema 严格校验。省略时仍原样采用；提供时将教师编辑后的分项和生成记录关联，在现有事务内一次保存。If-Match、baseLockVersion、workspace/task、来源/引用与等待教师状态均不变。幂等摘要含最终确认内容。
+
+本地 UI 将生成结果转换为相应 Draft，只替换目标字段或卡片。待确认、撤销栈与手工编辑仅在当前窗口内存中，正式内容保持服务器版本；刷新可恢复原始 generated revision，但不能恢复未保存手工修改。确认前不进入签发或导出。证据关系 Draft 的可选 `citations` 保留 sourceVersionId/chunkId/quotedText，改理由不丢原始引用；缺失短引明确提示，不伪造核验。
+
+相同合成输出可对应不同 model run；generated snapshot 包含由 Worker 写入的 `modelRunId`，原始 proposal 不改写。再次生成只取入队冻结边界之前的完整保存修订，不能拿待确认建议冒充完整课程上下文。
+
+用户后续批准 Demo 同步：Demo 不使用 adoption API 或后台 job。预生成 Draft 在页面加载时直接投影，恢复示例/撤销只改变本机 Draft 并沿用 IndexedDB 保存；不写入本地完整模式的待确认缓存或服务器。初次检查理由为明确标注的演示预设，不能当作真实教师决定；已保存用户修改不被清空。本地模式仍按 CP-11-03 执行真实版本和事务门禁。

@@ -1,6 +1,9 @@
+import { isLocalMode } from "./runtime-mode";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { deleteTask, duplicateTask, listTasks, restoreTask, subscribeTaskChanges, type TaskSummary } from "./teaching-context-store";
 import { IconButton, InlineNotice, UiIcon } from "./UiControls";
+
+
 
 export const taskSteps = ["教学情境", "探究问题", "查找史料", "组织证据", "设计活动", "评价量规", "设计检查", "最终确认与导出"];
 
@@ -46,7 +49,10 @@ export function TaskDrawer({ open, currentTaskId, onClose, onNewTask, onOpenTask
   const drawerRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
-  const refresh = () => void listTasks().then(setTasks);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const refresh = () => void listTasks().then(setTasks, reason => setError(reason.message));
+  const mutate = async (action: () => Promise<unknown>) => { if (busy) return; setBusy(true); setError(""); try { await action(); refresh(); } catch (reason) { setError(reason instanceof Error ? reason.message : "操作未完成。"); } finally { setBusy(false); } };
   useEffect(() => { if (open) refresh(); }, [open]);
   useEffect(() => {
     if (!open) return;
@@ -81,12 +87,13 @@ export function TaskDrawer({ open, currentTaskId, onClose, onNewTask, onOpenTask
             <button className="task-open" type="button" onClick={() => onOpenTask(task.id, task.reachedStep)}>
               <strong>{task.title}</strong><span>{task.minutes ? `${task.minutes} 分钟 · ` : ""}已到第 {task.reachedStep + 1} 步</span><time>{new Date(task.updatedAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</time>
             </button>
-            <div className="task-row-actions"><button type="button" onClick={() => void duplicateTask(task.id, crypto.randomUUID()).then(refresh)}>复制</button><button type="button" onClick={() => void deleteTask(task.id).then((value) => { setBackup(value); refresh(); })}>删除</button></div>
+            <div className="task-row-actions"><button type="button" disabled={busy} onClick={() => void mutate(() => duplicateTask(task.id, crypto.randomUUID()))}>复制</button><button type="button" disabled={busy} onClick={() => { if (!isLocalMode || window.confirm("删除后任务内容立即不可使用，24小时内可撤销；到期后后台会清除其数据和历史。确认删除？")) void mutate(async () => { setBackup(await deleteTask(task.id)); }); }}>删除</button></div>
           </li>
         ))}</ul> : <div className="task-empty"><strong>这里还没有匹配的备课</strong><p>新建后，填写第一组有效课程信息就会自动保存在这里。</p></div>}
         {tasks.length > 5 && !query ? <button className="drawer-all" type="button" onClick={() => setShowAll((value) => !value)}>{showAll ? "收起完整列表" : `查看全部 ${tasks.length} 份备课`}</button> : null}
-        <p className="local-boundary">这些内容不会上传或跨设备同步。清理浏览器数据后可能无法恢复。</p>
-        {backup ? <InlineNotice actionLabel="撤销" onAction={() => void restoreTask(backup).then(() => { setBackup(undefined); refresh(); })}>已删除“{backup.task.title}”</InlineNotice> : null}
+        {error ? <p role="alert">{error}</p> : null}
+        <p className="local-boundary">{isLocalMode ? "内容保存在本地数据库；删除后有24小时撤销窗口，不跨设备同步。" : "这些内容不会上传或跨设备同步。清理浏览器数据后可能无法恢复。"}</p>
+        {backup ? <InlineNotice actionLabel="撤销" onAction={() => void mutate(async () => { await restoreTask(backup); setBackup(undefined); })}>已删除“{backup.task.title}”</InlineNotice> : null}
       </aside>
     </div>
   );
@@ -114,7 +121,7 @@ export function WorkbenchShell({ children, currentStep, currentLabel, reachedSte
   useEffect(() => taskId ? subscribeTaskChanges(taskId, () => setExternalChange(true)) : undefined, [taskId]);
   useEffect(() => {
     if (!taskId) return;
-    const refreshTitle = () => void listTasks().then((tasks) => setTaskTitle(tasks.find((task) => task.id === taskId)?.title || "新建备课"));
+    const refreshTitle = () => void listTasks().then((tasks) => setTaskTitle(tasks.find((task) => task.id === taskId)?.title || "新建备课"), () => setExternalChange(true));
     const onSaved = (event: Event) => { if ((event as CustomEvent<{ taskId: string }>).detail.taskId === taskId) refreshTitle(); };
     refreshTitle(); window.addEventListener("tracepbl-task-saved", onSaved);
     return () => window.removeEventListener("tracepbl-task-saved", onSaved);

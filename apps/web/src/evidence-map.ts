@@ -3,7 +3,7 @@ import { sourceFixture } from "./source-discovery";
 export type RelationKind = "背景条件" | "支持原因" | "关键转折" | "后续影响" | "质疑或限制";
 export type RelationStatus = "ready" | "needs-review";
 export type EvidenceClaim = { id: string; text: string; gapAccepted: boolean };
-export type EvidenceRelation = { id: string; claimId: string; sourceId: string; kind: RelationKind; reason: string; status: RelationStatus };
+export type EvidenceRelation = { id: string; claimId: string; sourceId: string; kind: RelationKind; reason: string; status: RelationStatus; citations?: Array<{ sourceVersionId: string; chunkId: number | null; quotedText: string | null }> };
 export type EvidenceMapDraft = { fixtureVersion: 2; claims: EvidenceClaim[]; relations: EvidenceRelation[]; confirmed: boolean; questionSnapshot: string; sourceSnapshot: string[] };
 
 export const defaultSubQuestions = [

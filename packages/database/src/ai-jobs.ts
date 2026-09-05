@@ -1,3 +1,4 @@
+import { lockCommand } from "./command-lock.ts";
 import { createHash } from "node:crypto";
 import { NotFoundError, type WorkspaceScope } from "@tracepbl/domain";
 import type { Database } from "./index.ts";
@@ -8,10 +9,10 @@ export type ProposalInput = { purpose: keyof typeof purposeMap; baseLockVersion:
 export class AiJobRepository {
   constructor(private readonly sql: Database) {}
   async enqueueProposal(scope: WorkspaceScope, taskId: string, input: ProposalInput, idempotencyKey: string, priceProfileVersion: string, reservedCnyMicros: number) {
-    const requestHash = createHash("sha256").update(JSON.stringify(input)).digest("hex");
+    const requestHash = createHash("sha256").update(JSON.stringify({ operation: "proposal", taskId, input })).digest("hex");
     try {
       return await this.sql.begin(async (tx) => {
-        const old = await tx<Record<string, unknown>[]>`select request_hash,resource_id,response_summary from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
+        await lockCommand(tx, scope, idempotencyKey); const old = await tx<Record<string, unknown>[]>`select request_hash,resource_id,response_summary from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
         if (old[0]) { if (old[0].request_hash !== requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED"); return { jobId: String(old[0].resource_id), modelRunId: String((old[0].response_summary as Record<string, unknown>).modelRunId) }; }
         const rows = await tx<{ job_id: string; model_run_id: string }[]>`select * from ops.enqueue_model_job(${scope.workspaceId},${taskId},${input.baseLockVersion},${purposeMap[input.purpose]},${promptMap[input.purpose]},${requestHash},${idempotencyKey},${tx.json({ purpose: input.purpose, baseLockVersion: input.baseLockVersion, objectIds: input.objectIds ?? [] })},${priceProfileVersion},${reservedCnyMicros})`;
         if (!rows[0]) throw new NotFoundError();
@@ -25,7 +26,7 @@ export class AiJobRepository {
     }
   }
   async proposal(scope: WorkspaceScope, taskId: string, revisionId: string) {
-    const rows = await this.sql<Record<string, unknown>[]>`select tr.id,tr.base_lock_version,tr.snapshot,mr.purpose from core.task_revisions tr join rag.model_runs mr on mr.output_task_revision_id=tr.id and mr.workspace_id=tr.workspace_id and mr.task_id=tr.task_id where tr.workspace_id=${scope.workspaceId} and tr.task_id=${taskId} and tr.id=${revisionId} and tr.reason='generated'`;
+    const rows = await this.sql<Record<string, unknown>[]>`select tr.id,tr.base_lock_version,tr.snapshot,mr.purpose from core.task_revisions tr join rag.model_runs mr on mr.output_task_revision_id=tr.id and mr.workspace_id=tr.workspace_id and mr.task_id=tr.task_id where tr.workspace_id=${scope.workspaceId} and tr.task_id=${taskId} and tr.id=${revisionId} and tr.reason='generated' and exists(select 1 from core.tasks where workspace_id=tr.workspace_id and id=tr.task_id and deleted_at is null)`;
     if (!rows[0]) throw new NotFoundError(); return rows[0];
   }
 }

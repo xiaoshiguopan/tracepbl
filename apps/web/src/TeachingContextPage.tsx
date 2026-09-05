@@ -1,3 +1,4 @@
+import { isLocalMode } from "./runtime-mode";
 import { useEffect, useMemo, useState } from "react";
 import { TeachingContextForm } from "./TeachingContextForm";
 import {
@@ -30,7 +31,7 @@ type Scenario = "ready" | "loading" | "empty" | "failure" | "timeout" | "offline
 type SaveState = "idle" | "saving" | "saved" | "failed";
 
 function readScenario(): Scenario {
-  if (typeof window === "undefined" || !import.meta.env.DEV) return "ready";
+  if (typeof window === "undefined" || !import.meta.env.DEV || isLocalMode) return "ready";
   const value = new URLSearchParams(window.location.search).get("p01-state");
   return (["loading", "empty", "failure", "timeout", "offline", "unavailable"] as const).includes(
     value as Exclude<Scenario, "ready">,
@@ -106,9 +107,9 @@ export function TeachingContextPage({
     if (scenario !== "ready") return;
     void Promise.all([loadContextDraft(storageKey), loadQuestionDraft(storageKey)])
       .then(([storedContext, storedQuestion]) => {
-        const nextDraft = storedContext ? normalizeTeachingContextDraft(storedContext) : syntheticFixture;
+          const nextDraft = storedContext ? (isLocalMode ? storedContext : normalizeTeachingContextDraft(storedContext)) : syntheticFixture;
         setDraft(nextDraft);
-        if (storedQuestion) {
+          if (storedQuestion && (!isLocalMode || storedQuestion.centralQuestion)) {
           setQuestionReached(true);
           const snapshot = storedQuestion.contextSnapshot
             ? normalizeTeachingContextDraft(storedQuestion.contextSnapshot)
@@ -120,7 +121,7 @@ export function TeachingContextPage({
   }, [scenario, storageKey]);
 
   useEffect(() => {
-    if (scenario === "unavailable" || loading) return;
+    if (isLocalMode || scenario === "unavailable" || loading) return;
     setSaveState("saving");
     const timer = window.setTimeout(() => {
       void saveContextDraft(storageKey, draft).then(
@@ -190,9 +191,7 @@ export function TeachingContextPage({
       return;
     }
     const confirmedValue = { ...draft, lessonTypes: [...draft.lessonTypes], learningNeeds: [...draft.learningNeeds] };
-    setConfirmedDraft(confirmedValue);
-    setQuestionReached(true);
-    void saveContextDraft(storageKey, confirmedValue).then(onNext, () => setSaveState("failed"));
+    void saveContextDraft(storageKey, confirmedValue).then(() => { setConfirmedDraft(confirmedValue); setQuestionReached(true); onNext(); }, () => setSaveState("failed"));
   };
 
   const openQuestion = () => {

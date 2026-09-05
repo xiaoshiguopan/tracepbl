@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useInlineAi, InlineAiButton, InlineAiStatus } from "./InlineAi";
+import { isLocalMode } from "./runtime-mode";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createEvidenceMapDraft } from "./evidence-map";
 import { createLessonDesignDraft, type LessonActivity } from "./lesson-design";
 import { createRubricDraft, getRubricSummary, normalizeRubricDraft, updateRubricDimension, type RubricDimension, type RubricDraft } from "./rubric-design";
@@ -15,19 +17,20 @@ const defaultLesson = createLessonDesignDraft(QUESTION, SOURCE_IDS, defaultEvide
 type Scenario = "ready" | "loading" | "empty" | "validation" | "failure" | "offline" | "unavailable" | "missing-activities" | "success";
 
 function readScenario(): Scenario {
-  if (typeof window === "undefined" || !import.meta.env.DEV) return "ready";
+  if (typeof window === "undefined" || !import.meta.env.DEV || isLocalMode) return "ready";
   const value = new URLSearchParams(window.location.search).get("p07-state");
   return (["loading", "empty", "validation", "failure", "offline", "unavailable", "missing-activities", "success"] as const).includes(value as Exclude<Scenario, "ready">) ? value as Scenario : "ready";
 }
 
-function RubricRow({ dimension, errors, showErrors, startEditing, onSave, onRemove }: { dimension: RubricDimension; errors: string[]; showErrors: boolean; startEditing?: boolean; onSave: (change: Partial<Omit<RubricDimension, "id">>) => void; onRemove: () => void }) {
+function RubricRow({ dimension, errors, showErrors, startEditing, aiControl, onSave, onRemove }: { aiControl?: ReactNode; dimension: RubricDimension; errors: string[]; showErrors: boolean; startEditing?: boolean; onSave: (change: Partial<Omit<RubricDimension, "id">>) => void; onRemove: () => void }) {
   const [editing, setEditing] = useState(Boolean(startEditing));
   const [editDraft, setEditDraft] = useState(dimension);
   const invalid = showErrors && errors.length > 0;
-  return <article id={`rubric-${dimension.id}`} className="rubric-row" data-invalid={invalid || undefined} tabIndex={invalid ? -1 : undefined}>
+  return <article data-inline-editing={isLocalMode && editing ? "true" : undefined} id={`rubric-${dimension.id}`} className="rubric-row" data-invalid={invalid || undefined} tabIndex={invalid ? -1 : undefined}>
     <header>
       {editing ? <textarea className="rubric-title-input" aria-label="评价维度名称" rows={2} value={editDraft.title} onChange={(event) => setEditDraft((current) => ({ ...current, title: event.target.value }))} autoFocus /> : <h3>{dimension.title}</h3>}
       <div className="icon-actions">{editing ? <><button type="button" className="ui-button quiet compact" onClick={() => { setEditDraft(dimension); setEditing(false); }}>取消</button><button type="button" className="ui-button secondary compact" onClick={() => { onSave(editDraft); setEditing(false); }}>保存</button></> : <><IconButton icon="edit" label={`修改${dimension.title}`} onClick={() => { setEditDraft(dimension); setEditing(true); }} /><IconButton icon="delete" tone="danger" label={`删除${dimension.title}`} onClick={onRemove} /></>}</div>
+      {aiControl}
     </header>
     <div className="rubric-level-grid">{(editing ? editDraft : dimension).levels.map((item, index) => editing ? <label key={item.key}><strong>{item.label}</strong><textarea aria-label={`${editDraft.title}：${item.label}`} rows={4} value={item.description} onChange={(event) => setEditDraft((current) => ({ ...current, levels: current.levels.map((level, levelIndex) => levelIndex === index ? { ...level, description: event.target.value } : level) }))} /></label> : <section key={item.key}><strong>{item.label}</strong><p>{item.description}</p></section>)}</div>
     {invalid ? <div className="field-error" role="alert">{errors.join(" ")}</div> : null}
@@ -42,6 +45,7 @@ export function RubricDesignPage({ taskId = "demo-tang-45m", onBack, onReturnCon
   const [draft, setDraft] = useState<RubricDraft>(scenario === "empty" ? { ...initialDraft, dimensions: [] } : scenario === "success" ? { ...initialDraft, confirmed: true } : initialDraft);
   const [classLine, setClassLine] = useState(`${syntheticFixture.grade} · ${syntheticFixture.minutes} 分钟`);
   const [loading, setLoading] = useState(scenario === "ready" || scenario === "loading");
+  const ai = useInlineAi(taskId, "rubric", draft, setDraft, loading);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const [feedback, setFeedback] = useState("");
   const [showErrors, setShowErrors] = useState(scenario === "validation");
@@ -56,11 +60,11 @@ export function RubricDesignPage({ taskId = "demo-tang-45m", onBack, onReturnCon
     void Promise.all([loadContextDraft(storageKey), loadLessonDraft(storageKey), loadRubricDraft(storageKey)]).then(([context, lesson, rubric]) => {
       const nextActivities = lesson?.activities || defaultLesson.activities;
       setActivities(nextActivities); setClassLine(`${context?.grade || syntheticFixture.grade} · ${context?.minutes || syntheticFixture.minutes} 分钟`);
-      setDraft(rubric ? normalizeRubricDraft(rubric, nextActivities) : createRubricDraft(nextActivities));
+      setDraft(rubric ? (isLocalMode ? rubric : normalizeRubricDraft(rubric, nextActivities)) : createRubricDraft(nextActivities));
     }, () => setSaveState("failed")).finally(() => setLoading(false));
   }, [scenario, storageKey]);
   useEffect(() => {
-    if (loading || !activities.length || !draft.dimensions.length) return;
+    if (isLocalMode || loading || !activities.length || !draft.dimensions.length) return;
     setSaveState("saving"); const timer = window.setTimeout(() => void saveRubricDraft(storageKey, draft).then(() => setSaveState("saved"), () => setSaveState("failed")), 300);
     return () => window.clearTimeout(timer);
   }, [activities.length, draft, loading, storageKey]);
@@ -78,13 +82,14 @@ export function RubricDesignPage({ taskId = "demo-tang-45m", onBack, onReturnCon
     setShowErrors(true);
     if (!summary.ready) { setFeedback(activities.length ? "请先处理标出的评价描述。" : "请先返回设计活动，完成课堂活动。"); requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-invalid]")?.focus()); return; }
     const next = { ...draft, confirmed: true }; setDraft(next);
-    void saveRubricDraft(storageKey, next).then(onNext, () => { setSaveState("failed"); setFeedback("当前内容仍保留在页面中，请稍后重试。"); });
+    void (isLocalMode ? ai.commit(next, () => saveRubricDraft(storageKey, next)) : saveRubricDraft(storageKey, next)).then(onNext, () => { setSaveState("failed"); setFeedback("当前内容仍保留在页面中，请稍后重试。"); });
   };
   const navigateStep = (step: number) => [onReturnContext, onReturnQuestion, onReturnSources, onReturnEvidence, onReturnLesson][step]?.();
 
   return <WorkbenchShell currentStep={5} reachedStep={5} currentLabel="评价量规" nextLabel="设计检查" onBack={onBack} onNavigateStep={navigateStep}>
     <main className="context-main rubric-main" id="main-content" tabIndex={-1}>
       <header className="page-heading"><div><p className="eyebrow">按可观察的课堂表现评阅</p><h1>评价量规</h1></div><p className={`save-status ${saveState}`} aria-live="polite">{saveState === "saving" ? "正在保存…" : saveState === "saved" ? "已保存到本机" : saveState === "failed" ? "保存失败" : "本机草稿"}</p></header>
+        <InlineAiStatus ai={ai} />
       <p className="page-intro">系统依据本课问题、史料和学生产出形成五个维度。每项都描述课堂中能够观察到的表现。</p>
       <div className="rubric-meta"><span>{classLine}</span><span>个人历史解释为主要评价对象</span><button type="button" onClick={onReturnLesson}>查看课堂活动</button></div>
       <details className="fixture-note"><summary>这套量规如何对齐历史学科</summary><p>时空观念落实在阶段变化，史料实证落实在材料分析，多重因果与结论边界承接历史解释；唯物史观和家国情怀通过问题与材料语境综合体现，不拆成脱离任务的独立分数。</p></details>
@@ -93,10 +98,10 @@ export function RubricDesignPage({ taskId = "demo-tang-45m", onBack, onReturnCon
       {summary.reviewCount ? <InlineNotice tone="warning">课堂活动已有变化，建议浏览受影响的评价维度；不影响继续设计。</InlineNotice> : null}
       {feedback ? <InlineNotice actionLabel={removed ? "撤销" : undefined} onAction={removed ? undo : undefined}>{feedback}</InlineNotice> : null}
       {loading ? <div className="rubric-skeleton" aria-busy="true"><span /><span /><span /></div> : !activities.length ? <section className="rubric-upstream-empty" tabIndex={-1}><h2>先完成课堂活动</h2><p>量规需要对应学生在课堂中实际完成的任务。</p><button className="context-primary" type="button" onClick={onReturnLesson}>返回设计活动</button></section> : <>
-        <button className="add-row-button" type="button" onClick={add}><UiIcon name="add" />添加评价维度</button>
+        <div className="inline-ai-section-heading"><span>按活动形成评价标准，再逐项调整</span><InlineAiButton ai={ai} target="all" label="生成整套量规" /></div><button className="add-row-button" type="button" onClick={add}><UiIcon name="add" />添加评价维度</button>
         <div className="rubric-table-head" aria-hidden="true"><span>评价维度</span><span>需要支持</span><span>达到要求</span><span>表现充分</span></div>
-        <section className="rubric-list" aria-label="评价维度">{draft.dimensions.map((dimension, index) => <RubricRow key={dimension.id} dimension={dimension} errors={summary.errors[dimension.id] || []} showErrors={showErrors} startEditing={dimension.id === newDimensionId} onSave={(change) => { setDraft((current) => updateRubricDimension(current, dimension.id, change)); setNewDimensionId(null); }} onRemove={() => remove(dimension, index)} />)}</section>
-        <PageActionBar status={`${draft.dimensions.length} 个评价维度`} detail="三级标准均对应可观察的学生表现"><button className="ui-button primary" type="button" onClick={confirm}>继续设计检查</button></PageActionBar>
+        <section className="rubric-list" aria-label="评价维度">{draft.dimensions.map((dimension, index) => <RubricRow key={dimension.id} dimension={dimension} aiControl={<InlineAiButton ai={ai} target={dimension.id} label={`替换评价维度 ${index + 1}`} />} errors={summary.errors[dimension.id] || []} showErrors={showErrors} startEditing={dimension.id === newDimensionId} onSave={(change) => { setDraft((current) => updateRubricDimension(current, dimension.id, change)); setNewDimensionId(null); }} onRemove={() => remove(dimension, index)} />)}</section>
+        <PageActionBar status={`${draft.dimensions.length} 个评价维度`} detail="三级标准均对应可观察的学生表现"><button className="ui-button primary" type="button" disabled={ai.busy} onClick={confirm}>{isLocalMode ? "确认量规并设计检查" : "继续设计检查"}</button></PageActionBar>
       </>}
     </main>
   </WorkbenchShell>;

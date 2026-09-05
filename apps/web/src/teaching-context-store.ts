@@ -1,3 +1,4 @@
+import { isLocalMode } from "./runtime-mode";
 import type { TeachingContextDraft } from "./teaching-context";
 import type { QuestionWorkspaceDraft } from "./question-workspace";
 import type { SourceDiscoveryDraft } from "./source-discovery";
@@ -37,7 +38,7 @@ export type TaskBackup = {
 
 const draftStores = [CONTEXT_STORE, QUESTION_STORE, SOURCE_STORE, EVIDENCE_STORE, LESSON_STORE, RUBRIC_STORE, AUDIT_STORE, FINAL_REVIEW_STORE];
 const clientId = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-const taskChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("tracepbl-tasks") : null;
+const taskChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(isLocalMode ? "tracepbl-local-tasks" : "tracepbl-tasks") : null;
 
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -153,6 +154,7 @@ const legacyInquiryDirections = new Set([
 ]);
 
 export const loadContextDraft = async (taskRef: string) => {
+  if (isLocalMode) return (await import("./local-task-store")).loadLocalDraft(taskRef, "context");
   const draft = await loadDraft<TeachingContextDraft>(CONTEXT_STORE, taskRef);
   if (!draft || !legacyInquiryDirections.has(draft.inquiryQuestion)) return draft;
   const migrated = { ...draft, inquiryQuestion: "唐朝由盛转衰的原因" };
@@ -160,6 +162,7 @@ export const loadContextDraft = async (taskRef: string) => {
   return migrated;
 };
 export const saveContextDraft = async (taskRef: string, draft: TeachingContextDraft) => {
+  if (isLocalMode) return (await import("./local-task-store")).saveLocalContext(taskRef, draft);
   await saveDraft(CONTEXT_STORE, taskRef, draft);
   if (draft.textbook.trim() && draft.lesson.trim() && draft.grade && draft.minutes) await touchTask(taskRef, draft);
 };
@@ -180,6 +183,7 @@ const currentSubQuestions = [
 ];
 
 export const loadQuestionDraft = async (taskRef: string) => {
+  if (isLocalMode) return (await import("./local-task-store")).loadLocalDraft(taskRef, "question");
   const draft = await loadDraft<QuestionWorkspaceDraft>(QUESTION_STORE, taskRef);
   if (!draft) return undefined;
   const centralChanged = legacyCentralQuestions.has(draft.centralQuestion);
@@ -189,25 +193,27 @@ export const loadQuestionDraft = async (taskRef: string) => {
   await saveDraft(QUESTION_STORE, taskRef, migrated);
   return migrated;
 };
-export const saveQuestionDraft = (taskRef: string, draft: QuestionWorkspaceDraft) => saveDraft(QUESTION_STORE, taskRef, draft);
-export const loadSourceDraft = (taskRef: string) => loadDraft<SourceDiscoveryDraft>(SOURCE_STORE, taskRef);
-export const saveSourceDraft = (taskRef: string, draft: SourceDiscoveryDraft) => saveDraft(SOURCE_STORE, taskRef, draft);
-export const loadEvidenceDraft = (taskRef: string) => loadDraft<EvidenceMapDraft>(EVIDENCE_STORE, taskRef);
-export const saveEvidenceDraft = (taskRef: string, draft: EvidenceMapDraft) => saveDraft(EVIDENCE_STORE, taskRef, draft);
-export const loadLessonDraft = (taskRef: string) => loadDraft<LessonDesignDraft>(LESSON_STORE, taskRef);
-export const saveLessonDraft = (taskRef: string, draft: LessonDesignDraft) => saveDraft(LESSON_STORE, taskRef, draft);
-export const loadRubricDraft = (taskRef: string) => loadDraft<RubricDraft>(RUBRIC_STORE, taskRef);
-export const saveRubricDraft = (taskRef: string, draft: RubricDraft) => saveDraft(RUBRIC_STORE, taskRef, draft);
-export const loadAuditDraft = (taskRef: string) => loadDraft<AuditDraft>(AUDIT_STORE, taskRef);
-export const saveAuditDraft = (taskRef: string, draft: AuditDraft) => saveDraft(AUDIT_STORE, taskRef, draft);
-export const loadFinalReviewDraft = (taskRef: string) => loadDraft<FinalReviewDraft>(FINAL_REVIEW_STORE, taskRef);
-export const saveFinalReviewDraft = (taskRef: string, draft: FinalReviewDraft) => saveDraft(FINAL_REVIEW_STORE, taskRef, draft);
+export const saveQuestionDraft = (taskRef: string, draft: QuestionWorkspaceDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalQuestion(taskRef, draft)) : saveDraft(QUESTION_STORE, taskRef, draft);
+export const loadSourceDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "source")) : loadDraft<SourceDiscoveryDraft>(SOURCE_STORE, taskRef);
+export const saveSourceDraft = (taskRef: string, draft: SourceDiscoveryDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalSources(taskRef, draft)) : saveDraft(SOURCE_STORE, taskRef, draft);
+export const loadEvidenceDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "evidence")) : loadDraft<EvidenceMapDraft>(EVIDENCE_STORE, taskRef);
+export const saveEvidenceDraft = (taskRef: string, draft: EvidenceMapDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalEvidence(taskRef, draft)) : saveDraft(EVIDENCE_STORE, taskRef, draft);
+export const loadLessonDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "lesson")) : loadDraft<LessonDesignDraft>(LESSON_STORE, taskRef);
+export const saveLessonDraft = (taskRef: string, draft: LessonDesignDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalLesson(taskRef, draft)) : saveDraft(LESSON_STORE, taskRef, draft);
+export const loadRubricDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "rubric")) : loadDraft<RubricDraft>(RUBRIC_STORE, taskRef);
+export const saveRubricDraft = (taskRef: string, draft: RubricDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalRubric(taskRef, draft)) : saveDraft(RUBRIC_STORE, taskRef, draft);
+export const loadAuditDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "audit")) : loadDraft<AuditDraft>(AUDIT_STORE, taskRef);
+export const saveAuditDraft = (taskRef: string, draft: AuditDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalAudit(taskRef, draft)) : saveDraft(AUDIT_STORE, taskRef, draft);
+export const loadFinalReviewDraft = (taskRef: string) => isLocalMode ? import("./local-task-store").then(module => module.loadLocalDraft(taskRef, "review")) : loadDraft<FinalReviewDraft>(FINAL_REVIEW_STORE, taskRef);
+export const saveFinalReviewDraft = (taskRef: string, draft: FinalReviewDraft) => isLocalMode ? import("./local-task-store").then(module => module.saveLocalReview(taskRef, draft)) : saveDraft(FINAL_REVIEW_STORE, taskRef, draft);
 
 export async function markTaskReached(taskRef: string, reachedStep: number) {
+  if (isLocalMode) return;
   await touchTask(taskRef, undefined, reachedStep);
 }
 
 export async function listTasks() {
+  if (isLocalMode) return (await import("./local-task-store")).listLocalTasks();
   const database = await openDatabase();
   return new Promise<TaskSummary[]>((resolve, reject) => {
     const transaction = database.transaction(TASK_STORE);
@@ -219,6 +225,7 @@ export async function listTasks() {
 }
 
 export async function prepareNewTask(taskRef: string, fallback: TeachingContextDraft) {
+  if (isLocalMode) return (await import("./local-task-store")).createLocalTask(taskRef);
   const [latest] = await listTasks();
   const previous = latest ? await loadContextDraft(latest.id) : undefined;
   const source = previous || fallback;
@@ -233,6 +240,7 @@ export async function prepareNewTask(taskRef: string, fallback: TeachingContextD
 }
 
 export async function deleteTask(taskRef: string): Promise<TaskBackup | undefined> {
+  if (isLocalMode) return (await import("./local-task-store")).deleteLocalTask(taskRef);
   const task = await readTask(taskRef);
   if (!task) return undefined;
   const database = await openDatabase();
@@ -257,6 +265,7 @@ export async function deleteTask(taskRef: string): Promise<TaskBackup | undefine
 }
 
 export async function restoreTask(backup: TaskBackup) {
+  if (isLocalMode) return (await import("./local-task-store")).restoreLocalTask(backup);
   const database = await openDatabase();
   await new Promise<void>((resolve, reject) => {
     const transaction = database.transaction([TASK_STORE, ...draftStores], "readwrite");
@@ -270,6 +279,7 @@ export async function restoreTask(backup: TaskBackup) {
 }
 
 export async function duplicateTask(taskRef: string, nextId: string) {
+  if (isLocalMode) return (await import("./local-task-store")).copyLocalTask(taskRef, nextId);
   const task = await readTask(taskRef);
   if (!task) return;
   const database = await openDatabase();

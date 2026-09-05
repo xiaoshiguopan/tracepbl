@@ -1,0 +1,61 @@
+import assert from "node:assert/strict";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+const modulePath = process.env.TRACEPBL_PLAYWRIGHT_MODULE;
+if (!modulePath) throw new Error("Set an existing TRACEPBL_PLAYWRIGHT_MODULE.");
+const { chromium } = await import(pathToFileURL(resolve(modulePath)).href);
+const browser = await chromium.launch({ headless: true, args: ["--no-proxy-server"] });
+const context = await browser.newContext();
+const origin = "http://127.0.0.1:5173";
+const api = async (path, method = "GET", body, version) => {
+  const response = await context.request.fetch(`${origin}/api/v1${path}`, { method, headers: { Origin: origin, "Sec-Fetch-Site": "same-origin", "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID(), ...(version === undefined ? {} : { "If-Match": `"task-lv-${version}"` }) }, ...(body === undefined ? {} : { data: body }) });
+  assert.ok(response.ok(), `${method} ${path}: ${response.status()}`); return response.json();
+};
+try {
+  assert.equal((await api("/runtime")).ai.execution, "fake");
+  const task = (await api("/tasks", "POST", { title: "合成教师理由恢复验证" })).id;
+  const base = `/tasks/${task}`;
+  const put = (section, body, version) => api(`${base}/${section}`, "PUT", body, version);
+  await put("context", {stage:"初中",grade:"七年级",textbook:"合成教材",lesson:"合成教师理由恢复验证",lessonTypes:[],minutes:45,inquiryDirection:null,priorKnowledge:null,learningNeeds:[],profileNote:null}, 0);
+  await put("question-set", {centralQuestion:"合成材料如何支持有条件的解释？",focus:"single",subQuestions:[],confirmed:true}, 1);
+  const sources = (await api(`${base}/sources`)).items.filter(item => item.title.match(/^合成材料 [1-6]（非真实史料）$/)).map(item => item.versionId);
+  assert.equal(sources.length, 6);
+  await put("source-selection", {sourceVersionIds:sources}, 2);
+  await put("evidence-map", {claims:[{text:"合成材料如何支持解释？",gapAccepted:false,relations:[{sourceVersionId:sources[0],kind:"supports",reason:"合成练习依据",citations:[{sourceVersionId:sources[0],chunkId:null,quotedText:null}]}]}]}, 3);
+  await put("lesson-design", {activities:[{title:"合成证据活动",activityMinutes:40,transitionMinutes:0,studentAction:"比较并引用",evidenceProduct:"解释表格",difficulty:"证据边界",scaffold:"标明出处",sourceVersionIds:sources}]}, 4);
+  await put("rubric", {items:[{title:"合成引用评价",activityOrdinals:[0],levels:[{key:"support",label:"需要支持",description:"提示下引用"},{key:"expected",label:"达到要求",description:"准确引用"},{key:"strong",label:"表现充分",description:"引用并限定结论"}]}]}, 5);
+  const audit = await api(`${base}/audits`, "POST", {baseLockVersion:6}, 6);
+  const page = await context.newPage();
+  await page.goto(`${origin}${base}/audit`);
+  await page.getByText("设计检查 · 已完成 · 尝试 1", {exact:true}).waitFor({timeout:30000});
+  await page.getByRole("button", {name:"载入服务器最新内容",exact:true}).click();
+  await page.getByRole("button", {name:"采用建议",exact:true}).click();
+  await page.getByText("已采用建议 · 查看或修改确认理由", {exact:true}).click();
+  const reason = page.getByRole("textbox", {name:"教师确认理由",exact:true});
+  const first = "合成教师理由：保留五分钟用于独立阅读和核对出处。";
+  const second = "合成修改理由：五分钟用于小组互查引文，避免扩大结论。";
+  await reason.fill(first);
+  let failOnce = true; const keys = [];
+  await page.route(`**/api/v1${base}/decisions`, route => {
+    keys.push(route.request().headers()["idempotency-key"]);
+    if (failOnce) { failOnce = false; return route.abort(); }
+    return route.continue();
+  });
+  await page.getByRole("button", {name:"完成设计检查",exact:true}).click();
+  await page.getByText("检查结果已确认，但本机保存失败。当前内容仍保留在本页。",{exact:true}).waitFor();
+  assert.ok(page.url().endsWith("/audit"));
+  await page.getByRole("button", {name:"进入最终确认与导出",exact:true}).click();
+  await page.waitForURL("**/review");
+  assert.equal(keys[0], keys[1], "Failed save must retry with the same key");
+  await page.goto(`${origin}${base}/audit`);
+  await page.getByText("已采用建议 · 查看或修改确认理由", {exact:true}).click();
+  assert.equal(await reason.inputValue(), first);
+  await reason.fill(second);
+  await page.getByRole("button", {name:"完成设计检查",exact:true}).click(); await page.waitForURL("**/review");
+  await page.goto(`${origin}${base}/audit`);
+  await page.getByText("已采用建议 · 查看或修改确认理由", {exact:true}).click();
+  assert.equal(await reason.inputValue(), second);
+  const saved = await api(`${base}/audits/${audit.runId}`);
+  assert.equal(saved.findings.find(item => item.severity === "teacher_confirmation").teacherReason, second);
+  console.log(JSON.stringify({status:"passed",reasonRestored:true,editRestored:true,failedSaveRetried:true,taskPath:base}));
+} finally { await context.close(); await browser.close(); }

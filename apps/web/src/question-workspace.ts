@@ -1,4 +1,4 @@
-import type { TeachingContextDraft } from "./teaching-context";
+import { inquiryDirectionOptions, type TeachingContextDraft } from "./teaching-context";
 
 export const inputTypes = ["因果解释", "变化解释", "证据支持", "史料比较"] as const;
 export type InputType = (typeof inputTypes)[number];
@@ -63,6 +63,22 @@ export function createQuestionGuidance(originalInput: string, context: TeachingC
     fitReason: "适合3—15分钟的小问题探究，减少材料和课堂步骤。",
     omission: "不承担整节课的知识线索。",
   };
+  const presetIndex = (inquiryDirectionOptions as readonly string[]).indexOf(text);
+  if (presetIndex >= 0) {
+    const topic = context.lesson.trim() || "本课主题";
+    const plans = [
+      { type: "因果解释", question: `围绕“${topic}”，哪些因素共同促成了历史变化？`, subQuestions: ["变化发生前有哪些背景条件？", "哪些因素直接推动了变化？", "这些因素如何相互影响，哪些解释仍有局限？"] },
+      { type: "变化解释", question: `围绕“${topic}”，不同阶段发生了哪些变化，又有哪些延续？`, subQuestions: ["可以依据哪些史料划分阶段？", "不同阶段的特征有哪些异同？", "哪些发生了变化，哪些仍然延续？"] },
+      { type: "证据支持", question: `围绕“${topic}”，史料能在多大程度上支持我们的判断？`, subQuestions: ["我们要检验的判断是什么？", "哪些史料支持或质疑这一判断？", "考虑史料的局限，判断需要怎样限定？"] },
+      { type: "史料比较", question: `围绕“${topic}”，不同史料的记载有何异同，为什么？`, subQuestions: ["各份史料分别记录了什么？", "记载的异同与作者、时代和目的有什么关系？", "相互参照后，可以形成哪些有限度的认识？"] },
+    ] as const;
+    const plan = plans[presetIndex];
+    primary.question = plan.question;
+    primary.subQuestions = [...plan.subQuestions];
+    primary.evidenceOutcome = "围绕中心问题形成一份有史料编号的探究成果，说明证据如何支持结论以及结论的限制。";
+    alternative.question = plan.question;
+    return { inputType: plan.type, reason: `已沿用所选探究方向；可按课时选择整课线索或单个问题。`, primary, alternative };
+  }
   return { inputType, reason: `系统判断它更接近“${inputType}”，并根据45分钟课时推荐整课线索模式。`, primary, alternative };
 }
 
@@ -95,7 +111,7 @@ export function normalizeQuestionDraft(value: QuestionWorkspaceDraft, context: T
     "哪些变化破坏了这些条件，安史之乱为何构成重要转折？",
     "安史之乱后唐朝为何还能延续，却始终未恢复盛世并最终灭亡？",
   ]);
-  const savedSubQuestions = Array.isArray(value.subQuestions) && value.subQuestions.length ? value.subQuestions : initial.subQuestions;
+  const savedSubQuestions = Array.isArray(value.subQuestions) && (value.subQuestions.length || value.focus === "single") ? value.subQuestions : initial.subQuestions;
   return {
     ...initial,
     ...value,

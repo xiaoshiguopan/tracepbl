@@ -32,7 +32,7 @@ export class ContentRepository {
   async putQuestionSet(scope: WorkspaceScope, taskId: string, expectedVersion: number, input: QuestionSetInput) {
     await this.sql.begin(async (tx) => {
       const changed = await advance(tx, scope, taskId, expectedVersion);
-      await tx`update core.evidence_claims set question_id=null,review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
+      await tx`update core.task_sources set review_state='needs_review' where workspace_id=${scope.workspaceId} and task_id=${taskId}`;await tx`update core.evidence_claims set question_id=null,review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       await tx`delete from core.inquiry_questions where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       const central = await tx<{ id: string }[]>`insert into core.inquiry_questions(workspace_id,task_id,kind,ordinal,question_text,input_type,evidence_outcome,scope_boundary,confirmed_at) values (${scope.workspaceId},${taskId},'central',0,${input.centralQuestion},${input.inputType ?? null},${input.evidenceOutcome ?? null},${input.scopeBoundary ?? null},${input.confirmed ? new Date() : null}) returning id`;
       for (const [index, question] of input.subQuestions.entries()) await tx`insert into core.inquiry_questions(workspace_id,task_id,parent_id,kind,ordinal,question_text,confirmed_at) values (${scope.workspaceId},${taskId},${central[0]!.id},'sub',${index + 1},${question},${input.confirmed ? new Date() : null})`;

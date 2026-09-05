@@ -19,3 +19,5 @@ Migration 创建的是不登录的权限组 `tracepbl_owner/migrator/app/worker/
 备份与恢复脚本要求 PostgreSQL 18 客户端工具在 PATH。备份强制写到仓库外且拒绝覆盖；恢复强制使用空数据库。恢复后必须运行当前 migration，并在开放应用前清理已到期任务。
 
 `0003_backend_runtime_support.sql` 在不改写 `0001`/`0002` 的前提下补充 job lease/fencing、SSE events、usage ledger、运行组件版本、受控函数与最小权限。`agent` schema 内的 LangGraph checkpointer 表由固定版本 `PostgresSaver.setup()` 初始化，内部结构不手写进项目 migration；初始化结果登记到 `ops.runtime_components`，供 API readiness 核验。
+
+阶段 11 增加 CP-11-01 的 0004 迁移和显式合成种子 `scripts/seed-integration.ts`。合成种子仅在 `TRACEPBL_SYNTHETIC_FIXTURES=true` 时写入六条标明“非真实史料”的记录，不运行真实模型，不自动导入到 Demo。操作说明见 `../docs/06-development/STAGE-11-LOCAL-RUN.md`。

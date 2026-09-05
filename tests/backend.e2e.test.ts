@@ -65,7 +65,9 @@ describe("local backend end to end", () => {
     expect(operationBody).toMatchObject({ status: "succeeded" });
     const result = await app.request(`http://127.0.0.1:8787/api/v1/tasks/${task.id}/audits/${queued.runId}`, { headers: { Cookie: cookie } });
     expect(result.status).toBe(200);
-    expect(await result.json()).toMatchObject({ id: queued.runId, status: "succeeded", summary: { blocking: 1, pass: false } });
+    const body = await result.json() as { findings: {title:string}[] };
+    expect(body).toMatchObject({ id: queued.runId, status: "succeeded", summary: { blocking: 6, pass: false } });
+    expect(body.findings.map(item=>item.title)).toEqual(expect.arrayContaining(["缺少教学情境","缺少已确认问题","缺少证据关系","缺少课堂活动","缺少评价量规","尚未选择来源"]));
     await owner`delete from core.tasks where id=${task.id}`;
   });
 });

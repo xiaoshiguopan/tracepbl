@@ -236,3 +236,7 @@ bigint identity PK；workspace/task、`actor_kind`（`teacher/api/worker/system`
 - model/job/audit：去秘密、最小化；与 task 同生命周期。
 - API Key、数据库密码、capability、Cookie：G5，禁止入库。
 - 外部备份：仓库外由本地用户保管；恢复后必须重跑 purge，不能宣称 hard purge 会删除既有备份文件。
+
+## 2026-09-05 CP-11-01 现役修订（已批准，待实现复核）
+
+问题 ordinal 支持中心 0 和子问题 1—4；问题规模不新增列，按数量派生。新 0004 迁移扩展两项 CHECK，不修改 0001—0003。当前快照函数增加 frozenSources（选中版本的标题、URL、定位、权利依据、核验、允许输出正文及解读），用 exportContentVersion=1 标记具备完整冻结内容；不覆盖历史快照。不允许输出的来源正文置 null。无权限或生命周期变更。

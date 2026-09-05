@@ -1,5 +1,18 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { localProposalContent } from "./LocalProposalContent";
 import { describe, expect, it } from "vitest";
+
+it("renders evidence as labeled review content without duplicated source notes or raw fields", () => {
+  const id = "11000000-0000-4000-8000-000000000001";
+  const content = localProposalContent("evidenceAnalysis", { claims: [{ text: "合成问题", gapAccepted: false, relations: [{ sourceVersionId: id, kind: "supports", reason: "待核对的合成理由", citations: [{ sourceVersionId: id, chunkId: null, quotedText: null }] }] }] }, []);
+  const html = renderToStaticMarkup(<>{content}</>);
+  expect(html).toContain("建议关系：支持原因");
+  expect(html).toContain("尚未提供原文短引");
+  expect(html.match(/来源与边界/g)).toHaveLength(1);
+  expect(html).not.toContain(id);
+  expect(html).not.toContain("gapAccepted");
+  expect(localProposalContent("evidenceAnalysis", { claims: [{ text: "invalid" }] }, [])).toBeNull();
+});
 import { App, boundaryCopy, routeForPath } from "./App";
 import { DesignAuditPage } from "./DesignAuditPage";
 import { EvidenceMapPage } from "./EvidenceMapPage";
@@ -16,7 +29,7 @@ import { createLessonDesignDraft, getLessonDesignSummary, moveLessonActivity, no
 import { createQuestionDraft, createQuestionGuidance, normalizeQuestionDraft, validateQuestionConfirmation, validateQuestionInput } from "./question-workspace";
 import { createRubricDraft, getRubricSummary, normalizeRubricDraft, updateRubricLevel } from "./rubric-design";
 import { emptySourceDraft, getSourceSetSummary, normalizeSourceDraft, sourceFixture, toggleSourceSelection } from "./source-discovery";
-import { getContextConflict, isSameTeachingContext, normalizeTeachingContextDraft, syntheticFixture, validateTeachingContext, type TeachingContextDraft } from "./teaching-context";
+import { getContextConflict, inquiryDirectionOptions, isSameTeachingContext, normalizeTeachingContextDraft, syntheticFixture, validateTeachingContext, type TeachingContextDraft } from "./teaching-context";
 import { TaskUnavailable, WorkbenchShell } from "./WorkbenchShell";
 
 const question = "唐朝为何由盛转衰？";
@@ -73,6 +86,24 @@ describe("首页、导航与安全边界", () => {
 });
 
 describe("P01 教学情境", () => {
+  it("方向预设带入当前主题并形成不同问题结构", () => {
+    for (const lesson of [syntheticFixture.lesson, "合成课程：工业化与社会生活"]) {
+      const plans = inquiryDirectionOptions.map(inquiryQuestion => createQuestionDraft({ ...syntheticFixture, lesson, inquiryQuestion }));
+      expect(new Set(plans.map(plan => plan.centralQuestion)).size).toBe(4);
+      expect(plans.map(plan => plan.inputType)).toEqual(["因果解释", "变化解释", "证据支持", "史料比较"]);
+      for (const plan of plans) {
+        expect(plan.centralQuestion).toContain(lesson);
+        expect(validateQuestionConfirmation(plan, syntheticFixture)).toEqual({});
+        expect(plan.evidenceOutcome).not.toContain("由盛转衰");
+      }
+    }
+  });
+  it("课型默认展开且允许跳过，基础选项不绑定唐朝主题", () => {
+    const html = renderToStaticMarkup(<TeachingContextPage onBack={noop} onNext={noop} />);
+    expect(html).toContain('class="advanced-fields" open=""');
+    expect(html).not.toContain("初中已接触隋唐基本史实、贞观之治和开元盛世");
+    expect(validateTeachingContext({ ...syntheticFixture, lessonTypes: [], inquiryQuestion: "" })).toEqual({});
+  });
   it("接受匿名合成学情并拒绝个人信息", () => {
     expect(validateTeachingContext(syntheticFixture)).toEqual({});
     expect(validateTeachingContext({ ...syntheticFixture, profileNote: "学生姓名张某" }).profileNote).toContain("个人信息");
@@ -87,6 +118,13 @@ describe("P01 教学情境", () => {
 });
 
 describe("P02 探究问题", () => {
+  it("重新载入单问题草稿时不添加默认子问题", () => {
+    const draft = { ...createQuestionDraft(syntheticFixture), focus: "single" as const, subQuestions: [], confirmed: true };
+    const restored = normalizeQuestionDraft(JSON.parse(JSON.stringify(draft)), syntheticFixture);
+    expect(restored.subQuestions).toEqual([]);
+    expect(restored.focus).toBe("single");
+    expect(restored.confirmed).toBe(true);
+  });
   it("把整课线索拆成三个递进问题，小问题不强制拆分", () => {
     const guidance = createQuestionGuidance("唐朝为何由盛转衰", syntheticFixture);
     expect(guidance.inputType).toBe("因果解释");
