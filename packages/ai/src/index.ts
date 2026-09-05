@@ -8,6 +8,7 @@ export type Usage = Readonly<{ inputTokens: number; outputTokens: number; totalT
 export type GenerateRequest<T> = Readonly<{ schema: z.ZodType<T>; system: string; input: string; maxOutputTokens: number; signal?: AbortSignal }>;
 export type GenerateResult<T> = Readonly<{ value: T; actualModel: typeof GENERATION_MODEL; usage: Usage }>;
 export interface AiProvider {
+  readonly execution: "fake" | "real" | "disabled";
   capabilities(): { generation: boolean; embedding: boolean; reason: string | null };
   generateStructured<T>(request: GenerateRequest<T>): Promise<GenerateResult<T>>;
   embed(input: readonly string[], signal?: AbortSignal): Promise<{ vectors: number[][]; actualModel: typeof EMBEDDING_MODEL; inputTokens: number }>;
@@ -19,6 +20,7 @@ export class ProviderError extends Error {
 
 type FakeMode = "success" | "invalidJson" | "wrongModel" | "unavailable";
 export class FakeAiProvider implements AiProvider {
+  readonly execution = "fake" as const;
   constructor(private readonly output: unknown | ((request:GenerateRequest<unknown>)=>unknown) = {}, private readonly mode: FakeMode = "success") {}
   capabilities() { return { generation: true, embedding: true, reason: null }; }
   async generateStructured<T>(request: GenerateRequest<T>): Promise<GenerateResult<T>> {
@@ -39,6 +41,7 @@ export class FakeAiProvider implements AiProvider {
 
 
 export class DisabledAiProvider implements AiProvider {
+  readonly execution = "disabled" as const;
   capabilities() { return { generation: false, embedding: false, reason: "AI_NOT_CONFIGURED" }; }
   async generateStructured<T>(request: GenerateRequest<T>): Promise<GenerateResult<T>> { void request; throw new ProviderError("AI_NOT_CONFIGURED", "AI 未配置。"); }
   async embed(input: readonly string[], signal?: AbortSignal): Promise<{ vectors: number[][]; actualModel: "embedding-3"; inputTokens: number }> { void input; void signal; throw new ProviderError("AI_NOT_CONFIGURED", "AI 未配置。"); }

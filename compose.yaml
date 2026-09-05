@@ -29,10 +29,13 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      TRACEPBL_RECOVERY_JOURNAL: /recovery/deletion-journal.json
       TRACEPBL_MIGRATOR_DATABASE_URL: postgres://postgres:${TRACEPBL_POSTGRES_PASSWORD}@postgres:5432/tracepbl
       TRACEPBL_APP_DB_PASSWORD: ${TRACEPBL_APP_DB_PASSWORD:?set a distinct 32-character app password}
       TRACEPBL_WORKER_DB_PASSWORD: ${TRACEPBL_WORKER_DB_PASSWORD:?set a distinct 32-character worker password}
-    command: ["sh", "-c", "npm run db:migrate && npm run provision:runtime --workspace @tracepbl/database && npm run checkpointer:init --workspace @tracepbl/worker"]
+    volumes:
+      - tracepbl_recovery:/recovery
+    command: ["sh", "-c", "npm run db:migrate && npm run provision:runtime --workspace @tracepbl/database && npm run checkpointer:init --workspace @tracepbl/worker && node --experimental-transform-types apps/worker/src/recovery-maintenance.ts initialize"]
 
   api:
     <<: *backend
@@ -40,6 +43,7 @@ services:
       runtime-init:
         condition: service_completed_successfully
     environment:
+      TRACEPBL_RECOVERY_JOURNAL: /recovery/deletion-journal.json
       TRACEPBL_API_HOST: 0.0.0.0
       TRACEPBL_API_PORT: 8787
       TRACEPBL_ALLOWED_ORIGIN: http://127.0.0.1:5173
@@ -49,6 +53,8 @@ services:
       TRACEPBL_PROVIDER_MODE: ${TRACEPBL_PROVIDER_MODE:-disabled}
       TRACEPBL_AI_ENABLED: "false"
       TRACEPBL_URL_FETCH_ENABLED: "false"
+    volumes:
+      - tracepbl_recovery:/recovery
     command: ["npm", "run", "dev", "--workspace", "@tracepbl/api"]
     ports:
       - "127.0.0.1:8787:8787"
@@ -59,10 +65,13 @@ services:
       runtime-init:
         condition: service_completed_successfully
     environment:
+      TRACEPBL_RECOVERY_JOURNAL: /recovery/deletion-journal.json
       TRACEPBL_WORKER_DATABASE_URL: postgres://tracepbl_worker:${TRACEPBL_WORKER_DB_PASSWORD}@postgres:5432/tracepbl
       TRACEPBL_PROVIDER_MODE: ${TRACEPBL_PROVIDER_MODE:-disabled}
       TRACEPBL_AI_ENABLED: ${TRACEPBL_AI_ENABLED:-false}
       TRACEPBL_URL_FETCH_ENABLED: ${TRACEPBL_URL_FETCH_ENABLED:-false}
+    volumes:
+      - tracepbl_recovery:/recovery
     command: ["npm", "run", "dev", "--workspace", "@tracepbl/worker"]
 
   web:
@@ -78,3 +87,4 @@ services:
 
 volumes:
   tracepbl_postgres:
+  tracepbl_recovery:

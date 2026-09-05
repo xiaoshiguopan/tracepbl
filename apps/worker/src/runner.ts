@@ -21,7 +21,9 @@ export class WorkerRunner {
     const heartbeat = setInterval(async () => { try { if (await this.jobs.cancellationRequested(job.id, job.leaseToken!)) controller.abort(new WorkerFailure("CANCELLED")); else if (!(await this.jobs.renew(job.id, job.leaseToken!))) controller.abort(new WorkerFailure("LEASE_LOST")); } catch { controller.abort(new WorkerFailure("LEASE_LOST")); } }, 10_000); heartbeat.unref();
     try { const outcome = await handler(job, controller.signal); if (outcome === "managed") return true; if (await this.jobs.cancellationRequested(job.id, job.leaseToken)) controller.abort(new WorkerFailure("CANCELLED")); if (controller.signal.aborted) await this.jobs.finish(job.id, job.leaseToken, "cancelled", "CANCELLED"); else await this.jobs.finish(job.id, job.leaseToken, "succeeded"); }
     catch (error) {
-      const coded=error as {code?:unknown;retryable?:unknown};const failure = error instanceof WorkerFailure ? error : typeof coded?.code==="string"?new WorkerFailure(coded.code,coded.retryable===true):new WorkerFailure("WORKER_FAILED");
+      const coded=error as {code?:unknown;retryable?:unknown;message?:unknown};
+      const databaseFailure = coded?.code === "P0001" && typeof coded.message === "string" && ["BUDGET_EXCEEDED","PRICE_PROFILE_INVALID","PROVIDER_RESULT_UNKNOWN","LEASE_LOST","RESULT_STALE","PROVIDER_OUTPUT_INVALID"].includes(coded.message) ? coded.message : null;
+      const failure = error instanceof WorkerFailure ? error : databaseFailure ? new WorkerFailure(databaseFailure) : typeof coded?.code==="string"?new WorkerFailure(coded.code,coded.retryable===true):new WorkerFailure("WORKER_FAILED");
       if (failure.code === "RESULT_STALE") await this.jobs.finish(job.id,job.leaseToken,"stale",failure.code);
       else if (failure.code === "CANCELLED") await this.jobs.finish(job.id, job.leaseToken, "cancelled", failure.code);
       else { const delays = [2, 10, 30]; const delay = delays[Math.min(job.attempts - 1, delays.length - 1)] ?? 30; if (!failure.retryable || !(await this.jobs.releaseForRetry(job.id, job.leaseToken, delay, failure.code))) await this.jobs.finish(job.id, job.leaseToken, "failed", failure.code); }

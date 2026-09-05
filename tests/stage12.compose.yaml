@@ -1,0 +1,33 @@
+# Isolated synthetic quality environment. No preview volume or published port.
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+    environment:
+      POSTGRES_DB: tracepbl
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: synthetic-stage12-only
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tracepbl"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  verify:
+    image: tracepbl-stage12-review
+    user: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TRACEPBL_TEST_DATABASE_URL: postgres://postgres:synthetic-stage12-only@postgres:5432/tracepbl
+      TRACEPBL_MIGRATOR_DATABASE_URL: postgres://postgres:synthetic-stage12-only@postgres:5432/tracepbl
+      TRACEPBL_APP_DB_PASSWORD: synthetic-stage12-app-password-0000001
+      TRACEPBL_WORKER_DB_PASSWORD: synthetic-stage12-worker-password-001
+      TRACEPBL_TEST_APP_DATABASE_URL: postgres://tracepbl_app:synthetic-stage12-app-password-0000001@postgres:5432/tracepbl
+      TRACEPBL_TEST_WORKER_DATABASE_URL: postgres://tracepbl_worker:synthetic-stage12-worker-password-001@postgres:5432/tracepbl
+      TRACEPBL_PROVIDER_MODE: fake
+      TRACEPBL_AI_ENABLED: "false"
+      TRACEPBL_URL_FETCH_ENABLED: "false"
+    volumes:
+      - ../.tracepbl/stage12-evidence:/evidence
+      - ./stage12.verify.mjs:/app/tests/stage12.verify.mjs:ro
+    command: ["node", "tests/stage12.verify.mjs"]

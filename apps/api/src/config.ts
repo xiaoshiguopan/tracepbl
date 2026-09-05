@@ -1,3 +1,4 @@
+import { fakePriceProfile, realPriceProfile, generationReservation, type PriceProfile } from "@tracepbl/domain";
 import { randomBytes } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -15,6 +16,8 @@ const ConfigSchema = z.object({
   urlFetchEnabled: z.boolean(),
   priceProfileVersion: z.string().min(1).nullable(),
   generationReservationCnyMicros: z.int().min(0).max(2_000_000),
+  priceProfile: z.custom<PriceProfile>().optional(),
+  recoveryJournalPath: z.string().min(1).optional(),
 }).strict();
 export type ApiConfig = z.input<typeof ConfigSchema>;
 
@@ -31,7 +34,8 @@ export async function loadOrCreateSecret(path = resolve(".tracepbl/session-secre
 
 export async function loadConfig(env = process.env): Promise<ApiConfig> {
   const sessionSecret = env.TRACEPBL_SESSION_SECRET ?? await loadOrCreateSecret(env.TRACEPBL_SESSION_SECRET_FILE);
-  const providerMode = env.TRACEPBL_PROVIDER_MODE ?? "disabled";
+  const providerMode = env.TRACEPBL_PROVIDER_MODE === "real" && env.TRACEPBL_AI_ENABLED === "false" ? "disabled" : env.TRACEPBL_PROVIDER_MODE ?? "disabled";
+  const priceProfile = providerMode === "real" ? realPriceProfile(env) : fakePriceProfile();
   const priceProfileVersion = providerMode === "fake" ? "synthetic-zero-cost.v1" : env.TRACEPBL_PRICE_PROFILE_VERSION ?? null;
-  return ConfigSchema.parse({ host: env.TRACEPBL_API_HOST ?? "127.0.0.1", port: Number(env.TRACEPBL_API_PORT ?? 8787), allowedOrigin: env.TRACEPBL_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173", databaseUrl: env.TRACEPBL_APP_DATABASE_URL ?? env.TRACEPBL_DATABASE_URL, sessionSecret, mode: env.TRACEPBL_MODE ?? "local", providerMode, aiConfigured: providerMode === "fake" || (providerMode === "real" && Boolean(env.TRACEPBL_GLM_API_KEY && priceProfileVersion && env.TRACEPBL_AI_ENABLED !== "false")), urlFetchEnabled: env.TRACEPBL_URL_FETCH_ENABLED === "true", priceProfileVersion, generationReservationCnyMicros: Number(env.TRACEPBL_GENERATION_RESERVATION_CNY_MICROS ?? 0) });
+  return ConfigSchema.parse({ host: env.TRACEPBL_API_HOST ?? "127.0.0.1", port: Number(env.TRACEPBL_API_PORT ?? 8787), allowedOrigin: env.TRACEPBL_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173", databaseUrl: env.TRACEPBL_APP_DATABASE_URL ?? env.TRACEPBL_DATABASE_URL, sessionSecret, mode: env.TRACEPBL_MODE ?? "local", providerMode, aiConfigured: providerMode === "fake" || (providerMode === "real" && Boolean(env.TRACEPBL_GLM_API_KEY && priceProfileVersion && env.TRACEPBL_AI_ENABLED !== "false")), urlFetchEnabled: env.TRACEPBL_URL_FETCH_ENABLED === "true", priceProfileVersion, priceProfile, recoveryJournalPath: env.TRACEPBL_RECOVERY_JOURNAL, generationReservationCnyMicros: generationReservation(priceProfile) });
 }

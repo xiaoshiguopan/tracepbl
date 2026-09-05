@@ -42,7 +42,7 @@ describe("PostgreSQL 18 and pgvector migrations", () => {
     expect(versions?.pg.startsWith("18")).toBe(true);
     expect(versions?.vector).toBe("0.8.6");
     const relations = await sql<{ count: number }[]>`select count(*)::int as count from pg_tables where schemaname in ('core','rag','ops')`;
-    expect(relations[0]?.count).toBe(31);
+    expect(relations[0]?.count).toBe(33); // CP-12-01 adds two recovery relations.
     const seedCount = await sql<{ count: number }[]>`select count(*)::int as count from core.workspaces where id='01990000-0000-7000-8000-000000000001'`;
     expect(seedCount[0]?.count).toBe(1);
   });

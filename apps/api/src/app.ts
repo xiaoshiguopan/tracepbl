@@ -5,7 +5,7 @@ import { bodyLimit } from "hono/body-limit";
 import { AdoptionRequestSchema, AsyncOperationSchema, AuditOperationSchema, AuditRequestSchema, AuditViewSchema, ContractVersion, TaskDetailSchema, OperationListSchema, CopyTaskSchema, CreateTaskSchema, DecisionRequestSchema, DecisionResultSchema, DeletionWindowSchema, EvidenceMapSchema, ExportManifestSchema, ExportOperationSchema, ExportRequestSchema, GeneratedProposalSchema, IdempotencyKeySchema, JobEventSchema, LessonDesignSchema, MaterialInputSchema, MaterialResultSchema, OperationStatusSchema, ProblemSchema, ProposalRequestSchema, QuestionSetSchema, RubricSchema, RuntimeSchema, SourceListSchema, SourceSelectionSchema, TaskListSchema, TaskSchema, TeachingContextSchema, UuidSchema, parseTaskEtag, taskEtag } from "@tracepbl/contracts";
 import { DomainError, containsSensitiveData, mapStoredJobStatus, type WorkspaceScope } from "@tracepbl/domain";
 import { FIXTURE_VERSION } from "@tracepbl/fixtures";
-import { AiJobRepository, ContentRepository, JobRepository, SourceRepository, TaskRepository, WorkflowRepository, type Database, type JobRow } from "@tracepbl/repositories";
+import { AiJobRepository, ContentRepository, DeletionJournal, RecoveryRequired, JobRepository, SourceRepository, TaskRepository, WorkflowRepository, type Database, type JobRow } from "@tracepbl/repositories";
 import type { ApiConfig } from "./config.ts";
 import { issueSession, readSession } from "./session.ts";
 
@@ -27,12 +27,28 @@ function jobView(job: JobRow) {
 const TaskCursorSchema=z.object({updatedAt:z.iso.datetime({offset:true}),id:UuidSchema}).strict();
 function decodeTaskCursor(value:string|undefined){if(!value)return undefined;try{return TaskCursorSchema.parse(JSON.parse(Buffer.from(value,"base64url").toString("utf8")));}catch{throw new DomainError("MALFORMED_REQUEST","分页游标无效。");}}
 
-export function createApp(database: Database, config: ApiConfig) {
+export function createApp(database: Database, config: ApiConfig, recovery?: DeletionJournal) {
   const app = new OpenAPIHono<{ Variables: Variables }>({ defaultHook: (result, c) => result.success ? undefined : result.target === "header" && result.error.issues.some(issue => issue.path.includes("if-match")) ? problem(c, 428, "PRECONDITION_REQUIRED", "需要有效的 If-Match。") : problem(c, 422, "VALIDATION_FAILED", "请求字段不符合契约。") });
-  const tasks = new TaskRepository(database); const jobs = new JobRepository(database); const content = new ContentRepository(database); const sources = new SourceRepository(database); const aiJobs = new AiJobRepository(database);const workflow=new WorkflowRepository(database);
+  const tasks = new TaskRepository(database, recovery); const jobs = new JobRepository(database); const content = new ContentRepository(database); const sources = new SourceRepository(database); const aiJobs = new AiJobRepository(database);const workflow=new WorkflowRepository(database);
   const sessionStreams = new Map<string, number>(); const taskStreams = new Map<string, number>();
+  app.use("/api/v1/*", async (c, next) => { await next(); c.header("Cache-Control", "no-store"); c.header("X-Content-Type-Options", "nosniff"); });
   app.use("*", async (c, next) => { const traceId = c.req.header("X-Trace-Id"); c.set("traceId", UuidSchema.safeParse(traceId).success ? traceId! : randomUUID()); await next(); c.header("X-Trace-Id", c.get("traceId")); });
   app.use("*",async(c,next)=>{const host=c.req.header("Host")||new URL(c.req.url).host;if(![`127.0.0.1:${config.port}`,`localhost:${config.port}`].includes(host))return problem(c,400,"MALFORMED_REQUEST","请求主机无效。");return next();});
+  let windowStart = Date.now(); let requestCount = 0;
+  const workspaceRequests = new Map<string, number>();
+  app.use("/api/v1/*", async (c, next) => {
+    const now = Date.now();
+    if (now - windowStart >= 60_000) { windowStart = now; requestCount = 0; workspaceRequests.clear(); }
+    const workspace = readSession(c, config.sessionSecret)?.workspaceId;
+    if (requestCount >= 600 || (workspace && (workspaceRequests.get(workspace) ?? 0) >= 300)) {
+      const response = problem(c, 429, "RATE_LIMITED", "操作过于频繁，已保存内容不变，请稍后重试。");
+      response.headers.set("Retry-After", String(Math.max(1, Math.ceil((60_000 - (now - windowStart)) / 1000))));
+      return response;
+    }
+    requestCount++;
+    if (workspace) workspaceRequests.set(workspace, (workspaceRequests.get(workspace) ?? 0) + 1);
+    return next();
+  });
   app.use("/api/v1/*",bodyLimit({maxSize:262_144,onError:(c)=>problem(c,413,"INPUT_TOO_LARGE","请求体超过允许大小。")}));
   app.use("/api/v1/*", async (c, next) => {
     if (c.req.path === "/api/v1/runtime") return next();
@@ -43,7 +59,9 @@ export function createApp(database: Database, config: ApiConfig) {
     }
     c.set("scope", scope); return next();
   });
+  app.use("/api/v1/*", async (_c, next) => { if (recovery) await recovery.verify(database); return next(); });
   app.onError((error, c) => {
+    if (error instanceof RecoveryRequired) return problem(c,503,"PROVIDER_UNAVAILABLE","恢复保护尚未完成，请由本机维护者核对删除清单后重启服务。");
     if (error instanceof DomainError) { const status = error.code === "MALFORMED_REQUEST" ? 400 : error.code === "RESOURCE_NOT_FOUND" ? 404 : error.code === "VERSION_CONFLICT" ? 412 : error.code === "PRECONDITION_REQUIRED" ? 428 : error.code === "AI_NOT_CONFIGURED" || error.code === "PROVIDER_UNAVAILABLE" ? 503 : error.code === "BUDGET_EXCEEDED" ? 429 : error.code === "VALIDATION_FAILED" || error.code === "CITATION_GATE_FAILED" ? 422 : 409; return problem(c, status, error.code, error.message); }
     if (error.message === "IDEMPOTENCY_KEY_REUSED") return problem(c, 409, error.message, "该幂等键已用于不同请求。");
     if (error.message === "VERSION_CONFLICT") return problem(c, 412, error.message, "内容已在另一窗口发生变化，请重新加载。");
@@ -55,7 +73,7 @@ export function createApp(database: Database, config: ApiConfig) {
   });
 
   app.get("/health/live", (c) => c.json({ status: "live" }));
-  app.get("/health/ready", async (c) => { const rows = await database<{schema_ready:boolean;checkpointer_ready:boolean;overdue:number}[]>`select exists(select 1 from ops.runtime_components where component='backend_schema' and version='0004') as schema_ready,exists(select 1 from ops.runtime_components where component='langgraph_checkpointer') as checkpointer_ready,(select count(*)::int from core.tasks where deleted_at is not null and purge_after<=now()) as overdue`; const ready=Boolean(rows[0]?.schema_ready&&rows[0]?.checkpointer_ready&&rows[0]?.overdue===0);return ready ? c.json({ status: "ready" }) : c.json({ status: "not_ready" }, 503); });
+  app.get("/health/ready", async (c) => { if (recovery) await recovery.verify(database); const rows = await database<{schema_ready:boolean;checkpointer_ready:boolean;overdue:number}[]>`select exists(select 1 from ops.runtime_components where component='backend_schema' and version='0005') as schema_ready,exists(select 1 from ops.runtime_components where component='langgraph_checkpointer') as checkpointer_ready,(select count(*)::int from core.tasks where deleted_at is not null and purge_after<=now()) as overdue`; const ready=Boolean(rows[0]?.schema_ready&&rows[0]?.checkpointer_ready&&rows[0]?.overdue===0);return ready ? c.json({ status: "ready" }) : c.json({ status: "not_ready" }, 503); });
 
   const runtime = createRoute({ method: "get", path: "/api/v1/runtime", operationId: "getRuntime", responses: { 200: { description: "Runtime capabilities", content: { "application/json": { schema: RuntimeSchema } } }, 500: problemResponses[500] } });
   app.openapi(runtime, async (c) => { const workspaceId = await tasks.localWorkspaceId(); issueSession(c, workspaceId, config.sessionSecret); const body = RuntimeSchema.parse({ mode: config.mode, contractVersion: ContractVersion, fixtureVersion: FIXTURE_VERSION, ai: { execution: config.providerMode ?? (config.aiConfigured ? "real" : "disabled"), available: config.aiConfigured, provider: "zhipu", generationModel: "GLM-5.3-Flash", embeddingModel: "embedding-3", reason: config.aiConfigured ? null : "AI_NOT_CONFIGURED" }, limits: { generationInputTokens: 24000, generationOutputTokens: 4000, callsPerAction: 2, dailyGenerationCalls: 20, dailyGenerationTokens: 200000, dailyEmbeddingTokens: 200000, dailyCny: 2, deleteGraceHours: 24 } }); return c.json(body, 200); });
@@ -106,7 +124,7 @@ export function createApp(database: Database, config: ApiConfig) {
   app.openapi(putRubric, async (c) => { const expected = parseTaskEtag(c.req.valid("header")["if-match"]); if (expected === null) throw new DomainError("PRECONDITION_REQUIRED", "需要有效的 If-Match。"); const input = c.req.valid("json"); await content.putRubric(c.get("scope"), c.req.valid("param").taskId, expected, input); c.header("ETag", taskEtag(expected + 1)); return c.json(input, 200); });
 
   const createProposal = createRoute({ method: "post", path: "/api/v1/tasks/{taskId}/proposals", operationId: "createProposal", request: { params: resourceParams, headers: z.object({ "if-match": z.string(), "idempotency-key": IdempotencyKeySchema }), body: { content: { "application/json": { schema: ProposalRequestSchema } } } }, responses: { 202: { description: "Proposal operation", content: { "application/json": { schema: AsyncOperationSchema } } }, ...problemResponses, 429: { description: "Budget exceeded", content: { "application/problem+json": { schema: ProblemSchema } } }, 503: { description: "AI not configured", content: { "application/problem+json": { schema: ProblemSchema } } } } });
-  app.openapi(createProposal, async (c) => { if (!config.aiConfigured || !config.priceProfileVersion) throw new DomainError("AI_NOT_CONFIGURED", "AI 未配置或价格档案未确认。"); const expected=parseTaskEtag(c.req.valid("header")["if-match"]); if(expected===null) throw new DomainError("PRECONDITION_REQUIRED","需要有效的 If-Match。"); const input=c.req.valid("json"); if(input.baseLockVersion!==expected) throw new DomainError("VERSION_CONFLICT","请求版本不一致。"); const created=await aiJobs.enqueueProposal(c.get("scope"),c.req.valid("param").taskId,input,c.req.valid("header")["idempotency-key"],config.priceProfileVersion,config.generationReservationCnyMicros); return c.json({ operation: jobView(await jobs.get(c.get("scope"),c.req.valid("param").taskId,created.jobId)) },202); });
+  app.openapi(createProposal, async (c) => { if (!config.aiConfigured || !config.priceProfileVersion) throw new DomainError("AI_NOT_CONFIGURED", "AI 未配置或价格档案未确认。"); const expected=parseTaskEtag(c.req.valid("header")["if-match"]); if(expected===null) throw new DomainError("PRECONDITION_REQUIRED","需要有效的 If-Match。"); const input=c.req.valid("json"); if(input.baseLockVersion!==expected) throw new DomainError("VERSION_CONFLICT","请求版本不一致。"); const created=await aiJobs.enqueueProposal(c.get("scope"),c.req.valid("param").taskId,input,c.req.valid("header")["idempotency-key"],config.priceProfileVersion,config.generationReservationCnyMicros,config.priceProfile); return c.json({ operation: jobView(await jobs.get(c.get("scope"),c.req.valid("param").taskId,created.jobId)) },202); });
   const getProposal=createRoute({method:"get",path:"/api/v1/tasks/{taskId}/proposals/{revisionId}",operationId:"getProposal",request:{params:z.object({taskId:UuidSchema,revisionId:UuidSchema})},responses:{200:{description:"Validated generated proposal",content:{"application/json":{schema:GeneratedProposalSchema}}},...problemResponses}});
   app.openapi(getProposal,async(c)=>{const row=await aiJobs.proposal(c.get("scope"),c.req.valid("param").taskId,c.req.valid("param").revisionId);const purposes:Record<string,z.infer<typeof GeneratedProposalSchema>["purpose"]>={question_guidance:"questionGuidance",source_analysis:"sourceAnalysis",evidence_analysis:"evidenceAnalysis",lesson:"lesson",rubric:"rubric",audit:"audit"};return c.json(GeneratedProposalSchema.parse({revisionId:row.id,purpose:purposes[String(row.purpose)],baseLockVersion:Number(row.base_lock_version),status:"validated",snapshot:row.snapshot}),200);});
   const adoptProposal=createRoute({method:"post",path:"/api/v1/tasks/{taskId}/proposals/{revisionId}/adoption",operationId:"adoptProposal",request:{params:z.object({taskId:UuidSchema,revisionId:UuidSchema}),headers:z.object({"if-match":z.string(),"idempotency-key":IdempotencyKeySchema}),body:{content:{"application/json":{schema:AdoptionRequestSchema}}}},responses:{200:{description:"Updated task after teacher adoption",content:{"application/json":{schema:TaskSchema}}},...problemResponses}});

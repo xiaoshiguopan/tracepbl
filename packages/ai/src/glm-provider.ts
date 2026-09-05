@@ -4,6 +4,7 @@ import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL, GENERATION_MODEL, ProviderError,
 type Fetcher = typeof fetch;
 const ALLOWED_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
 export class GlmProvider implements AiProvider {
+  readonly execution = "real" as const;
   constructor(private readonly apiKey: string, private readonly fetcher: Fetcher = fetch, private readonly baseUrl = ALLOWED_BASE_URL) {
     if (!apiKey) throw new ProviderError("AI_NOT_CONFIGURED", "AI 未配置。");
     if (baseUrl !== ALLOWED_BASE_URL) throw new ProviderError("AI_NOT_CONFIGURED", "GLM 端点不在批准范围内。");
@@ -21,6 +22,8 @@ export class GlmProvider implements AiProvider {
     if (input.length < 1 || input.length > 64) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "embedding 批次必须为 1—64 项。");
     const payload = await this.post("embeddings", { model: EMBEDDING_MODEL, input, dimensions: EMBEDDING_DIMENSIONS }, signal, 30_000);
     const envelope = embeddingEnvelope.safeParse(payload); if (!envelope.success || envelope.data.data.length !== input.length || envelope.data.data.some((item) => item.embedding.length !== EMBEDDING_DIMENSIONS)) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "embedding 响应结构或维度无效。");
+    const indexes = new Set(envelope.data.data.map(item => item.index));
+    if (indexes.size !== input.length || envelope.data.data.some(item => item.index >= input.length || !item.embedding.some(value => value !== 0))) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "embedding 序号或向量无效。");
     if (envelope.data.model !== EMBEDDING_MODEL) throw new ProviderError("PROVIDER_MODEL_MISMATCH", "embedding 返回了不同模型。");
     return { vectors: envelope.data.data.sort((a, b) => a.index - b.index).map((item) => item.embedding), actualModel: EMBEDDING_MODEL, inputTokens: envelope.data.usage.prompt_tokens };
   }
@@ -31,7 +34,18 @@ export class GlmProvider implements AiProvider {
     catch { if(signal?.aborted)throw signal.reason??new ProviderError("PROVIDER_UNAVAILABLE","GLM 请求已取消。");if(timeout.aborted)throw new ProviderError("PROVIDER_TIMEOUT_UNKNOWN","GLM 请求超时，结果与费用状态未知。");throw new ProviderError("PROVIDER_UNAVAILABLE", "GLM 连接失败。", true); }
     if (!response.ok) throw new ProviderError("PROVIDER_UNAVAILABLE", "GLM 暂时不可用。", response.status === 429 || response.status >= 500);
     const contentLength = Number(response.headers.get("content-length") ?? 0); if (contentLength > 1_048_576) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "GLM 响应过大。");
-    const text = await response.text(); if (Buffer.byteLength(text) > 1_048_576) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "GLM 响应过大。");
+    const reader = response.body?.getReader();
+    if (!reader) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "GLM 响应为空。");
+    const chunks: Uint8Array[] = []; let size = 0;
+    try {
+      while (true) {
+        const chunk = await reader.read(); if (chunk.done) break;
+        size += chunk.value.byteLength;
+        if (size > 1_048_576) throw new ProviderError("PROVIDER_OUTPUT_INVALID", "GLM 响应过大。");
+        chunks.push(chunk.value);
+      }
+    } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
+    const text = Buffer.concat(chunks, size).toString("utf8");
     try { return JSON.parse(text) as unknown; } catch { throw new ProviderError("PROVIDER_OUTPUT_INVALID", "GLM 响应不是 JSON。"); }
   }
 }

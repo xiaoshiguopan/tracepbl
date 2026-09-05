@@ -13,10 +13,14 @@ function blockedIpv4(address: string) {
   return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && (b === 0 || b === 168)) || (a === 198 && (b === 18 || b === 19 || b === 51)) || (a === 203 && b === 0) || a >= 224;
 }
 export function isBlockedAddress(input: string) {
-  const address = input.toLowerCase().split("%")[0]!;
+  let address = input.toLowerCase().split("%")[0]!;
   if (isIP(address) === 4) return blockedIpv4(address);
   if (isIP(address) !== 6) return true;
-  if (address.startsWith("::ffff:")) return blockedIpv4(address.slice(7));
+  address = new URL(`http://[${address}]/`).hostname.slice(1, -1);
+  if (address.startsWith("::ffff:")) {
+    const [high, low] = address.slice(7).split(":").map(value => Number.parseInt(value, 16));
+    return blockedIpv4(`${high! >>> 8}.${high! & 255}.${low! >>> 8}.${low! & 255}`);
+  }
   return address === "::" || address === "::1" || address.startsWith("fc") || address.startsWith("fd") || /^fe[89ab]/.test(address) || address.startsWith("ff") || address.startsWith("2001:db8:");
 }
 

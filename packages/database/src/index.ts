@@ -1,6 +1,7 @@
 import { lockCommand } from "./command-lock.ts";
 import { createHash } from "node:crypto";
-import postgres, { type Sql } from "postgres";
+import postgres, { type Sql, type TransactionSql } from "postgres";
+import { DeletionJournal } from "./recovery.ts";
 import { NotFoundError, VersionConflictError, type JobStatus, type WorkspaceScope } from "@tracepbl/domain";
 
 export type Database = Sql<Record<string, never>>;
@@ -26,7 +27,11 @@ function jobFrom(row: Record<string, unknown>): JobRow {
 function publicJobKind(kind:string){return kind==="source_check"?"sourceCheck":kind;}
 
 export class TaskRepository {
-  constructor(private readonly sql: Database) {}
+  constructor(private readonly sql: Database, private readonly recovery?: DeletionJournal) {}
+  private async deletionTransaction<T>(operation: (tx: TransactionSql<Record<string, never>>) => Promise<T>): Promise<T> {
+    if (this.recovery) return this.recovery.transaction(this.sql, operation);
+    return await this.sql.begin(operation) as T;
+  }
   async detail(scope: WorkspaceScope, taskId: string) {
     const rows = await this.sql<Record<string, unknown>[]>`select t.*,
       (select id from core.task_revisions where workspace_id=t.workspace_id and task_id=t.id and reason='teacher_confirmed' order by revision_no desc limit 1) as teacher_revision,
@@ -116,7 +121,7 @@ export class TaskRepository {
   }
   async softDelete(scope: WorkspaceScope, taskId: string, expectedVersion: number, idempotencyKey: string) {
     const requestHash = canonicalHash({ operation: "deleteTask", taskId, expectedVersion });
-    return this.sql.begin(async (tx) => {
+    return this.deletionTransaction(async (tx) => {
       await lockCommand(tx, scope, idempotencyKey); const old = await tx<Record<string, unknown>[]>`select request_hash,response_summary from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`;
       if (old[0]) { if (old[0].request_hash !== requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED"); return old[0].response_summary as { deletedAt: string; purgeAfter: string; lockVersion: number }; }
       const rows = await tx<{ deleted_at: Date; purge_after: Date; lock_version: number }[]>`update core.tasks set deleted_at=now(),purge_after=now()+interval '24 hours',lock_version=lock_version+1,updated_at=now() where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null and lock_version=${expectedVersion} returning deleted_at,purge_after,lock_version`;
@@ -130,7 +135,7 @@ export class TaskRepository {
   }
   async restore(scope: WorkspaceScope, taskId: string, expectedVersion: number, idempotencyKey: string) {
     const requestHash=canonicalHash({operation:"restoreTask",taskId,expectedVersion});
-    return this.sql.begin(async(tx)=>{ await lockCommand(tx, scope, idempotencyKey); const old=await tx<Record<string,unknown>[]>`select request_hash from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`; if(old[0]&&old[0].request_hash!==requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
+    return this.deletionTransaction(async(tx)=>{ await lockCommand(tx, scope, idempotencyKey); const old=await tx<Record<string,unknown>[]>`select request_hash from ops.command_receipts where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey} for update`; if(old[0]&&old[0].request_hash!==requestHash) throw new Error("IDEMPOTENCY_KEY_REUSED");
       if(!old[0]) await tx`insert into ops.command_receipts(workspace_id,task_id,idempotency_key,operation,request_hash,status,resource_kind,resource_id) values (${scope.workspaceId},${taskId},${idempotencyKey},'restore_task',${requestHash},'processing','task',${taskId})`;
       const rows=await tx<Record<string,unknown>[]>`select * from ops.restore_task(${scope.workspaceId},${taskId},${expectedVersion})`; if(!rows[0]?.id){ if(old[0]) { const replay=await tx<Record<string,unknown>[]>`select id,title,workflow_state,lock_version,deleted_at,created_at,updated_at from core.tasks where workspace_id=${scope.workspaceId} and id=${taskId} and deleted_at is null`; if(replay[0]) return taskFrom(replay[0]); } throw new NotFoundError(); }
       await tx`update ops.command_receipts set status='succeeded',response_summary=${tx.json({id:taskId})},updated_at=now() where workspace_id=${scope.workspaceId} and idempotency_key=${idempotencyKey}`; return taskFrom(rows[0]); });
@@ -227,3 +232,4 @@ export { ContentRepository, type EvidenceMapInput, type LessonDesignInput, type 
 export { SourceRepository, type MaterialInput } from "./sources.ts";
 export { AiJobRepository, type ProposalInput } from "./ai-jobs.ts";
 export { WorkflowRepository, type AuditRequest, type DecisionInput, type ExportInput } from "./workflow.ts";
+export { DeletionJournal, RecoveryRequired, defaultRecoveryPath, recoverySnapshot, recoveryTaskDigest, type RecoveryFile, type RecoveryEvent } from "./recovery.ts";

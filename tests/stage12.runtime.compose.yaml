@@ -1,0 +1,16 @@
+# Use with compose.yaml and an isolated project name. Never attach preview volumes.
+services:
+  runtime-init:
+    image: tracepbl-stage12-review
+  api:
+    image: tracepbl-stage12-review
+    environment:
+      TRACEPBL_ALLOWED_ORIGIN: http://127.0.0.1:38173
+    ports: !override
+      - "127.0.0.1:38787:8787"
+  worker:
+    image: tracepbl-stage12-review
+  web:
+    image: tracepbl-stage12-review
+    ports: !override
+      - "127.0.0.1:38173:5173"

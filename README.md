@@ -7,7 +7,7 @@
 - P00—P09 与 P12 已完成；P04 自动核验并入 P03，P10 导出并入 P09，P11 已取消且不得恢复。
 - React/Vite 前端是长期公开的纯静态 Demo，只使用 IndexedDB、公开/合成 fixtures 与预生成结果。
 - PostgreSQL 18.6 + pgvector 0.8.6 数据层，以及 Hono API、Worker、RAG、GLM adapter 与 LangGraph checkpointer 已实现。
-- 阶段 10 已归档；阶段 11 本地前后端集成已完成，等待用户预览及批准归档，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
+- 阶段 11 已归档为 `97321fe`；阶段 12 质量与安全审查已获批准并随本次提交归档，阶段 13 尚未开始，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
 
 ## 两种运行形态
 
@@ -21,8 +21,10 @@
 目标工具链为 Node.js 24.20.0、npm 11.19.0、TypeScript 6.0.3；标准完整后端环境使用 Docker Compose。
 
 1. 将根目录 `.env.example` 复制为不会提交的 `.env`，替换四个密码/秘密占位符。
-2. 运行 `npm run local:up`。Compose 会启动 PostgreSQL、执行 migration、配置独立 API/Worker 角色、初始化 LangGraph checkpointer，再启动 API、Worker 与 localhost:5173 的完整前端。
+2. 运行 `npm run local:up`。Compose 会启动 PostgreSQL、执行 migration、配置独立 API/Worker 角色、初始化 LangGraph checkpointer 和独立删除清单，再启动 API、Worker 与 localhost:5173 的完整前端。
 3. 打开 `http://127.0.0.1:5173` 使用完整前端；打开 `http://127.0.0.1:8787/health/ready` 检查就绪状态；OpenAPI 3.1 契约位于 `http://127.0.0.1:8787/openapi.json`。
+已有数据库升级前先阅读 [阶段 12 恢复与升级说明](./docs/07-quality-security/RECOVERY-RUNBOOK.md)，不能删除清单或重置数据来绕过新门禁。
+
 4. 运行 `npm run local:down` 停止服务。命名卷会保留本地数据库；删除卷属于数据删除，不会自动执行。
 
 无 Key 是正常运行方式：AI、embedding 和 URL 抓取默认关闭，普通手工工作流仍可使用。不得把真实密钥写入 `.env.example`、Git、浏览器或日志；真实 GLM 联调必须另行授权。
@@ -49,6 +51,7 @@ npm run build
 - [产品需求](./docs/01-initiation/PRD.md)
 - [唯一技术决策](./docs/01-initiation/TECHNOLOGY-DECISION.md)
 - [文档索引](./docs/README.md)
+- [阶段 12 质量与安全报告](./docs/07-quality-security/STAGE-12-REPORT.md)
 - [阶段 11 当前报告](./docs/06-development/STAGE-11-REPORT.md)
 - [阶段 11 验证记录](./docs/06-development/STAGE-11-IMPLEMENTATION-VALIDATION.md)
 - [阶段 10 完成报告](./docs/06-development/STAGE-10-REPORT.md)

@@ -53,3 +53,4 @@ export function mapStoredJobStatus(status: JobStatus) {
 
 const sensitiveDataPattern = /(身份证|手机号|联系电话|学生姓名|班级名单|家庭住址|api[_ -]?key|bearer\s+[a-z0-9._-]+)/i;
 export function containsSensitiveData(value: string) { return sensitiveDataPattern.test(value); }
+export { fakePriceProfile, realPriceProfile, generationReservation, generationCost, type PriceProfile } from "./pricing.ts";

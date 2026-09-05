@@ -9,6 +9,7 @@ const safeMessages: Partial<Record<ProblemCode, string>> = {
   CITATION_GATE_FAILED: "引用与来源版本不一致，请返回组织证据检查。", IDEMPOTENCY_KEY_REUSED: "此操作标识已用于其他请求，请重新发起。",
   PURGE_ALREADY_STARTED: "撤销窗口已结束，或到期清理已经开始。", PRECONDITION_REQUIRED: "缺少内容版本，请重新载入页面。",
   AI_NOT_CONFIGURED: "当前未启用 AI 建议，可继续手工备课。", BUDGET_EXCEEDED: "本地测试额度已达上限，请稍后再试。",
+  RATE_LIMITED: "操作过于频繁，已保存内容不变，请稍后重试。",
 };
 export class LocalApiError extends Error {
   readonly code: string; readonly traceId?: string;

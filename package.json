@@ -22,6 +22,7 @@
     "format:check": "git diff --check",
     "lint": "eslint tests && npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:stage12": "vitest run tests/stage12.safety.test.ts",
     "test:stage11": "vitest run tests/stage11.integration.test.ts",
     "test:browser:local": "node tests/stage11.browser.mjs",
     "test:e2e": "vitest run tests/backend.e2e.test.ts",

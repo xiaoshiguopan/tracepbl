@@ -1,6 +1,9 @@
+import { fakePriceProfile, realPriceProfile, type PriceProfile } from "@tracepbl/domain";
 import { z } from "zod";
 
 const WorkerConfigSchema=z.object({
+  priceProfile:z.custom<PriceProfile>(),
+  recoveryJournalPath:z.string().optional(),
   databaseUrl:z.url(),
   providerMode:z.enum(["disabled","fake","real"]),
   urlFetchEnabled:z.boolean(),
@@ -14,8 +17,10 @@ const WorkerConfigSchema=z.object({
 
 export type WorkerConfig=z.infer<typeof WorkerConfigSchema>;
 export function loadWorkerConfig(env=process.env):WorkerConfig{return WorkerConfigSchema.parse({
+  priceProfile:env.TRACEPBL_PROVIDER_MODE==="real"&&env.TRACEPBL_AI_ENABLED!=="false"?realPriceProfile(env):fakePriceProfile(),
+  recoveryJournalPath:env.TRACEPBL_RECOVERY_JOURNAL,
   databaseUrl:env.TRACEPBL_WORKER_DATABASE_URL??env.TRACEPBL_DATABASE_URL,
-  providerMode:env.TRACEPBL_PROVIDER_MODE??"disabled",
+  providerMode:env.TRACEPBL_PROVIDER_MODE==="real"&&env.TRACEPBL_AI_ENABLED==="false"?"disabled":env.TRACEPBL_PROVIDER_MODE??"disabled",
   urlFetchEnabled:env.TRACEPBL_URL_FETCH_ENABLED==="true",
   priceProfileVersion:env.TRACEPBL_PRICE_PROFILE_VERSION??null,
   glmApiKey:env.TRACEPBL_GLM_API_KEY??null,

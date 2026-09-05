@@ -2,6 +2,8 @@
 
 本目录只放需求、决策、设计、验证、发布和运营文档，不放应用源代码。以下结构由 AI 在对应阶段创建；不得提前用猜测填满。
 
+阶段 12 本地质量与安全成果已获批准并随本次提交归档，阶段 13 尚未开始：[阶段报告](./07-quality-security/STAGE-12-REPORT.md)、[测试映射](./07-quality-security/TESTS.md)、[安全发现](./07-quality-security/SECURITY-REVIEW.md)、[已批准 CP-12-01](./07-quality-security/CP-12-01-RECOVERY-AND-COST.md)。阶段 11 已归档为 `97321fe`；下方早期阶段说明为历史记录。
+
 ```text
 docs/
 ├─ 00-governance/        # 状态、阶段报告、决定、风险、变更

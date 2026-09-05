@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   base: mode === "complete" ? "/" : "/tracepbl/",
   server: {
     host: "127.0.0.1", port: 5173, strictPort: true,
+    fs: { deny: [".env", ".env.*", "*.{crt,pem,key}", "**/.git/**", "**/.tracepbl/**", "**/output/**"] },
     ...(mode === "complete" ? { proxy: { "/api": { target, headers: { host: "127.0.0.1:8787" }, configure: proxy => { proxy.on("proxyRes", (response, _request, client) => { client.once("close", () => response.destroy()); }); } } } } : {}),
   },
   build: {

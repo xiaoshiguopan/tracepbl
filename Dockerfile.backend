@@ -15,4 +15,5 @@ COPY packages/retrieval/package.json packages/retrieval/package.json
 RUN npm install --global npm@11.19.0
 RUN npm ci
 COPY . .
+RUN mkdir -p /recovery && chown node:node /recovery
 USER node

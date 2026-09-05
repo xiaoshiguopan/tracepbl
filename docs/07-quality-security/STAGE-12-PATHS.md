@@ -1,0 +1,70 @@
+# 阶段 12 精确归档路径清单
+
+日期：2026-09-05；用户已明确“批准归档”。以下是本阶段随本次提交归档的精确路径；该批准仅授权这些路径的一次本地提交，不含 tag、push、部署或下一阶段。
+
+既有 output/、所有忽略的清单、dump、日志、截图、测试/预览数据库与卷均不纳入；原用户预览数据保留。
+
+共 62 个路径：
+
+- `.env.example`
+- `.github/workflows/ci.yml`
+- `Dockerfile.backend`
+- `README.md`
+- `apps/api/src/app.ts`
+- `apps/api/src/config.ts`
+- `apps/api/src/server.ts`
+- `apps/api/tests/app-contract.test.ts`
+- `apps/web/src/local-api.ts`
+- `apps/web/vite.config.ts`
+- `apps/worker/package.json`
+- `apps/worker/src/config.ts`
+- `apps/worker/src/handlers.ts`
+- `apps/worker/src/main.ts`
+- `apps/worker/src/recovery-maintenance.ts`
+- `apps/worker/src/runner.ts`
+- `apps/worker/tests/config.test.ts`
+- `apps/worker/tests/runner.test.ts`
+- `compose.yaml`
+- `database/README.md`
+- `database/migrations/0005_recovery_and_cost_safety.sql`
+- `database/scripts/backup.ps1`
+- `database/scripts/restore.ps1`
+- `database/tests/database.integration.test.ts`
+- `database/tests/schema-contract.test.ts`
+- `docs/00-governance/PROJECT-STATE.md`
+- `docs/04-database-design/RECOVERY-COST-SAFETY.md`
+- `docs/05-backend-design/RECOVERY-COST-AMENDMENT.md`
+- `docs/07-quality-security/CP-12-01-RECOVERY-AND-COST.md`
+- `docs/07-quality-security/DEPENDENCY-LICENSES.md`
+- `docs/07-quality-security/LEARNING-CARD-12.md`
+- `docs/07-quality-security/RECOVERY-RUNBOOK.md`
+- `docs/07-quality-security/SECURITY-REVIEW.md`
+- `docs/07-quality-security/STAGE-12-PATHS.md`
+- `docs/07-quality-security/STAGE-12-PLAN.md`
+- `docs/07-quality-security/STAGE-12-REPORT.md`
+- `docs/07-quality-security/STAGE-12-VALIDATION.md`
+- `docs/07-quality-security/TESTS.md`
+- `docs/README.md`
+- `package-lock.json`
+- `package.json`
+- `packages/ai/src/glm-provider.ts`
+- `packages/ai/src/index.ts`
+- `packages/ai/tests/glm-provider.test.ts`
+- `packages/database/src/ai-jobs.ts`
+- `packages/database/src/index.ts`
+- `packages/database/src/recovery.ts`
+- `packages/domain/src/index.ts`
+- `packages/domain/src/pricing.ts`
+- `packages/domain/tests/pricing.test.ts`
+- `packages/retrieval/src/url-fetch.ts`
+- `packages/retrieval/tests/url-fetch.test.ts`
+- `tests/stage12.compose.yaml`
+- `tests/stage12.private-files.mjs`
+- `tests/stage12.restore-fixture.ts`
+- `tests/stage12.restore.sh`
+- `tests/stage12.runtime.compose.yaml`
+- `tests/stage12.runtime.mjs`
+- `tests/stage12.safety.test.ts`
+- `tests/stage12.supply-chain.mjs`
+- `tests/stage12.synthetic.env`
+- `tests/stage12.verify.mjs`
