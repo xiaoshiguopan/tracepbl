@@ -4,18 +4,22 @@ import { pathToFileURL } from "node:url";
 
 const modulePath = process.env.TRACEPBL_PLAYWRIGHT_MODULE;
 if (!modulePath) throw new Error("Set an existing TRACEPBL_PLAYWRIGHT_MODULE; no installation is performed.");
-const { chromium } = await import(pathToFileURL(resolve(modulePath)).href);
-const browser = await chromium.launch({ headless: true, args: ["--no-proxy-server"] });
+const engines = await import(pathToFileURL(resolve(modulePath)).href);
+const engineName = process.env.TRACEPBL_BROWSER_ENGINE ?? "chromium";
+if (!["chromium", "firefox", "webkit"].includes(engineName)) throw new Error("Unsupported test browser");
+const browser = await engines[engineName].launch({ headless: true, ...(engineName === "chromium" ? { args: ["--no-proxy-server"] } : {}) });
 const context = await browser.newContext();
+const origin = process.env.TRACEPBL_BROWSER_ORIGIN ?? "http://127.0.0.1:5174";
+if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) throw new Error("Use loopback only");
 const requests = []; const errors = [];
 await context.route("**/*", route => {
   const url = new URL(route.request().url());
-  if (url.origin !== "http://127.0.0.1:5174" || url.pathname.includes("/api/")) { requests.push(url.href); return route.abort(); }
+  if (url.origin !== origin || url.pathname.includes("/api/")) { requests.push(url.href); return route.abort(); }
   return route.continue();
 });
 try {
   const page = await context.newPage(); page.on("pageerror", error => errors.push(error.message));
-  await page.goto("http://127.0.0.1:5174/tracepbl/");
+  await page.goto(`${origin}/tracepbl/`);
   await page.getByRole("button", { name: "进入史料工作台", exact: true }).click();
   await page.locator('input[name="textbook"]').waitFor();
   await page.locator('input[name="textbook"]').fill("合成 Demo 教材");
@@ -24,6 +28,7 @@ try {
   await page.locator('input[name="minutes"]').fill("45");
   await page.getByRole("button", { name: "继续形成探究问题", exact: true }).click();
   await page.waitForURL("**/question");
+  await page.getByRole("heading", { name: "探究问题", exact: true }).waitFor();
   await page.reload(); await page.getByRole("heading", { name: "探究问题", exact: true }).waitFor();
   assert.equal(await page.locator('.missing-direction').count(),0);
   const outcome=page.locator('textarea[name="evidenceOutcome"]');await outcome.waitFor();assert.ok((await outcome.inputValue()).length>0);
@@ -38,7 +43,7 @@ try {
   await page.locator('.activity-card').first().waitFor();
   await page.getByRole('button',{name:'设计评价量规',exact:true}).click();await page.waitForURL('**/rubric');
   await page.locator('.rubric-row').first().waitFor();
-  const {mkdir}=await import('node:fs/promises');const output=resolve('.tracepbl/stage11-demo-inline');await mkdir(output,{recursive:true});
+  const {mkdir}=await import('node:fs/promises');const output=resolve(process.env.TRACEPBL_BROWSER_EVIDENCE ?? '.tracepbl/stage11-demo-inline');await mkdir(output,{recursive:true});
   for(const width of [1774,390,320]){
     await page.setViewportSize({width,height:1114});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -53,7 +58,7 @@ try {
     const download=page.waitForEvent('download');await page.getByRole('button',{name:new RegExp('^'+label)}).click();assert.equal(await (await download).failure(),null);
   }
   for(const [route,selector] of [['question','.question-form'],['evidence-map','.evidence-card'],['lesson','.activity-card'],['rubric','.rubric-row']]){
-    await page.goto(`http://127.0.0.1:5174/tracepbl/tasks/demo-tang-45m/${route}`);await page.locator(selector).first().waitFor();
+    await page.goto(`${origin}/tracepbl/tasks/demo-tang-45m/${route}`);await page.locator(selector).first().waitFor();
     for(const width of [1774,390,320]){
       await page.setViewportSize({width,height:1114});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${route} overflow at ${width}`);
       await page.screenshot({path:resolve(output,`${route}-${width}.png`),fullPage:true});

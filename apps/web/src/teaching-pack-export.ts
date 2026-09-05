@@ -18,7 +18,7 @@ const activityRange = (pack: TeachingPackExport, index: number) => {
   const start = pack.input.lesson.activities.slice(0, index).reduce((total, activity) => total + activity.minutes + activity.transitionMinutes, 0);
   return `${start}—${start + pack.input.lesson.activities[index].minutes + pack.input.lesson.activities[index].transitionMinutes} 分钟`;
 };
-const heading = (text: string, level: typeof HeadingLevel.HEADING_1 | typeof HeadingLevel.HEADING_2) => new Paragraph({ text, heading: level, spacing: { before: level === HeadingLevel.HEADING_1 ? 320 : 220, after: 100 } });
+const heading = (text: string, level: typeof HeadingLevel.HEADING_1 | typeof HeadingLevel.HEADING_2) => new Paragraph({ text, heading: level, keepNext: true, spacing: { before: level === HeadingLevel.HEADING_1 ? 320 : 220, after: 100 } });
 const paragraph = (text: string) => new Paragraph({ children: [new TextRun(text)], spacing: { after: 100, line: 360 } });
 
 export async function exportTeachingPackDocx(pack: TeachingPackExport) {

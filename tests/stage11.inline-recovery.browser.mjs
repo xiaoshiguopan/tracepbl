@@ -4,10 +4,12 @@ import { pathToFileURL } from "node:url";
 import { mkdir, writeFile } from "node:fs/promises";
 const modulePath=process.env.TRACEPBL_PLAYWRIGHT_MODULE;
 if(!modulePath)throw new Error("Set an existing TRACEPBL_PLAYWRIGHT_MODULE.");
-const {chromium}=await import(pathToFileURL(resolve(modulePath)).href);
+const engines=await import(pathToFileURL(resolve(modulePath)).href);
+const engineName=process.env.TRACEPBL_BROWSER_ENGINE ?? "chromium";
+if(!["chromium","firefox","webkit"].includes(engineName))throw new Error("Unsupported test browser");
 const origin=process.env.TRACEPBL_BROWSER_ORIGIN ?? "http://127.0.0.1:25173";
 if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin))throw new Error("Use loopback only.");
-const browser=await chromium.launch({headless:true,args:["--no-proxy-server"]});
+const browser=await engines[engineName].launch({headless:true,...(engineName==="chromium"?{args:["--no-proxy-server"]}:{})});
 const context=await browser.newContext();const page=await context.newPage();
 const api=async(path,method="GET",body,version)=>{
  const response=await context.request.fetch(`${origin}/api/v1${path}`,{method,headers:{Origin:origin,"Sec-Fetch-Site":"same-origin","Content-Type":"application/json","Idempotency-Key":crypto.randomUUID(),...(version===undefined?{}:{"If-Match":`"task-lv-${version}"`})},...(body===undefined?{}:{data:body})});
@@ -46,7 +48,7 @@ try{
  await page.getByText("内容已在另一窗口修改。",{exact:false}).waitFor({timeout:15000});
  assert.ok(page.url().endsWith('/question'));assert.equal((await api(base)).lockVersion,2);
  assert.equal(await page.locator('.question-form').innerText(),before);
- const output=resolve('.tracepbl/stage11-inline-recovery-verification');await mkdir(output,{recursive:true});
+ const output=resolve(process.env.TRACEPBL_BROWSER_EVIDENCE ?? '.tracepbl/stage11-inline-recovery-verification');await mkdir(output,{recursive:true});
  const result={status:"passed",offlineRestored:true,cancelDoesNotFill:true,cancelledAdoptionRejected:true,reloadOffersUnconfirmedResult:true,staleConfirmationPreservesDraft:true};
  await writeFile(resolve(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await context.close();await browser.close();}

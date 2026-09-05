@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-const origin = "http://127.0.0.1:38173";
+const origin = process.env.TRACEPBL_BROWSER_ORIGIN ?? "http://127.0.0.1:38173";
+if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) throw new Error("Use loopback only");
 const runtime = await fetch(`${origin}/api/v1/runtime`);
 assert.equal((await runtime.json()).ai.execution, "fake");
 const cookie = runtime.headers.get("set-cookie").split(";", 1)[0];
