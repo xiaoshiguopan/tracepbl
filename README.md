@@ -7,7 +7,7 @@
 - P00—P09 与 P12 已完成；P04 自动核验并入 P03，P10 导出并入 P09，P11 已取消且不得恢复。
 - React/Vite 前端是长期公开的纯静态 Demo，只使用 IndexedDB、公开/合成 fixtures 与预生成结果。
 - PostgreSQL 18.6 + pgvector 0.8.6 数据层，以及 Hono API、Worker、RAG、GLM adapter 与 LangGraph checkpointer 已实现。
-- 阶段 11 已归档为 `97321fe`；阶段 12 已归档为 `6bcf716`；阶段 13.1 仅合成数据就绪方案已获批准并随本次提交归档，未执行真实导入，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
+- 阶段 11 已归档为 `97321fe`；阶段 12 已归档为 `6bcf716`；阶段 12 补验已归档 `8de8f5c`；阶段 13.1 方案归档 `2952c53`；阶段 13.2 合成演练与空库首次使用验证已完成、用户已批准随本次本地提交归档，未执行真实导入，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
 
 ## 两种运行形态
 
