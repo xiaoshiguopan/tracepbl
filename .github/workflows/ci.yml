@@ -45,11 +45,13 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      # Integration initializes the schema, least-privilege roles and checkpoints
+      # required by the workspace tests when database URLs are present.
+      - run: npm run test:integration
       - run: npm test
       - run: npm run build
       - run: npm audit --omit=dev
       - run: npm run format:check
-      - run: npm run test:integration
       - run: npm run test:e2e
       - run: npm run test:stage11
       - run: npm run test:stage12
