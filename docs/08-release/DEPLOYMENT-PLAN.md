@@ -2,7 +2,9 @@
 
 > 2026-09-06 执行批准：用户明确回复“批准归档并发布到上述地址”，授权报告 19 路径本地归档、新建 xiaoshiguopan/tracepbl Public、仅推送 main、通过 CI 后发布 GitHub Pages。以下此前待批准文字为准备历史；本次不含 tag、付费、真实模型或阶段 15。
 
-当前仅完成本地准备。2026-09-06 用户确认 MIT 并要求直接动工；已通过 gh api user 核实账号 xiaoshiguopan，gh repo view 未找到 xiaoshiguopan/tracepbl。目标为新建该 Public 仓库，MIT 已落地；最终精确外部批准单如下。
+当前执行已完成：Public 仓库、仅 main 推送、同 SHA CI、Pages 与公网验证均通过，见 RELEASE-RECORD.md。下文准备语句为批准前历史。
+
+准备时：2026-09-06 用户确认 MIT 并要求直接动工；已通过 gh api user 核实账号 xiaoshiguopan，gh repo view 未找到 xiaoshiguopan/tracepbl。目标为新建该 Public 仓库，MIT 已落地；最终精确外部批准单如下。
 
 ## 候选与发布门禁
 
@@ -35,4 +37,4 @@ Pages 工作流仅 workflow_dispatch，不在 push 时自动发布。需要 appr
 - 发布后：README 回填实际体验 URL 与发布记录，后续归档/推送仅在用户明确纳入授权时执行；不启动阶段 15。
 - 回滚：首发失败保留日志并停止发布；若已错误公开，按 ROLLBACK-PLAN 处理，涉及撤销公开需相应授权。
 
-尚未执行上述远程写操作；提交号将在本轮归档后由 Git 确定，不预造 SHA。
+上述动作已按用户“批准归档并发布到上述地址”执行；部署 SHA 6706601，实际运行及文档回填范围见报告和 RELEASE-RECORD.md。

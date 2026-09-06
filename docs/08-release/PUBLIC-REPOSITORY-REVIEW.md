@@ -1,4 +1,4 @@
-# 公开仓库审查记录（候选）
+# 公开仓库审查记录
 
 输入 main=6d8b886，共 34 个 main 可达提交；355 个当前跟踪路径。无 remote；2026-09-06 用户确认 MIT，根 LICENSE 与素材许可范围说明已补齐，尚未公开。
 
@@ -20,4 +20,4 @@
 
 构建仍包含静态 source map 和部分未执行的本地模式前端代码（现役混合导入限制），不含后端可执行服务或密钥；是否连接后端以浏览器零请求证据为准，不把字符串存在当成已外发。PDF 大 chunk 与混合导入 warning 保留。
 
-远端扫描保护、Dependabot、仓库可见性、Actions/Pages 配额、最终媒体/内容公开范围确认尚未完成；目标明确及必要授权后逐项落地。
+2026-09-06 用户批准 main 完整历史与指定 Public 仓库/Pages 发布；远端已建立，Secret scanning、Push protection、vulnerability alerts 已启用。只存在 main 远端分支，无 tag 或内部引用。实际 CI/Pages 成功，未请求付费升级；未开展所有账户配额专项审计，未配置自动更新 PR/CodeQL。首段为准备时快照，实际运行见 RELEASE-RECORD.md。

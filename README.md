@@ -7,9 +7,11 @@
 - P00—P09 与 P12 已完成；P04 自动核验并入 P03，P10 导出并入 P09，P11 已取消且不得恢复。
 - React/Vite 前端是长期公开的纯静态 Demo，只使用 IndexedDB、公开/合成 fixtures 与预生成结果。
 - PostgreSQL 18.6 + pgvector 0.8.6 数据层，以及 Hono API、Worker、RAG、GLM adapter 与 LangGraph checkpointer 已实现。
-- 阶段 11 已归档为 `97321fe`；阶段 12 已归档为 `6bcf716`；阶段 12 补验已归档 `8de8f5c`；阶段 13.1 方案归档 `2952c53`；阶段 13.2 合成演练与空库首次使用验证已完成、用户已批准随本次本地提交归档，未执行真实导入，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
+- 阶段 11 已归档为 `97321fe`；阶段 12 已归档为 `6bcf716`；阶段 12 补验已归档 `8de8f5c`；阶段 13.1 方案归档 `2952c53`；阶段 13.2 合成演练与空库首次使用验证已归档 `6d8b886`，未执行真实导入，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
 
-阶段 14.1 公开发布准备已启动，Pages 候选工作流与本地验证已完成；账号已核实为 xiaoshiguopan，目标仓库 tracepbl，MIT 已确认；精确外部发布批准待完成，尚无公开体验 URL。见 [发布准备报告](./docs/08-release/STAGE-14.1-REPORT.md)。
+**[打开史证工坊 Demo](https://xiaoshiguopan.github.io/tracepbl/)** · [公开源码](https://github.com/xiaoshiguopan/tracepbl)
+
+阶段 14.1 已于 2026-09-06 发布。静态 Demo 使用公开/合成示例和预生成结果，不调用真实 AI；数据仅保存在当前浏览器。完整流程、深层刷新、手机宽度及 Word/PDF 下载已在公开地址验证。见 [发布记录](./docs/08-release/RELEASE-RECORD.md)。
 
 ## 两种运行形态
 

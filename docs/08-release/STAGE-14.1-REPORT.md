@@ -1,8 +1,10 @@
-# 阶段 14.1 公开发布准备报告（准备完成）
+# 阶段 14.1 公开发布报告（已发布）
 
 > 2026-09-06 执行批准：用户明确回复“批准归档并发布到上述地址”，授权报告 19 路径本地归档、新建 xiaoshiguopan/tracepbl Public、仅推送 main、通过 CI 后发布 GitHub Pages。以下此前待批准文字为准备历史；本次不含 tag、付费、真实模型或阶段 15。
 
-日期：2026-09-05。输入基线 6d8b886。2026-09-06 更新：本地准备已完成；用户确认 MIT 并要求直接动工，已核实账号 xiaoshiguopan，具体化目标 xiaoshiguopan/tracepbl；最终发布批准单见 DEPLOYMENT-PLAN.md。没有归档、推送、远程创建或部署授权。
+当前结论：2026-09-06 已发布，访客验证通过；原 19 路径归档 99f3714，必要发布修复 5569773/6706601。实际链接与验证见 RELEASE-RECORD.md。以下准备阶段叙述保留历史，不覆盖本结论。
+
+准备日期：2026-09-05。输入基线 6d8b886。2026-09-06 更新：本地准备已完成；用户确认 MIT 并要求直接动工，已核实账号 xiaoshiguopan，具体化目标 xiaoshiguopan/tracepbl；最终发布批准单见 DEPLOYMENT-PLAN.md。没有归档、推送、远程创建或部署授权。
 
 ## 已完成
 
@@ -50,3 +52,27 @@
 19. docs/08-release/THIRD-PARTY-NOTICES.md
 
 证据在忽略的 .tracepbl/stage14/：history-scan.json、build/、browser-1788617371829/；不会推送。构建/扫描/官方 SHA/YAML/ESLint 具体命令和结果保留在本任务记录，URL 行为详见 PUBLIC-URL-CHECK.md。等待归档与精确外部批准期间继续保留现有运行环境，不清理或改写历史。
+
+## 执行补记与精确收口路径
+
+用户本次批准归档并发布后，按发布顺序实际执行；两轮 CI 失败、原因及最终成功证据全部保留在 RELEASE-RECORD.md。除原 19 路径，必要修复仅有：
+
+- .github/workflows/ci.yml
+- apps/api/tests/api.integration.test.ts
+- packages/database/src/index.ts
+
+发布后的 README 入口及事实回填共 11 路径，均在原获批文档范围：
+
+1. README.md
+2. docs/README.md
+3. docs/00-governance/PROJECT-STATE.md
+4. docs/08-release/DEPLOYMENT-PLAN.md
+5. docs/08-release/ENVIRONMENT-MATRIX.md
+6. docs/08-release/RELEASE-CHECKLIST.md
+7. docs/08-release/RELEASE-RECORD.md
+8. docs/08-release/PUBLIC-REPOSITORY-REVIEW.md
+9. docs/08-release/PUBLIC-URL-CHECK.md
+10. docs/08-release/LEARNING-CARD-14.1.md
+11. docs/08-release/STAGE-14.1-REPORT.md
+
+不包含 output/、.tracepbl/、密钥、数据库、标签或内部快照。阶段 15 未开始。后续文档提交只同步发布事实，不触发 Pages；公开制品维持 6706601。
