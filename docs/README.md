@@ -2,6 +2,8 @@
 
 本目录只放需求、决策、设计、验证、发布和运营文档，不放应用源代码。以下结构由 AI 在对应阶段创建；不得提前用猜测填满。
 
+阶段 14.1 正在准备公开发布，目标已具体化为 xiaoshiguopan/tracepbl，MIT 已确认，等待精确发布批准：[发布准备报告](./08-release/STAGE-14.1-REPORT.md)。阶段 13.2 已归档 `6d8b886`。
+
 阶段 13.2 合成演练与空库首次使用验证已完成，用户已批准随本次本地提交归档：[阶段报告](./08-release/STAGE-13.2-REPORT.md)。阶段 12 补验已归档 `8de8f5c`：[补验报告](./07-quality-security/STAGE-12-FOLLOWUP-REPORT.md)。未导入真实数据或进入公开发布。
 
 阶段 13.1 仅合成数据就绪方案已获批准，随本次本地提交归档：[数据就绪方案](./08-release/REAL-DATA-IMPORT.md)。阶段 12 已归档为 `6bcf716`：[阶段报告](./07-quality-security/STAGE-12-REPORT.md)、[测试映射](./07-quality-security/TESTS.md)、[安全发现](./07-quality-security/SECURITY-REVIEW.md)、[已批准 CP-12-01](./07-quality-security/CP-12-01-RECOVERY-AND-COST.md)。阶段 11 已归档为 `97321fe`；下方早期阶段说明为历史记录。

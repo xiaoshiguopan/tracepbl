@@ -9,6 +9,8 @@
 - PostgreSQL 18.6 + pgvector 0.8.6 数据层，以及 Hono API、Worker、RAG、GLM adapter 与 LangGraph checkpointer 已实现。
 - 阶段 11 已归档为 `97321fe`；阶段 12 已归档为 `6bcf716`；阶段 12 补验已归档 `8de8f5c`；阶段 13.1 方案归档 `2952c53`；阶段 13.2 合成演练与空库首次使用验证已完成、用户已批准随本次本地提交归档，未执行真实导入，当前准确进度与门禁以 [PROJECT-STATE.md](./docs/00-governance/PROJECT-STATE.md) 为准。
 
+阶段 14.1 公开发布准备已启动，Pages 候选工作流与本地验证已完成；账号已核实为 xiaoshiguopan，目标仓库 tracepbl，MIT 已确认；精确外部发布批准待完成，尚无公开体验 URL。见 [发布准备报告](./docs/08-release/STAGE-14.1-REPORT.md)。
+
 ## 两种运行形态
 
 | 形态 | 用途 | 数据与网络边界 |
@@ -57,3 +59,7 @@ npm run build
 - [阶段 10 完成报告](./docs/06-development/STAGE-10-REPORT.md)
 
 未经明确授权，不得调用真实 GLM、读取本机密钥、导入真实个人/学生数据、push、部署或恢复已取消的 P11。
+
+## 许可证
+
+原创代码采用 [MIT](./LICENSE)。字体、第三方依赖、史料及独立媒体的适用范围见 [许可说明](./docs/08-release/THIRD-PARTY-NOTICES.md)。
