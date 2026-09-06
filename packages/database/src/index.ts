@@ -114,7 +114,7 @@ export class TaskRepository {
       await tx`update core.learning_activities set review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       await tx`update core.rubric_items set review_state='needs_review',updated_at=now() where workspace_id=${scope.workspaceId} and task_id=${taskId}`;
       const row = changed[0]; const snapshotRows=await tx<{snapshot:Record<string,unknown>}[]>`select core.current_task_snapshot(${scope.workspaceId},${taskId}) as snapshot`; const snapshot=snapshotRows[0]!.snapshot;
-      await tx`insert into core.task_revisions(workspace_id,task_id,revision_no,reason,schema_version,base_lock_version,snapshot,content_hash,created_by) values (${scope.workspaceId},${taskId},${Number(row.revision_seq)},'teacher_confirmed',1,${expectedVersion},${tx.json(snapshot as Parameters<typeof tx.json>[0])},${canonicalHash(snapshot)},'teacher')`;
+      await tx`insert into core.task_revisions(workspace_id,task_id,revision_no,reason,schema_version,base_lock_version,snapshot,content_hash,created_by) values (${scope.workspaceId},${taskId},${Number(row.revision_seq)},'teacher_confirmed',1,${expectedVersion},${tx.json(snapshot as Parameters<typeof tx.json>[0])},${canonicalHash(snapshot)},'teacher') on conflict(task_id,content_hash,reason) do nothing`;
       await tx`insert into ops.audit_events(workspace_id,task_id,actor_kind,action,entity_kind,entity_id,metadata) values (${scope.workspaceId},${taskId},'teacher','context.updated','task',${taskId},${tx.json({ lockVersion: Number(row.lock_version) })})`;
       return taskFrom(row);
     });
